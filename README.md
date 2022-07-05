@@ -1,2 +1,2 @@
 # DXRPathTracer
-This is a real-time path tracer implemented based on DirectX RayTracing.
+This is a real-time path tracer based on DirectX RayTracing.
