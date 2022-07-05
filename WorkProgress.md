@@ -1,6 +1,6 @@
 This document describes daily work progess of the project.
 
-## 20220701
+## 20220630, 20220701
 Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 - Raytracing pipeline (anyhit-closesthit-miss)
 - DXR Initialization & setup
