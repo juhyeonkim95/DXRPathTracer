@@ -23,3 +23,6 @@ Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 - In order to access normal, uv information, implementing StructuredBuffer is inevitable!
 - Changed mesh color buffer from ConstantBuffer to StructuredBuffer.
 - How to implement normal/uv information buffer? (StructuredBuffer vs ByteAddressBuffer)
+
+## 20220707
+- Load UV/Normal infomation using StructuredBuffer
