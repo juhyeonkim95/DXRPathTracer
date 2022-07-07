@@ -26,3 +26,5 @@ Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 
 ## 20220707
 - Load UV/Normal infomation using StructuredBuffer
+- Try to apply texture. Creating buffer is done, but uploading texture data is troublesome.
+- Exploit external library (DirectXTex)
