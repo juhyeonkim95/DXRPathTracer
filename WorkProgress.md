@@ -28,3 +28,7 @@ Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 - Load UV/Normal infomation using StructuredBuffer
 - Try to apply texture. Creating buffer is done, but uploading texture data is troublesome.
 - Exploit external library (DirectXTex)
+
+## 20220708
+- Load a single texture using DirectXTex.
+- Try to implement per-instance texture loading using per-instance SRV.
