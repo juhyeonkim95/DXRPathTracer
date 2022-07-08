@@ -31,4 +31,5 @@ Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 
 ## 20220708
 - Load a single texture using DirectXTex.
-- Try to implement per-instance texture loading using per-instance SRV.
+- Implement per-instance texture loading using per-instance SRV.
+- Working on loading XML file better way. 
