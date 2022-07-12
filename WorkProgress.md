@@ -33,3 +33,8 @@ Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 - Load a single texture using DirectXTex.
 - Implement per-instance texture loading using per-instance SRV.
 - Working on loading XML file better way. 
+
+## 20220711
+- Implement new geometry (rectangle, cube) by transforming it into a mesh. (no additional intersection program)
+- Implement a simple rectangular emitter.
+- Diffuse only real-time path tracer.
