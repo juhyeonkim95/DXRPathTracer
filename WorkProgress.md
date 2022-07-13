@@ -44,6 +44,7 @@ Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 
 ## 20220713
 - Reduce recursion depth by moving shadowray program from closest hit to raygen program.
+
 | Frame   | depth 2 | depth 1  |
 |---------|---------|----------|
 | 1       | 1389328 | 953796   |
