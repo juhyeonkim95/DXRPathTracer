@@ -40,7 +40,8 @@ Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 - Diffuse only real-time path tracer.
 
 ## 20220712
-- Implement Multiple Importance Sampling with single light
+- Implement MIS(Multiple Importance Sampling) with single light
+- Code refactoring
 
 ## 20220713
 - Reduce recursion depth by moving shadowray program from closest hit to raygen program.
@@ -58,3 +59,5 @@ Performance Comparison for kitchen scene (256 spp, ms)
 | Average | 1364    | 953     |
 
 About x1.5 speed up!
+
+- Working on organizing BSDF sampling / pdf / eval and light sampling code.
