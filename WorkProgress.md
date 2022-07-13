@@ -45,12 +45,16 @@ Understand basics of DXR (reference : https://intro-to-dxr.cwyman.org/)
 ## 20220713
 - Reduce recursion depth by moving shadowray program from closest hit to raygen program.
 
-| Frame   | depth 2 | depth 1  |
-|---------|---------|----------|
-| 1       | 1389328 | 953796   |
-| 2       | 1375597 | 959725   |
-| 3       | 1354166 | 978917   |
-| 4       | 1350501 | 940901   |
-| 5       | 1351036 | 944522   |
-| 6       | 1366442 | 941524   |
-| Average | 1364512 | 953230.8 |
+Performance Comparison for kitchen scene (256 spp, ms)
+
+| Frame   | depth 2 | depth 1 |
+|---------|---------|---------|
+| 1       | 1389    | 953     |
+| 2       | 1375    | 959     |
+| 3       | 1354    | 978     |
+| 4       | 1350    | 940     |
+| 5       | 1351    | 944     |
+| 6       | 1366    | 941     |
+| Average | 1364    | 953     |
+
+About x1.5 speed up!
