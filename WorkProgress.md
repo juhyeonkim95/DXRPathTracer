@@ -61,3 +61,9 @@ Performance Comparison for kitchen scene (256 spp, ms)
 About x1.5 speed up!
 
 - Working on organizing BSDF sampling / pdf / eval and light sampling code.
+
+## 20220714
+- Implemented an environment light.
+- Implement Conductor
+- Implement Dielectric
+![image](https://user-images.githubusercontent.com/59192387/178934324-231aa08f-beec-44b8-81ae-d4d909c4b594.png)
