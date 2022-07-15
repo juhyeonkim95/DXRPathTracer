@@ -63,7 +63,13 @@ About x1.5 speed up!
 - Working on organizing BSDF sampling / pdf / eval and light sampling code.
 
 ## 20220714
-- Implemented an environment light.
+- Implement an environment light.
 - Implement Conductor
 - Implement Dielectric
 ![image](https://user-images.githubusercontent.com/59192387/178934324-231aa08f-beec-44b8-81ae-d4d909c4b594.png)
+
+## 20220715
+- Implement Rough Conductor
+- Implement Rough Dielectric
+- Implement Plastic
+![image](https://user-images.githubusercontent.com/59192387/179181050-dbb5f661-0b77-49e4-b3f7-304a25e3abfa.png)
