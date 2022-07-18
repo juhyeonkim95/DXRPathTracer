@@ -73,3 +73,7 @@ About x1.5 speed up!
 - Implement Rough Dielectric
 - Implement Plastic
 ![image](https://user-images.githubusercontent.com/59192387/179181050-dbb5f661-0b77-49e4-b3f7-304a25e3abfa.png)
+
+## 20220718
+- Try to apply filtering & denoising.
+- Reading SVGF, A-SVGF paper.
