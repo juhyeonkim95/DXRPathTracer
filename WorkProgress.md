@@ -77,3 +77,7 @@ About x1.5 speed up!
 ## 20220718
 - Try to apply filtering & denoising.
 - Reading SVGF, A-SVGF paper.
+
+## 20220719
+- Try to implement SVGF
+- MIS with multiple light (uniformly select one light)
