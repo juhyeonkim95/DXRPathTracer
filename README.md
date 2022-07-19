@@ -25,17 +25,17 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 
 ### BSDF
 - [x] Diffuse
-- [ ] Conductor
-- [ ] Rough Conductor
-- [ ] Dielectric
-- [ ] Rough Dielectric
-- [ ] Plastic
+- [x] Conductor
+- [x] Rough Conductor
+- [x] Dielectric
+- [x] Rough Dielectric
+- [x] Plastic
 - [ ] Rough Plastic
 - [ ] Disney
 
 ### Emitter
 - [x] Area (rectangle only)
-- [ ] Environment
+- [x] Environment
 - [ ] Point
 - [ ] Directional
 - [ ] Spotlight
