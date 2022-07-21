@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Sensor">
+      <UniqueIdentifier>{0206e3de-8f79-4bb5-b104-e1ecd69a1522}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{47dd3480-ec29-43eb-9d15-891793ef19f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BSDF">
+      <UniqueIdentifier>{77ba1171-9e53-4329-8168-704660a1da6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Texture">
+      <UniqueIdentifier>{9efe0d1f-ed52-4c32-b0be-54cf783dfbee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shape">
+      <UniqueIdentifier>{16973aef-102b-41df-af66-266316fa621b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emitter">
+      <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data">
+      <UniqueIdentifier>{da728bf9-5623-4581-b74a-f2cff2d988b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{39e921ed-9403-49df-86fa-32acda58320e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External">
+      <UniqueIdentifier>{ca1c7cc4-2eed-4158-929a-12f11a5730e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dx12">
+      <UniqueIdentifier>{8a3dc4ca-ddb0-4ff1-ba59-d52fcd4531bc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PathTracer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Perspective.cpp">
+      <Filter>Sensor</Filter>
+    </ClCompile>
+    <ClCompile Include="Diffuse.cpp">
+      <Filter>BSDF</Filter>
+    </ClCompile>
+    <ClCompile Include="loader_utils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Plastic.cpp">
+      <Filter>BSDF</Filter>
+    </ClCompile>
+    <ClCompile Include="RoughPlastic.cpp">
+      <Filter>BSDF</Filter>
+    </ClCompile>
+    <ClCompile Include="Conductor.cpp">
+      <Filter>BSDF</Filter>
+    </ClCompile>
+    <ClCompile Include="RoughConductor.cpp">
+      <Filter>BSDF</Filter>
+    </ClCompile>
+    <ClCompile Include="Dielectric.cpp">
+      <Filter>BSDF</Filter>
+    </ClCompile>
+    <ClCompile Include="RoughDielectric.cpp">
+      <Filter>BSDF</Filter>
+    </ClCompile>
+    <ClCompile Include="ThinDielectric.cpp">
+      <Filter>BSDF</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="Rectangle.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Shape.cpp">
+      <Filter>Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="light_utils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyxml2.cpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Helper.cpp">
+      <Filter>dx12</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PathTracer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="AccelerationStructureHelper.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Perspective.h">
+      <Filter>Sensor</Filter>
+    </ClInclude>
+    <ClInclude Include="loader_utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Sensor.h">
+      <Filter>Sensor</Filter>
+    </ClInclude>
+    <ClInclude Include="BSDF.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="Diffuse.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="loader_bsdf.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedTypes.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="HlslCompat.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Plastic.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="RoughPlastic.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="Conductor.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="RoughConductor.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="Dielectric.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="RoughDielectric.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="ThinDielectric.h">
+      <Filter>BSDF</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonStruct.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Rectangle.h">
+      <Filter>Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Emitter.h">
+      <Filter>Emitter</Filter>
+    </ClInclude>
+    <ClInclude Include="light_utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="loader_shape.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyxml2.h">
+      <Filter>External</Filter>
+    </ClInclude>
+    <ClInclude Include="tiny_obj_loader.h">
+      <Filter>External</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>External</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Helper.h">
+      <Filter>dx12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Initializer.h">
+      <Filter>dx12</Filter>
+    </ClInclude>
+    <ClInclude Include="DxilLibrary.h">
+      <Filter>dx12</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\ShaderUtils.hlsli">
+      <Filter>Data</Filter>
+    </None>
+    <None Include="Data\ShaderStructs.hlsli">
+      <Filter>Data</Filter>
+    </None>
+    <None Include="Data\BSDF.hlsli">
+      <Filter>Data</Filter>
+    </None>
+    <None Include="Data\SampleLight.hlsli">
+      <Filter>Data</Filter>
+    </None>
+    <None Include="Data\Fresnel.hlsli">
+      <Filter>Data</Filter>
+    </None>
+    <None Include="Data\Microfacet.hlsli">
+      <Filter>Data</Filter>
+    </None>
+    <None Include="Data\Constants.hlsli">
+      <Filter>Data</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Data\TutorialShader.hlsl">
+      <Filter>Data</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
