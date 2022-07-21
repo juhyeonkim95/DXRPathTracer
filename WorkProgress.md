@@ -81,3 +81,9 @@ About x1.5 speed up!
 ## 20220719
 - Try to implement SVGF
 - MIS with multiple light (uniformly select one light)
+
+## 20220720
+- Read ReSTIR paper.
+
+## 20220721
+- Code refactoring.
