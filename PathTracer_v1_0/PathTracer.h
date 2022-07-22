@@ -1,9 +1,12 @@
 #pragma once
 #include "Framework.h"
 #include "Scene.h"
+#include "RenderTexture.h"
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <fstream>
+
+
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
@@ -19,6 +22,9 @@ public:
     void onFrameRender() override;
     void onShutdown() override;
     void update();
+    void initPostProcess();
+    void postProcess(int rtvIndex);
+
 private:
     void initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight);
     uint32_t beginFrame();
@@ -39,6 +45,8 @@ private:
         ID3D12ResourcePtr pSwapChainBuffer;
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
     } mFrameObjects[kDefaultSwapChainBuffers];
+
+    RenderTexture renderTexture;
 
 
     // Heap data
@@ -70,20 +78,16 @@ private:
 
     void createShaderResources();
     void createTextureShaderResources();
-    ID3D12ResourcePtr mpOutputResource;
-    ID3D12ResourcePtr mpOutputHDRResource;
-    ID3D12ResourcePtr mpOutputDepthResource;
-    ID3D12ResourcePtr mpOutputNormalResource;
-    ID3D12ResourcePtr mpOutputGeomIDResource;
-    ID3D12ResourcePtr mpOutputNormalResource2;
-    ID3D12ResourcePtr mpOutputGeomIDResource2;
+
+    std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
 
 
     ID3D12DescriptorHeapPtr mpSrvUavHeap;
     static const uint32_t kSrvUavHeapSize = 2;
+    int mpSrvUavHeapCount = 0;
+
 
     //void createConstantBuffer();
-    void updateSensor();
     ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
     ID3D12ResourcePtr mpMaterialBuffer = nullptr;
     ID3D12ResourcePtr mpGeometryInfoBuffer = nullptr;
@@ -91,7 +95,6 @@ private:
 
     ID3D12ResourcePtr mpIndicesBuffer = nullptr;
     ID3D12ResourcePtr mpVerticesBuffer = nullptr;
-
     std::vector<ID3D12ResourcePtr> mpTextureBuffers;
     int textureStartHeapOffset;
 
@@ -100,15 +103,31 @@ private:
     IDirectInput8A* mpInput = 0;
     IDirectInputDevice8A* mpKeyboard = 0;
     unsigned char mpKeyboardState[256];
+    unsigned char mpKeyboardStatePrev[256];
 
     //D3D12_CPU_DESCRIPTOR_HANDLE g_SceneMeshInfo;
 
     uint32_t mFrameNumber = 1;
-    uint32_t mTotalFrameNumber = 1;
+    uint32_t mTotalFrameNumber = 0;
     std::ofstream logFile;
     std::chrono::steady_clock::time_point lastTime;
 
     float elapsedTime[FRAME_ACCUMULATE_NUMBER];
     
     uint renderMode;
+    bool doPostProcess = false;
+
+    void createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth = 1);
+    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
+
+    void createRenderTextures();
+    // PostProcessing
+    ID3D12RootSignature* rootSignature;
+    D3D12_VIEWPORT viewport; // area that output from rasterizer will be stretched to.
+    D3D12_RECT scissorRect; // the area to draw in. pixels outside that area will not be drawn onto
+    ID3D12PipelineState* pipelineStateObject; // pso containing a pipeline state
+    ID3D12Resource* vertexBuffer; // a default buffer in GPU memory that we will load vertex data for our triangle into
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
+                                               // the total size of the buffer, and the size of each element (vertex)
+
 };

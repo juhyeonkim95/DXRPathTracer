@@ -57,7 +57,7 @@ static const WCHAR* kShadowMiss = L"shadowMiss";
 static const WCHAR* kShadowHitGroup = L"ShadowHitGroup";
 
 
-ID3DBlobPtr compileLibrary(const WCHAR* filename, const WCHAR* targetString)
+ID3DBlobPtr compileLibrary(const WCHAR* filename, const WCHAR* targetEntry, const WCHAR* targetProfile)
 {
     // Initialize the helper
     d3d_call(gDxcDllHelper.Initialize());
@@ -85,7 +85,7 @@ ID3DBlobPtr compileLibrary(const WCHAR* filename, const WCHAR* targetString)
 
     // Compile
     IDxcOperationResultPtr pResult;
-    d3d_call(pCompiler->Compile(pTextBlob, filename, L"", targetString, nullptr, 0, nullptr, 0, includeHandler, &pResult));
+    d3d_call(pCompiler->Compile(pTextBlob, filename, targetEntry, targetProfile, nullptr, 0, nullptr, 0, includeHandler, &pResult));
 
     // Verify the result
     HRESULT resultCode;
@@ -108,7 +108,7 @@ ID3DBlobPtr compileLibrary(const WCHAR* filename, const WCHAR* targetString)
 DxilLibrary createDxilLibrary()
 {
     // Compile the shader
-    ID3DBlobPtr pDxilLib = compileLibrary(L"Data/TutorialShader.hlsl", L"lib_6_3");
+    ID3DBlobPtr pDxilLib = compileLibrary(L"Data/TutorialShader.hlsl", L"", L"lib_6_3");
     const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kMissEnvShader, kClosestHitShader, kShadowMiss, kShadowChs };
     return DxilLibrary(pDxilLib, entryPoints, arraysize(entryPoints));
 }
@@ -300,7 +300,7 @@ RootSignatureDesc createGlobalRootDesc()
 
     // UAV
     desc.range[1].BaseShaderRegister = 1;
-    desc.range[1].NumDescriptors = 6;
+    desc.range[1].NumDescriptors = 14;
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
@@ -311,6 +311,7 @@ RootSignatureDesc createGlobalRootDesc()
     desc.rootParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc.rootParams[0].Descriptor.RegisterSpace = 0;
     desc.rootParams[0].Descriptor.ShaderRegister = 0;
+    
     
     // material
     desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;

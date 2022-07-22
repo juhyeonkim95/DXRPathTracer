@@ -12,6 +12,13 @@
 #include "DirectXTex.inl"
 #include "d3dx12.h"
 
+#include <windows.h>
+#include <d3d12.h>
+#include <dxgi1_4.h>
+#include <D3Dcompiler.h>
+#include <DirectXMath.h>
+#include <string>
+
 void TutorialPathTracer::initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 {
     mHwnd = winHandle;
@@ -40,7 +47,7 @@ void TutorialPathTracer::initDX12(HWND winHandle, uint32_t winWidth, uint32_t wi
     {
         d3d_call(mpDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mFrameObjects[i].pCmdAllocator)));
         d3d_call(mpSwapChain->GetBuffer(i, IID_PPV_ARGS(&mFrameObjects[i].pSwapChainBuffer)));
-        mFrameObjects[i].rtvHandle = createRTV(mpDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
+        mFrameObjects[i].rtvHandle = createRTV(mpDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM);
     }
 
     // Create the command-list
@@ -80,9 +87,8 @@ void TutorialPathTracer::endFrame(uint32_t rtvIndex)
     }
 
     mFrameObjects[bufferIndex].pCmdAllocator->Reset();
-    mpCmdList->Reset(mFrameObjects[bufferIndex].pCmdAllocator, nullptr);
+    mpCmdList->Reset(mFrameObjects[bufferIndex].pCmdAllocator, pipelineStateObject);
 }
-
 
 AccelerationStructureBuffers TutorialPathTracer::createTopLevelAccelerationStructure()
 {
@@ -161,7 +167,7 @@ void TutorialPathTracer::createAccelerationStructures()
     mpFence->SetEventOnCompletion(mFenceValue, mFenceEvent);
     WaitForSingleObject(mFenceEvent, INFINITE);
     uint32_t bufferIndex = mpSwapChain->GetCurrentBackBufferIndex();
-    mpCmdList->Reset(mFrameObjects[0].pCmdAllocator, nullptr);
+    mpCmdList->Reset(mFrameObjects[bufferIndex].pCmdAllocator, nullptr);
 
     // Store the AS buffers. The rest of the buffers will be released once we exit the function
     mpTopLevelAS = topLevelBuffers.pResult;
@@ -331,33 +337,52 @@ void TutorialPathTracer::createShaderTable()
     mpShaderTable->Unmap(0, nullptr);
 }
 
-
-void TutorialPathTracer::createShaderResources()
+void TutorialPathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth)
 {
-    // Create the output resource. The dimensions and format should match the swap-chain
+    ID3D12ResourcePtr outputResources;
+
     D3D12_RESOURCE_DESC resDesc = {};
-    resDesc.DepthOrArraySize = 1;
+    resDesc.DepthOrArraySize = depth;
     resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
+    resDesc.Format = format;
     resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     resDesc.Width = mSwapChainSize.x;
     resDesc.Height = mSwapChainSize.y;
     resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     resDesc.MipLevels = 1;
     resDesc.SampleDesc.Count = 1;
-    d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
-    
+    d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&outputResources))); // Starting as copy-source to simplify onFrameRender()
 
-    // Create an SRV/UAV descriptor heap. Need 2 entries - 1 SRV for the scene and 1 UAV for the output
+    if (depth == 1) {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+        mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, srvHandle);
+        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    }
+    else {
+        for (int i = 0; i < depth; i++) {
+            D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+            uavDesc.Format = format;
+            uavDesc.Texture2DArray.ArraySize = 1;
+            uavDesc.Texture2DArray.FirstArraySlice = UINT(i);
+            uavDesc.Texture2DArray.PlaneSlice = 0;
+            mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, srvHandle);
+            srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        }
+    }
+    outputUAVBuffers[name] = outputResources;
+}
+
+void TutorialPathTracer::createShaderResources()
+{
+    // Create an SRV/UAV descriptor heap
     mpSrvUavHeap = createDescriptorHeap(mpDevice, 100, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+    srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
 
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-
-    // Create the UAV. Based on the root signature we created it should be the first entry
-    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-    mpDevice->CreateUnorderedAccessView(mpOutputResource, nullptr, &uavDesc, srvHandle);
-    srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    // Create the output resource. The dimensions and format should match the swap-chain
+    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_UNORM, "output");
 
     // Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -534,133 +559,33 @@ void TutorialPathTracer::createShaderResources()
         srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 
-    // Output HDR
-    {
-        D3D12_RESOURCE_DESC resDesc = {};
-        resDesc.DepthOrArraySize = 1;
-        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        resDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = mSwapChainSize.x;
-        resDesc.Height = mSwapChainSize.y;
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resDesc.MipLevels = 1;
-        resDesc.SampleDesc.Count = 1;
-        d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputHDRResource))); // Starting as copy-source to simplify onFrameRender()
+    // HDR
+    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "HDR", 4);
+    // createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "HDR2");
+    
+    // Moment
+    createUAVBuffer(DXGI_FORMAT_R16G16_FLOAT, "Moment", 4);
 
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        mpDevice->CreateUnorderedAccessView(mpOutputHDRResource, nullptr, &uavDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    }
+    // Normal
+    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gOutputNormal", 2);
+    // createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "Normal2");
 
-    // Output NORMAL
-    {
-        D3D12_RESOURCE_DESC resDesc = {};
-        resDesc.DepthOrArraySize = 1;
-        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        resDesc.Format = DXGI_FORMAT_R8G8B8A8_SNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
-        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = mSwapChainSize.x;
-        resDesc.Height = mSwapChainSize.y;
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resDesc.MipLevels = 1;
-        resDesc.SampleDesc.Count = 1;
-        d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputNormalResource))); // Starting as copy-source to simplify onFrameRender()
-        
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        mpDevice->CreateUnorderedAccessView(mpOutputNormalResource, nullptr, &uavDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    }
+    // Index
+    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputPositionGeomID", 2);
+    // Depth
+    createUAVBuffer(DXGI_FORMAT_R32_FLOAT, "gOutputDepth", 2);
 
-    // Output Depth
-    {
-        D3D12_RESOURCE_DESC resDesc = {};
-        resDesc.DepthOrArraySize = 1;
-        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        resDesc.Format = DXGI_FORMAT_R32_FLOAT;
-        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = mSwapChainSize.x;
-        resDesc.Height = mSwapChainSize.y;
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resDesc.MipLevels = 1;
-        resDesc.SampleDesc.Count = 1;
-        d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputDepthResource))); // Starting as copy-source to simplify onFrameRender()
 
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        mpDevice->CreateUnorderedAccessView(mpOutputDepthResource, nullptr, &uavDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    }
+    // other
+    // createUAVBuffer(DXGI_FORMAT_R32_UINT, "AccumFrameCount");
 
-    // Output Index
-    {
-        D3D12_RESOURCE_DESC resDesc = {};
-        resDesc.DepthOrArraySize = 1;
-        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        resDesc.Format = DXGI_FORMAT_R32_UINT;
-        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = mSwapChainSize.x;
-        resDesc.Height = mSwapChainSize.y;
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resDesc.MipLevels = 1;
-        resDesc.SampleDesc.Count = 1;
-        d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputGeomIDResource))); // Starting as copy-source to simplify onFrameRender()
-
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        mpDevice->CreateUnorderedAccessView(mpOutputGeomIDResource, nullptr, &uavDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    }
-
-    // Output NORMAL 2
-    {
-        D3D12_RESOURCE_DESC resDesc = {};
-        resDesc.DepthOrArraySize = 1;
-        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        resDesc.Format = DXGI_FORMAT_R8G8B8A8_SNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
-        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = mSwapChainSize.x;
-        resDesc.Height = mSwapChainSize.y;
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resDesc.MipLevels = 1;
-        resDesc.SampleDesc.Count = 1;
-        d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputNormalResource2))); // Starting as copy-source to simplify onFrameRender()
-
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        mpDevice->CreateUnorderedAccessView(mpOutputNormalResource2, nullptr, &uavDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    }
-
-    // Output Index 2
-    {
-        D3D12_RESOURCE_DESC resDesc = {};
-        resDesc.DepthOrArraySize = 1;
-        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        resDesc.Format = DXGI_FORMAT_R32_UINT;
-        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = mSwapChainSize.x;
-        resDesc.Height = mSwapChainSize.y;
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resDesc.MipLevels = 1;
-        resDesc.SampleDesc.Count = 1;
-        d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputGeomIDResource2))); // Starting as copy-source to simplify onFrameRender()
-
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        mpDevice->CreateUnorderedAccessView(mpOutputGeomIDResource2, nullptr, &uavDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    }
     textureStartHeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    mpSrvUavHeapCount = textureStartHeapOffset;
 }
 
 void TutorialPathTracer::createTextureShaderResources()
 {
-
     mpTextureBuffers.resize(scene->textures.size());
-    int startOffset = textureStartHeapOffset;
     // assert(scene->textures.size() == 1);
     for (int i = 0; i < scene->textures.size(); i++)
     {
@@ -727,8 +652,9 @@ void TutorialPathTracer::createTextureShaderResources()
         // 4. SRV Descriptor
         // D3D12_CPU_DESCRIPTOR_HANDLE handle = m_pSRV->GetCPUDescriptorHandleForHeapStart();
         D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-        descriptorHandle.ptr += (startOffset + i) * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        texture->descriptorHandleOffset = (startOffset + i);
+        descriptorHandle.ptr += mpSrvUavHeapCount * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        texture->descriptorHandleOffset = mpSrvUavHeapCount;
+        mpSrvUavHeapCount++;
 
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -739,9 +665,22 @@ void TutorialPathTracer::createTextureShaderResources()
     }
 }
 
-void TutorialPathTracer::updateSensor()
+void TutorialPathTracer::createRenderTextures()
 {
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap.pHeap->GetCPUDescriptorHandleForHeapStart();
+    rtvHandle.ptr += mRtvHeap.usedEntries * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    mRtvHeap.usedEntries++;
 
+    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
+    srvHandle.ptr += mpSrvUavHeapCount * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    
+    // renderTexture = RenderTexture();
+    renderTexture.mpDevice = mpDevice;
+    renderTexture.mRtvDescriptorHandle = rtvHandle;
+    renderTexture.mSrvDescriptorHandle = srvHandle;
+    renderTexture.mSrvDescriptorHandleOffset = mpSrvUavHeapCount;
+    renderTexture.createWithSize(mSwapChainSize.x, mSwapChainSize.y, DXGI_FORMAT_R8G8B8A8_UNORM);
+    mpSrvUavHeapCount++;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -762,9 +701,10 @@ void TutorialPathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winH
     createRtPipelineState();
     createShaderResources();
     createTextureShaderResources();
-    updateSensor();
     createShaderTable();
 
+    initPostProcess();
+    createRenderTextures();
 
     mpLightParametersBuffer = createBuffer(mpDevice, sizeof(LightParameter) * 20, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
     uint8_t* pData;
@@ -785,12 +725,13 @@ void TutorialPathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winH
 
 void TutorialPathTracer::onFrameRender()
 {
-    update();
     uint32_t rtvIndex = beginFrame();
+    ID3D12ResourcePtr mpOutputResource = outputUAVBuffers["output"];
+
+    update();
 
     // Let's raytrace
     resourceBarrier(mpCmdList, mpOutputResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(mpCmdList, mpOutputNormalResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
     raytraceDesc.Width = mSwapChainSize.x;
@@ -834,32 +775,332 @@ void TutorialPathTracer::onFrameRender()
     mpCmdList->SetPipelineState1(mpPipelineState.GetInterfacePtr());
     mpCmdList->DispatchRays(&raytraceDesc);
 
-    // Copy the results to the back-buffer
+    
+    //Copy the results to the back-buffer
     resourceBarrier(mpCmdList, mpOutputResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, mpOutputNormalResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, mpOutputResource);
 
-
-    //const float clearColor[4] = { 0.4f, 0.6f, 0.2f, 1.0f };
-    //CD3DX12_CLEAR_VALUE clearValue{ DXGI_FORMAT_R32G32B32_FLOAT, clearColor };
-
-    //D3D12_RENDER_PASS_BEGINNING_ACCESS renderPassBeginningAccessClear{ D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR, { clearValue } };
-    //D3D12_RENDER_PASS_ENDING_ACCESS renderPassEndingAccessPreserve{ D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE, {} };
-    //D3D12_RENDER_PASS_RENDER_TARGET_DESC renderPassRenderTargetDesc{ mFrameObjects[rtvIndex].rtvHandle, renderPassBeginningAccessClear, renderPassEndingAccessPreserve };
-
-    //D3D12_RENDER_PASS_BEGINNING_ACCESS renderPassBeginningAccessNoAccess{ D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS, {} };
-    //D3D12_RENDER_PASS_ENDING_ACCESS renderPassEndingAccessNoAccess{ D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_NO_ACCESS, {} };
-    //D3D12_RENDER_PASS_DEPTH_STENCIL_DESC renderPassDepthStencilDesc{ mFrameObjects[rtvIndex].rtvHandle, renderPassBeginningAccessNoAccess, renderPassBeginningAccessNoAccess, renderPassEndingAccessNoAccess, renderPassEndingAccessNoAccess };
-
-    //// D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[1] = { mFrameObjects[rtvIndex].rtvHandle };
-    //mpCmdList->OMSetRenderTargets(1, &mFrameObjects[rtvIndex].rtvHandle, false, nullptr);
-    //mpCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
-    //mpCmdList->BeginRenderPass(1, &renderPassRenderTargetDesc, &renderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
-    //
-    //mpCmdList->EndRenderPass();
-    //mpCmdList->setpipeline
+    if (doPostProcess) {
+        postProcess(rtvIndex);
+    }
+    else {
+        resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+        mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, mpOutputResource);
+    }
     endFrame(rtvIndex);
+}
+
+void TutorialPathTracer::initPostProcess()
+{
+    // create root signature
+
+    // create a root descriptor, which explains where to find the data for this root parameter
+    D3D12_ROOT_DESCRIPTOR rootCBVDescriptor;
+    rootCBVDescriptor.RegisterSpace = 0;
+    rootCBVDescriptor.ShaderRegister = 0;
+
+    // create a descriptor range (descriptor table) and fill it out
+    // this is a range of descriptors inside a descriptor heap
+    D3D12_DESCRIPTOR_RANGE  descriptorTableRanges[1]; // only one range right now
+    descriptorTableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV; // this is a range of shader resource views (descriptors)
+    descriptorTableRanges[0].NumDescriptors = 1; // we only have one texture right now, so the range is only 1
+    descriptorTableRanges[0].BaseShaderRegister = 0; // start index of the shader registers in the range
+    descriptorTableRanges[0].RegisterSpace = 0; // space 0. can usually be zero
+    descriptorTableRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; // this appends the range to the end of the root signature descriptor tables
+
+    // create a descriptor table
+    D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable;
+    descriptorTable.NumDescriptorRanges = _countof(descriptorTableRanges); // we only have one range
+    descriptorTable.pDescriptorRanges = &descriptorTableRanges[0]; // the pointer to the beginning of our ranges array
+
+    // create a root parameter for the root descriptor and fill it out
+    D3D12_ROOT_PARAMETER  rootParameters[2]; // two root parameters
+    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // this is a constant buffer view root descriptor
+    rootParameters[0].Descriptor = rootCBVDescriptor; // this is the root descriptor for this root parameter
+    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // our pixel shader will be the only shader accessing this parameter for now
+
+    // fill out the parameter for our descriptor table. Remember it's a good idea to sort parameters by frequency of change. Our constant
+    // buffer will be changed multiple times per frame, while our descriptor table will not be changed at all (in this tutorial)
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE; // this is a descriptor table
+    rootParameters[1].DescriptorTable = descriptorTable; // this is our descriptor table for this root parameter
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // our pixel shader will be the only shader accessing this parameter for now
+
+    // create a static sampler
+    D3D12_STATIC_SAMPLER_DESC sampler = {};
+    sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+    sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    sampler.MipLODBias = 0;
+    sampler.MaxAnisotropy = 0;
+    sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    sampler.MinLOD = 0.0f;
+    sampler.MaxLOD = D3D12_FLOAT32_MAX;
+    sampler.ShaderRegister = 0;
+    sampler.RegisterSpace = 0;
+    sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+    rootSignatureDesc.Init(_countof(rootParameters), // we have 2 root parameters
+        rootParameters, // a pointer to the beginning of our root parameters array
+        1, // we have one static sampler
+        &sampler, // a pointer to our static sampler (array)
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | // we can deny shader stages here for better performance
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
+
+    ID3DBlobPtr signature;
+    D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr);
+    mpDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+
+    HRESULT hr;
+
+    // compile vertex shader
+    ID3DBlob* vertexShader; // d3d blob for holding vertex shader bytecode
+    ID3DBlob* errorBuff; // a buffer holding the error data if any
+    hr = D3DCompileFromFile(L"VertexShader.hlsl",
+        nullptr,
+        nullptr,
+        "main",
+        "vs_5_0",
+        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+        0,
+        &vertexShader,
+        &errorBuff);
+    if (FAILED(hr))
+    {
+        OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+    }
+
+    // fill out a shader bytecode structure, which is basically just a pointer
+    // to the shader bytecode and the size of the shader bytecode
+    D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
+    vertexShaderBytecode.BytecodeLength = vertexShader->GetBufferSize();
+    vertexShaderBytecode.pShaderBytecode = vertexShader->GetBufferPointer();
+
+    // compile pixel shader
+    ID3DBlob* pixelShader;
+    hr = D3DCompileFromFile(L"PixelShader.hlsl",
+        nullptr,
+        nullptr,
+        "main",
+        "ps_5_0",
+        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+        0,
+        &pixelShader,
+        &errorBuff);
+    if (FAILED(hr))
+    {
+        OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+    }
+
+    // fill out shader bytecode structure for pixel shader
+    D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
+    pixelShaderBytecode.BytecodeLength = pixelShader->GetBufferSize();
+    pixelShaderBytecode.pShaderBytecode = pixelShader->GetBufferPointer();
+
+    // create input layout
+
+    // The input layout is used by the Input Assembler so that it knows
+    // how to read the vertex data bound to it.
+
+    D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+
+    // fill out an input layout description structure
+    D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
+
+    // we can get the number of elements in an array by "sizeof(array) / sizeof(arrayElementType)"
+    inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
+    inputLayoutDesc.pInputElementDescs = inputLayout;
+
+
+    // create a pipeline state object (PSO)
+
+    // In a real application, you will have many pso's. for each different shader
+    // or different combinations of shaders, different blend states or different rasterizer states,
+    // different topology types (point, line, triangle, patch), or a different number
+    // of render targets you will need a pso
+
+    // VS is the only required shader for a pso. You might be wondering when a case would be where
+    // you only set the VS. It's possible that you have a pso that only outputs data with the stream
+    // output, and not on a render target, which means you would not need anything after the stream
+    // output.
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
+    psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
+    psoDesc.pRootSignature = rootSignature; // the root signature that describes the input data this pso needs
+    psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
+    psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
+    psoDesc.SampleDesc.Count = 1; // must be the same sample description as the swapchain and depth/stencil buffer
+    psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT); // a default rasterizer state.
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
+    psoDesc.NumRenderTargets = 1; // we are only binding one render target
+
+    // create the pso
+    hr = mpDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStateObject));
+
+
+    // Create vertex buffer
+
+    // a triangle
+    vec3 vList[] = {
+        vec3(1.0f, 1.0f, 0.0f),
+        vec3(1.0f, -1.0f, 0.0f),
+        vec3(-1.0f, -1.0f, 0.0f),
+
+        vec3(-1.0f, -1.0f, 0.0f),
+        vec3(-1.0f, 1.0f, 0.0f),
+        vec3(1.0f, 1.0f, 0.0f),
+    };
+
+    int vBufferSize = sizeof(vList);
+
+    // create default heap
+    // default heap is memory on the GPU. Only the GPU has access to this memory
+    // To get data into this heap, we will have to upload the data using
+    // an upload heap
+    mpDevice->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
+        D3D12_HEAP_FLAG_NONE, // no flags
+        &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
+        D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data
+                                        // from the upload heap to this heap
+        nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
+        IID_PPV_ARGS(&vertexBuffer));
+
+    // we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
+    vertexBuffer->SetName(L"Vertex Buffer Resource Heap");
+
+    // create upload heap
+    // upload heaps are used to upload data to the GPU. CPU can write to it, GPU can read from it
+    // We will upload the vertex buffer using this heap to the default heap
+    ID3D12Resource* vBufferUploadHeap;
+    mpDevice->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
+        D3D12_HEAP_FLAG_NONE, // no flags
+        &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
+        D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
+        nullptr,
+        IID_PPV_ARGS(&vBufferUploadHeap));
+    vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
+
+    // store vertex buffer in upload heap
+    D3D12_SUBRESOURCE_DATA vertexData = {};
+    vertexData.pData = reinterpret_cast<BYTE*>(vList); // pointer to our vertex array
+    vertexData.RowPitch = vBufferSize; // size of all our triangle vertex data
+    vertexData.SlicePitch = vBufferSize; // also the size of our triangle vertex data
+
+    // we are now creating a command with the command list to copy the data from
+    // the upload heap to the default heap
+    UpdateSubresources(mpCmdList, vertexBuffer, vBufferUploadHeap, 0, 0, 1, &vertexData);
+
+    // transition the vertex buffer data from copy destination state to vertex buffer state
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+
+    // Now we execute the command list to upload the initial assets (triangle data)
+    mpCmdList->Close();
+    ID3D12CommandList* ppCommandLists[] = { mpCmdList };
+    mpCmdQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+    // increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
+    mFenceValue++;
+    mpCmdQueue->Signal(mpFence, mFenceValue);
+
+    // create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+    vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
+    vertexBufferView.StrideInBytes = sizeof(vec3);
+    vertexBufferView.SizeInBytes = vBufferSize;
+
+    uint Width = this->mSwapChainSize.x;
+    uint Height = this->mSwapChainSize.y;
+
+    // Fill out the Viewport
+    viewport.TopLeftX = 0;
+    viewport.TopLeftY = 0;
+    viewport.Width = Width;
+    viewport.Height = Height;
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+
+    // Fill out a scissor rect
+    scissorRect.left = 0;
+    scissorRect.top = 0;
+    scissorRect.right = Width;
+    scissorRect.bottom = Height;
+}
+
+void TutorialPathTracer::postProcess(int rtvIndex)
+{
+    const float clearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
+    mpCmdList->SetGraphicsRootSignature(rootSignature); // set the root signature
+
+    mpCmdList->RSSetViewports(1, &viewport); // set the viewports
+    mpCmdList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
+    mpCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
+    mpCmdList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+
+
+    // Render to renderTexture !!
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    mpCmdList->OMSetRenderTargets(1, &renderTexture.mRtvDescriptorHandle, FALSE, nullptr);
+    mpCmdList->ClearRenderTargetView(renderTexture.mRtvDescriptorHandle, clearColor, 0, nullptr);
+
+    // 0 th at mpSrvUavHeap --> direct output of path tracer
+    D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
+    mpCmdList->SetGraphicsRootDescriptorTable(1, descriptorHandle);
+
+    mpCmdList->DrawInstanced(6, 1, 0, 0);
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+    // Render to default !!
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    mpCmdList->OMSetRenderTargets(1, &mFrameObjects[rtvIndex].rtvHandle, FALSE, nullptr);
+    mpCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
+
+    // mSrvDescriptorHandleOffset th at mpSrvUavHeap
+    D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle2 = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
+    descriptorHandle2.ptr += renderTexture.mSrvDescriptorHandleOffset * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    mpCmdList->SetGraphicsRootDescriptorTable(1, descriptorHandle2);
+
+    mpCmdList->DrawInstanced(6, 1, 0, 0);
+    //mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+    
+    //HRESULT hr;
+    //hr = mFrameObjects[rtvIndex].pCmdAllocator->Reset();
+    //hr = mpCmdList->Reset(mFrameObjects[rtvIndex].pCmdAllocator, pipelineStateObject);
+    //assert(!FAILED(hr));
+
+    // here we start recording commands into the commandList (which all the commands will be stored in the commandAllocator)
+
+    // transition the "frameIndex" render target from the present state to the render target state so the command list draws to it starting from here
+    
+
+    // set the render target for the output merger stage (the output of the pipeline)
+    // mpCmdList->OMSetRenderTargets(1, &mFrameObjects[rtvIndex].rtvHandle, FALSE, nullptr);
+    //mpCmdList->OMSetRenderTargets(1, &renderTexture.mRtvDescriptorHandle, FALSE, nullptr);
+
+    //mpCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
+
+    // draw triangle
+    //mpCmdList->SetGraphicsRootSignature(rootSignature); // set the root signature
+
+    // set the descriptor table to the descriptor heap (parameter 1, as constant buffer root descriptor is parameter index 0)
+    //D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
+    //descriptorHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    //mpCmdList->SetGraphicsRootDescriptorTable(1, descriptorHandle);
+
+
+    //mpCmdList->DrawInstanced(6, 1, 0, 0);
+
+    //mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+    //hr = mpCmdList->Close();
 }
 
 void TutorialPathTracer::onShutdown()
@@ -875,18 +1116,19 @@ void TutorialPathTracer::onShutdown()
 
 void TutorialPathTracer::update()
 {
+    HRESULT result = mpKeyboard->GetDeviceState(256, mpKeyboardState);
+
     uint nextRenderMode = renderMode;
-    if (mpKeyboardState[DIK_1] & 0x80) {
-        nextRenderMode = 0;
+    for(int i = 0; i < 10; i++) {
+        if (mpKeyboardState[DIK_1 + i] & 0x80) {
+            nextRenderMode = i;
+        }
     }
-    if (mpKeyboardState[DIK_2] & 0x80) {
-        nextRenderMode = 1;
+    if (mpKeyboardState[DIK_P] & 0x80) {
+        doPostProcess = true;
     }
-    if (mpKeyboardState[DIK_3] & 0x80) {
-        nextRenderMode = 2;
-    }
-    if (mpKeyboardState[DIK_4] & 0x80) {
-        nextRenderMode = 3;
+    else if (mpKeyboardState[DIK_O] & 0x80) {
+        doPostProcess = false;
     }
 
     PerFrameData frameData;
@@ -897,8 +1139,7 @@ void TutorialPathTracer::update()
     frameData.previousProjView = transpose(projview);
     frameData.renderMode = nextRenderMode;
 
-    HRESULT result = mpKeyboard->GetDeviceState(256, mpKeyboardState);
-
+    
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     float elapsedTimeMicrosec = std::chrono::duration_cast<std::chrono::microseconds>(now - lastTime).count();
     // logFile << std::chrono::duration_cast<std::chrono::microseconds>(now - lastTime).count() << "\n";

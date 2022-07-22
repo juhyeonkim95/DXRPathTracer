@@ -182,19 +182,35 @@ struct PathTraceResult
     float depth;
     uint instanceIndex;
     float3 position;
+    float3 direct;
 };
 
 RaytracingAccelerationStructure gRtScene : register(t0);
 RWTexture2D<float4> gOutput : register(u0);
-RWTexture2D<float4> gOutputHDR : register(u1);
-RWTexture2D<float4> gOutputNormal : register(u2);
-RWTexture2D<float> gOutputDepth : register(u3);
-RWTexture2D<uint> gOutputGeomID : register(u4);
-RWTexture2D<float4> gOutputNormal2 : register(u5);
-RWTexture2D<uint> gOutputGeomID2 : register(u6);
-//RWTexture2D<float2> gOutputMoment : register(u7);
-//RWTexture2D<float2> gOutputMoment2 : register(u8);
-//RWTexture2D<float4> gOutputHDR2 : register(u9);
+
+RWTexture2D<float4> gOutputHDR[4] : register(u1);
+RWTexture2D<float2> gOutputMoment[4] : register(u5);
+RWTexture2D<float4> gOutputNormal[2] : register(u9);
+RWTexture2D<float4> gOutputPositionGeomID[2] : register(u11);
+RWTexture2D<float> gOutputDepth[2] : register(u13);
+
+//RWTexture2D<float4> gOutputHDR : register(u1);
+//RWTexture2D<float4> gOutputHDR2 : register(u2);
+//RWTexture2D<float4> gOutputNormal : register(u3);
+//RWTexture2D<float4> gOutputNormal2 : register(u4);
+//RWTexture2D<float> gOutputDepth : register(u5);
+//RWTexture2D<uint> gOutputGeomID : register(u6);
+//RWTexture2D<uint> gOutputGeomID2 : register(u7);
+//RWTexture2D<float2> gOutputMoment : register(u8);
+//RWTexture2D<float2> gOutputMoment2 : register(u9);
+//RWTexture2D<uint> gAccumCountBuffer : register(u10);
+//
+//RWTexture2D<float4> gOutputHDRIndirect : register(u11);
+//RWTexture2D<float4> gOutputHDR2Indirect : register(u12);
+//RWTexture2D<float2> gOutputMomentIndirect : register(u13);
+//RWTexture2D<float2> gOutputMoment2Indirect : register(u14);
+//
+//RWTexture2D<float4> gTest[2] : register(u15);
 
 StructuredBuffer<Material> g_materialinfo : register(t1);
 StructuredBuffer<GeometryInfo> g_geometryinfo : register(t2);

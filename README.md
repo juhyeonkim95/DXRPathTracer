@@ -4,8 +4,11 @@ Daily work process could be found [here](WorkProgress.md).
 
 ## Requirements
 This project is implemented based on the framework of [DxrTutorials](https://github.com/NVIDIAGameWorks/DxrTutorials).
+
 It was developed using Visual Studio 2019 16.11. 
+
 Windows 10 SDK 19041 or later is required.
+
 You also need to install [DirectXTex](https://github.com/microsoft/DirectXTex).
 
 ## Scene Data

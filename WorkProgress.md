@@ -87,3 +87,7 @@ About x1.5 speed up!
 
 ## 20220721
 - Code refactoring.
+- Still reading SVGF.
+
+## 20220722
+- Implement postprocessing.

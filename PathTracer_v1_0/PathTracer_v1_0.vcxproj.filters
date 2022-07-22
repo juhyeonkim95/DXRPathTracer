@@ -31,9 +31,6 @@
     <Filter Include="Emitter">
       <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Data">
-      <UniqueIdentifier>{da728bf9-5623-4581-b74a-f2cff2d988b2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{39e921ed-9403-49df-86fa-32acda58320e}</UniqueIdentifier>
     </Filter>
@@ -42,6 +39,15 @@
     </Filter>
     <Filter Include="dx12">
       <UniqueIdentifier>{8a3dc4ca-ddb0-4ff1-ba59-d52fcd4531bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="markdown">
+      <UniqueIdentifier>{cc83341f-3d2a-47ad-a34e-0546a1ebe66b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{da728bf9-5623-4581-b74a-f2cff2d988b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Postprocessing">
+      <UniqueIdentifier>{277b88d6-4151-4953-8ff5-8c5720551f11}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -101,6 +107,12 @@
     </ClCompile>
     <ClCompile Include="DX12Helper.cpp">
       <Filter>dx12</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessing.cpp">
+      <Filter>Postprocessing</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTexture.cpp">
+      <Filter>Postprocessing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -200,33 +212,51 @@
     <ClInclude Include="DxilLibrary.h">
       <Filter>dx12</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessing.h">
+      <Filter>Postprocessing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTexture.h">
+      <Filter>Postprocessing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\ShaderUtils.hlsli">
-      <Filter>Data</Filter>
+      <Filter>Shader</Filter>
     </None>
     <None Include="Data\ShaderStructs.hlsli">
-      <Filter>Data</Filter>
+      <Filter>Shader</Filter>
     </None>
     <None Include="Data\BSDF.hlsli">
-      <Filter>Data</Filter>
+      <Filter>Shader</Filter>
     </None>
     <None Include="Data\SampleLight.hlsli">
-      <Filter>Data</Filter>
+      <Filter>Shader</Filter>
     </None>
     <None Include="Data\Fresnel.hlsli">
-      <Filter>Data</Filter>
+      <Filter>Shader</Filter>
     </None>
     <None Include="Data\Microfacet.hlsli">
-      <Filter>Data</Filter>
+      <Filter>Shader</Filter>
     </None>
     <None Include="Data\Constants.hlsli">
-      <Filter>Data</Filter>
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\README.md">
+      <Filter>markdown</Filter>
+    </None>
+    <None Include="..\WorkProgress.md">
+      <Filter>markdown</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Data\TutorialShader.hlsl">
-      <Filter>Data</Filter>
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="PixelShader.hlsl">
+      <Filter>Postprocessing</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexShader.hlsl">
+      <Filter>Postprocessing</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

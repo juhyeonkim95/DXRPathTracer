@@ -31,6 +31,51 @@
 #include "BSDF.hlsli"
 #include "SampleLight.hlsli"
 
+float3 wavelet(in uint2 currentPixelCoord)
+{
+    uint3 launchDim = DispatchRaysDimensions();
+    float2 dims = float2(launchDim.xy);
+
+    float3 radiance = float3(0, 0, 0);
+    uint pMeshId;
+
+    for (int i = -2; i <= 2; i++) {
+        for (int j = -2; j <= 2; j++) {
+            uint x = currentPixelCoord.x + i;
+            uint y = currentPixelCoord.y + j;
+
+            x = min(max(x, 0), launchDim.x - 1);
+            y = min(max(y, 0), launchDim.y - 1);
+            
+            uint2 newCoord = uint2(x, y);
+        }
+    }
+    radiance /= (25.0f);
+    return radiance;
+}
+
+
+float3 accumulate(float3 radiance, float alpha, uint prevIndex, uint currIndex, in uint2 prevPixelCoord, in uint2 currPixelCoord)
+{
+    float luma = luminance(radiance);
+    float2 moment = float2(luma, luma * luma);
+    float3 prevRadiance = gOutputHDR[prevIndex][prevPixelCoord].xyz;
+    float2 prevMoment = gOutputMoment[prevIndex][prevPixelCoord];
+
+    float2 outMoments = moment * alpha + (1 - alpha) * prevMoment;
+    float3 outRadiance = radiance * alpha + (1 - alpha) * prevRadiance;
+    
+    float mu_1 = outMoments.x;
+    float mu_2 = outMoments.y;
+    // variance = E[X^2] - E[X]^2
+    float variance = mu_2 - mu_1 * mu_1;
+
+    gOutputHDR[currIndex][currPixelCoord] = float4(outRadiance, 1.0f);
+    gOutputMoment[currIndex][currPixelCoord] = outMoments;
+    return outRadiance;
+}
+
+
 void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult)
 {
     float emissionWeight = 1.0f;
@@ -52,7 +97,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.depth = payload.t;
     pathResult.instanceIndex = payload.instanceIndex;
     pathResult.position = payload.origin;
-
+    pathResult.direct = float3(0, 0, 0);
 
 #if USE_NEXT_EVENT_ESTIMATION
     LightSample lightSample;
@@ -69,6 +114,9 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         // (2) ray missed
         // (3) hit emission
         if (payload.done || depth >= PATHTRACE_MAX_DEPTH) {
+            if (depth == 1) {
+                pathResult.direct = result;
+            }
             break;
         }
 
@@ -115,7 +163,11 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
 
                 const float weight = powerHeuristic(lightPdf, scatterPdf);
 
-                result += weight* lightSample.Li* f / lightPdf * throughput;
+                const float3 L = weight * lightSample.Li * f / lightPdf * throughput;
+                result += L;
+                if (depth == 1) {
+                    pathResult.direct = L;
+                }
             }
         }
 #endif
@@ -129,7 +181,6 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         ray.Origin = payload.origin;
         float scatterPdf = payload.scatterPdf;
         depth += material.materialType & BSDF_TRANSMISSION ? 0.5f : 1.0f;
-        // depth += 1.0f;
 
         TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2, 0, ray, payload);
 #if USE_NEXT_EVENT_ESTIMATION
@@ -158,6 +209,8 @@ void rayGen()
     float aspectRatio = dims.x / dims.y;
 
     float3 radiance = float3(0, 0, 0);
+    float3 direct = float3(0, 0, 0);
+
     float3 normal = float3(0, 0, 0);
     float3 position = float3(0, 0, 0);
 
@@ -173,8 +226,6 @@ void rayGen()
 
         float2 jitter = float2(nextRand(seed), nextRand(seed));
 
-        // float2 d = (((crd + jitter) / dims) * 2.f - 1.f);
-
         float2 d = pixel + jitter * 1.f / dims * 2.f;
 
         ray.Origin = g_frameData.cameraPosition.xyz;
@@ -184,23 +235,15 @@ void rayGen()
         normal += pathResult.normal;
         depth += pathResult.depth;
         position += pathResult.position;
+        direct += pathResult.direct;
     }
     radiance /= PATHTRACE_SPP;
     normal /= PATHTRACE_SPP;
     depth /= PATHTRACE_SPP;
     position /= PATHTRACE_SPP;
-
-    if (g_frameData.frameNumber > 1) {
-        float3 oldColor = gOutputHDR[launchIndex.xy].xyz;
-        float a = 1.0f / (float)(g_frameData.frameNumber);
-        radiance = lerp(oldColor, radiance, a);
-    }
-    gOutputHDR[launchIndex.xy] = float4(radiance, 1.0f);
-
-    radiance = radiance / (radiance + 1);
-    radiance = pow(radiance, 1.f / 2.2f);
-    gOutput[launchIndex.xy] = float4(radiance, 1.0f);
-
+    direct /= PATHTRACE_SPP;
+    float3 indirect = radiance - direct;
+    uint currentMeshID = pathResult.instanceIndex;
     //gOutputNormal[launchIndex.xy] = float4((normal + 1) * 0.5f, 1.0f);
     //gOutputDepth[launchIndex.xy] = depth;
     //gOutputGeomID[launchIndex.xy] = pathResult.instanceIndex;
@@ -216,44 +259,62 @@ void rayGen()
 
     uint2 prevPixelCoord = uint2(prevPixel * dims);
 
-    float3 previousNormal;
-    if (g_frameData.totalFrameNumber % 2 == 0) {
-        previousNormal = gOutputNormal[prevPixelCoord].xyz; //.SampleLevel(g_s0, prevPixel, 0.0f).xyz;
-        gOutputNormal2[launchIndex.xy] = float4(normal, 1.0f);
-    }
-    else {
-        previousNormal = gOutputNormal2[prevPixelCoord].xyz; //.SampleLevel(g_s0, prevPixel, 0.0f).xyz;
-        gOutputNormal[launchIndex.xy] = float4(normal, 1.0f);
-    }
+    uint prevIndex = (g_frameData.totalFrameNumber % 2) == 0 ? 0 : 1;
+    uint currIndex = (prevIndex + 1) % 2;
 
-    uint previousMeshID;
-    uint currentMeshID = pathResult.instanceIndex;
-    if (g_frameData.totalFrameNumber % 2 == 0) {
-        previousMeshID = gOutputGeomID[prevPixelCoord]; //.SampleLevel(g_s0, prevPixel, 0.0f).xyz;
-        gOutputGeomID2[launchIndex.xy] = currentMeshID;
-    }
-    else {
-        previousMeshID = gOutputGeomID2[prevPixelCoord]; //.SampleLevel(g_s0, prevPixel, 0.0f).xyz;
-        gOutputGeomID[launchIndex.xy] = currentMeshID;
-    }
+    float previousMeshID = gOutputPositionGeomID[prevIndex][prevPixelCoord].w;
+    gOutputPositionGeomID[currIndex][launchIndex.xy] = float4(position, currentMeshID);
+
+    float3 previousNormal = gOutputNormal[prevIndex][prevPixelCoord].xyz;
+    gOutputNormal[currIndex][launchIndex.xy] = float4(normal, 1.0f);
+
     bool consistency = (previousMeshID == currentMeshID) && (dot(normal, previousNormal) > sqrt(2) / 2.0);
 
-    /*float luma = luminance(radiance);
-    float2 moment = float2(luma, luma * luma);
-    float3 prevRadiance;
-    if (g_frameData.totalFrameNumber % 2 == 0) {
-        prevRadiance = gOutputHDR[prevPixelCoord];
+
+    //if (g_frameData.totalFrameNumber == 1 || (!consistency)) {
+    //    gAccumCountBuffer[launchIndex.xy] = 1;
+    //}
+    //else {
+    //    gAccumCountBuffer[launchIndex.xy] += 1;
+    //}
+
+    //uint accumulatedFrameCountPixel = gAccumCountBuffer[launchIndex.xy];
+    //float alpha = 1.0f / (float)(accumulatedFrameCountPixel);
+
+    float alpha = max(float(!consistency), 0.2);
+    if (g_frameData.totalFrameNumber == 1) {
+        alpha = 1.0f;
     }
-    else {
-        prevRadiance = gOutputHDR2[prevPixelCoord];
-    }*/
+    float3 blurredDirect = accumulate(direct, alpha, prevIndex, currIndex, prevPixelCoord, launchIndex.xy);
+    float3 blurredIndirect = accumulate(indirect, alpha, prevIndex + 2, currIndex + 2, prevPixelCoord, launchIndex.xy);
+    
+    //blurredDirect = wavelet(launchIndex.xy, isOdd);
+    //blurredIndirect = waveletIndirect(launchIndex.xy, isOdd);
+
+    radiance = blurredDirect + blurredIndirect;
+
+    float3 radianceLDR = radiance / (radiance + 1);
+    radianceLDR = pow(radianceLDR, 1.f / 2.2f);
+
+    //radiance = gTest[0][launchIndex.xy].xyz;
 
     switch (g_frameData.renderMode) {
-    case 0:gOutput[launchIndex.xy] = float4(radiance, 1.0f); break;
+    case 0:gOutput[launchIndex.xy] = float4(radianceLDR, 1.0f); break;
     case 1:gOutput[launchIndex.xy] = float4(deltaU, deltaV, 0.0f, 1.0f); break;
     case 2:gOutput[launchIndex.xy] = float4((previousNormal+1) * 0.5, 1.0f); break;
     case 3:gOutput[launchIndex.xy] = float4(float(consistency), 0.0f, 0.0f, 1.0f); break;
+    default:gOutput[launchIndex.xy] = float4(radianceLDR, 1.0f); break;
     }
+#else
+    if (g_frameData.frameNumber > 1) {
+        float3 oldColor = gOutputHDR[0][launchIndex.xy].xyz;
+        float a = 1.0f / (float)(g_frameData.frameNumber);
+        radiance = lerp(oldColor, radiance, a);
+    }
+    gOutputHDR[0][launchIndex.xy] = float4(radiance, 1.0f);
+    radiance = radiance / (radiance + 1);
+    radiance = pow(radiance, 1.f / 2.2f);
+    gOutput[launchIndex.xy] = float4(radiance, 1.0f);
 #endif
     //uint geomIDSeed = pathResult.instanceIndex;
     //float r = nextRand(geomIDSeed);
@@ -320,12 +381,14 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     }
     nDotV = dot(normal, -rayDir);
 
+    float3 hitpoint = rayOrg + rayDir * t;
 
     payload.normal = normal;
     payload.lightIndex = geometryInfo.lightIndex;
     payload.materialIndex = geometryInfo.materialIndex;
     payload.instanceIndex = InstanceID();
     payload.t = t;
+    payload.origin = hitpoint;
 
     if (isEmitter) {
         payload.done = true;
@@ -344,10 +407,8 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     //uint diffuseReflectanceTextureID = materialInfo.diffuseReflectanceTextureID;
     //float3 diffuseReflectance = diffuseReflectanceTextureID ? g_textures.SampleLevel(g_s0, payload.uv, 0.0f).xyz : materialInfo.diffuseReflectance;
 
-    float3 hitpoint = rayOrg + rayDir * t;
-
-    payload.origin = hitpoint;
-
+    
+    
     payload.bitangent = getBinormal(normal);
     payload.tangent = cross(payload.bitangent, normal);
     float3 wi = -rayDir;

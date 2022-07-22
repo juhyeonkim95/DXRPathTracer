@@ -117,14 +117,14 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\minimini779\Desktop\projects\DirectXTK12\Inc;C:\Users\minimini779\Desktop\projects\DirectXTex\DirectXTex;$(SolutionDir)\Framework\</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D3D12.lib;DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3D12.lib;DXGI.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /y $(SolutionDir)\Framework\Externals\dxcompiler\*.dll $(OutDir) &gt;nul</Command>
@@ -165,7 +165,11 @@
     <ClCompile Include="PathTracer.cpp" />
     <ClCompile Include="Perspective.cpp" />
     <ClCompile Include="Plastic.cpp" />
+    <ClCompile Include="PostProcessing.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Rectangle.cpp" />
+    <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="RoughConductor.cpp" />
     <ClCompile Include="RoughDielectric.cpp" />
     <ClCompile Include="RoughPlastic.cpp" />
@@ -195,7 +199,9 @@
     <ClInclude Include="PathTracer.h" />
     <ClInclude Include="Perspective.h" />
     <ClInclude Include="Plastic.h" />
+    <ClInclude Include="PostProcessing.h" />
     <ClInclude Include="Rectangle.h" />
+    <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="RoughConductor.h" />
     <ClInclude Include="RoughDielectric.h" />
     <ClInclude Include="RoughPlastic.h" />
@@ -210,6 +216,8 @@
     <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\README.md" />
+    <None Include="..\WorkProgress.md" />
     <None Include="Data\BSDF.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
@@ -234,6 +242,12 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Data\TutorialShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="PixelShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="VertexShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>

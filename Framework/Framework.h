@@ -82,7 +82,7 @@ public:
     static void run(Tutorial& tutorial, const std::string& winTitle, uint32_t width = 1920, uint32_t height = 1200);
 };
 
-static const uint32_t kDefaultSwapChainBuffers = 3;
+static const uint32_t kDefaultSwapChainBuffers = 2;  // TODO : change!!
 
 #define d3d_call(a) {HRESULT hr_ = a; if(FAILED(hr_)) { d3dTraceHR( #a, hr_); }}
 #define arraysize(a) (sizeof(a)/sizeof(a[0]))
