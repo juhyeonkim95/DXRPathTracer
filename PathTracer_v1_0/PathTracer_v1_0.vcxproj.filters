@@ -114,6 +114,9 @@
     <ClCompile Include="RenderTexture.cpp">
       <Filter>Postprocessing</Filter>
     </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PathTracer.h">
@@ -218,6 +221,9 @@
     <ClInclude Include="RenderTexture.h">
       <Filter>Postprocessing</Filter>
     </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\ShaderUtils.hlsli">
@@ -252,10 +258,25 @@
     <FxCompile Include="Data\TutorialShader.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="PixelShader.hlsl">
+    <FxCompile Include="Wavelet.hlsl">
       <Filter>Postprocessing</Filter>
     </FxCompile>
     <FxCompile Include="VertexShader.hlsl">
+      <Filter>Postprocessing</Filter>
+    </FxCompile>
+    <FxCompile Include="Tonemap.hlsl">
+      <Filter>Postprocessing</Filter>
+    </FxCompile>
+    <FxCompile Include="MotionVector.hlsl">
+      <Filter>Postprocessing</Filter>
+    </FxCompile>
+    <FxCompile Include="TemporalAccumulation.hlsl">
+      <Filter>Postprocessing</Filter>
+    </FxCompile>
+    <FxCompile Include="CopyShader.hlsl">
+      <Filter>Postprocessing</Filter>
+    </FxCompile>
+    <FxCompile Include="Reconstruction.hlsl">
       <Filter>Postprocessing</Filter>
     </FxCompile>
   </ItemGroup>

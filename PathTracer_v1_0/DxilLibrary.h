@@ -300,7 +300,7 @@ RootSignatureDesc createGlobalRootDesc()
 
     // UAV
     desc.range[1].BaseShaderRegister = 1;
-    desc.range[1].NumDescriptors = 14;
+    desc.range[1].NumDescriptors = 6;
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 

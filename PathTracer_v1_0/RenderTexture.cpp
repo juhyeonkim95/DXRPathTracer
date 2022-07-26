@@ -17,8 +17,13 @@ void RenderTexture::createWithSize(size_t width, size_t height, DXGI_FORMAT form
     mpDevice->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
         &desc, mState, nullptr, IID_PPV_ARGS(&mResource));
 
+    D3D12_RENDER_TARGET_VIEW_DESC rtvdesc = {};
+    rtvdesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+    rtvdesc.Format = format;
+    rtvdesc.Texture2D.MipSlice = 0;
+
     // Create RTV.
-    mpDevice->CreateRenderTargetView(mResource, nullptr, mRtvDescriptorHandle);
+    mpDevice->CreateRenderTargetView(mResource, &rtvdesc, mRtvDescriptorHandle);
 
     // Create SRV.
     mpDevice->CreateShaderResourceView(mResource, nullptr, mSrvDescriptorHandle);

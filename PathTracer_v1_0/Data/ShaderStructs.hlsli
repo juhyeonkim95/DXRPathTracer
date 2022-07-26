@@ -9,7 +9,7 @@
 
 #define PATHTRACE_SPP 1
 
-#define DO_FILTERING 0
+#define DO_FILTERING 1
 
 static const float M_PIf = 3.14159265358979323846f;
 static const float M_1_PIf = 0.318309886183790671538f;
@@ -183,16 +183,25 @@ struct PathTraceResult
     uint instanceIndex;
     float3 position;
     float3 direct;
+    float3 indirect;
+    float3 reflectance;
 };
 
 RaytracingAccelerationStructure gRtScene : register(t0);
 RWTexture2D<float4> gOutput : register(u0);
 
-RWTexture2D<float4> gOutputHDR[4] : register(u1);
-RWTexture2D<float2> gOutputMoment[4] : register(u5);
-RWTexture2D<float4> gOutputNormal[2] : register(u9);
-RWTexture2D<float4> gOutputPositionGeomID[2] : register(u11);
-RWTexture2D<float> gOutputDepth[2] : register(u13);
+RWTexture2D<float4> gOutputHDR : register(u1);
+RWTexture2D<float4> gDirectIllumination : register(u2);
+RWTexture2D<float4> gIndirectIllumination : register(u3);
+RWTexture2D<float4> gReflectance : register(u4);
+RWTexture2D<float4> gOutputPositionGeomID : register(u5);
+RWTexture2D<float4> gOutputNormal : register(u6);
+
+//RWTexture2D<float4> gOutputHDR[4] : register(u1);
+//RWTexture2D<float2> gOutputMoment[4] : register(u5);
+//RWTexture2D<float4> gOutputNormal[2] : register(u9);
+//RWTexture2D<float4> gOutputPositionGeomID[2] : register(u11);
+//RWTexture2D<float> gOutputDepth[2] : register(u13);
 
 //RWTexture2D<float4> gOutputHDR : register(u1);
 //RWTexture2D<float4> gOutputHDR2 : register(u2);

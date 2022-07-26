@@ -31,50 +31,6 @@
 #include "BSDF.hlsli"
 #include "SampleLight.hlsli"
 
-float3 wavelet(in uint2 currentPixelCoord)
-{
-    uint3 launchDim = DispatchRaysDimensions();
-    float2 dims = float2(launchDim.xy);
-
-    float3 radiance = float3(0, 0, 0);
-    uint pMeshId;
-
-    for (int i = -2; i <= 2; i++) {
-        for (int j = -2; j <= 2; j++) {
-            uint x = currentPixelCoord.x + i;
-            uint y = currentPixelCoord.y + j;
-
-            x = min(max(x, 0), launchDim.x - 1);
-            y = min(max(y, 0), launchDim.y - 1);
-            
-            uint2 newCoord = uint2(x, y);
-        }
-    }
-    radiance /= (25.0f);
-    return radiance;
-}
-
-
-float3 accumulate(float3 radiance, float alpha, uint prevIndex, uint currIndex, in uint2 prevPixelCoord, in uint2 currPixelCoord)
-{
-    float luma = luminance(radiance);
-    float2 moment = float2(luma, luma * luma);
-    float3 prevRadiance = gOutputHDR[prevIndex][prevPixelCoord].xyz;
-    float2 prevMoment = gOutputMoment[prevIndex][prevPixelCoord];
-
-    float2 outMoments = moment * alpha + (1 - alpha) * prevMoment;
-    float3 outRadiance = radiance * alpha + (1 - alpha) * prevRadiance;
-    
-    float mu_1 = outMoments.x;
-    float mu_2 = outMoments.y;
-    // variance = E[X^2] - E[X]^2
-    float variance = mu_2 - mu_1 * mu_1;
-
-    gOutputHDR[currIndex][currPixelCoord] = float4(outRadiance, 1.0f);
-    gOutputMoment[currIndex][currPixelCoord] = outMoments;
-    return outRadiance;
-}
-
 
 void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult)
 {
@@ -90,7 +46,6 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     payload.direction = ray.Direction;
     payload.normal = float3(0, 0, 0);
 
-
     // ---------------------- First intersection ----------------------
     TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2, 0, ray, payload);
     pathResult.normal = payload.normal;
@@ -98,6 +53,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.instanceIndex = payload.instanceIndex;
     pathResult.position = payload.origin;
     pathResult.direct = float3(0, 0, 0);
+    pathResult.reflectance = payload.attenuation;
 
 #if USE_NEXT_EVENT_ESTIMATION
     LightSample lightSample;
@@ -114,8 +70,8 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         // (2) ray missed
         // (3) hit emission
         if (payload.done || depth >= PATHTRACE_MAX_DEPTH) {
-            if (depth == 1) {
-                pathResult.direct = result;
+            if (depth <= 2) {
+                pathResult.direct += result;
             }
             break;
         }
@@ -166,7 +122,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
                 const float3 L = weight * lightSample.Li * f / lightPdf * throughput;
                 result += L;
                 if (depth == 1) {
-                    pathResult.direct = L;
+                    pathResult.direct += L;
                 }
             }
         }
@@ -210,9 +166,9 @@ void rayGen()
 
     float3 radiance = float3(0, 0, 0);
     float3 direct = float3(0, 0, 0);
-
     float3 normal = float3(0, 0, 0);
     float3 position = float3(0, 0, 0);
+    float3 reflectance = float3(0, 0, 0);
 
     float depth = 0.0f;
     RayDesc ray;
@@ -224,7 +180,7 @@ void rayGen()
     {
         uint seed = initRand(launchIndex.x + launchIndex.y * launchDim.x, g_frameData.totalFrameNumber * PATHTRACE_SPP + i, 16);
 
-        float2 jitter = float2(nextRand(seed), nextRand(seed));
+        float2 jitter = 0.5f;// float2(nextRand(seed), nextRand(seed));
 
         float2 d = pixel + jitter * 1.f / dims * 2.f;
 
@@ -236,86 +192,39 @@ void rayGen()
         depth += pathResult.depth;
         position += pathResult.position;
         direct += pathResult.direct;
+        reflectance += pathResult.reflectance;
     }
     radiance /= PATHTRACE_SPP;
     normal /= PATHTRACE_SPP;
     depth /= PATHTRACE_SPP;
     position /= PATHTRACE_SPP;
     direct /= PATHTRACE_SPP;
+    reflectance /= PATHTRACE_SPP;
+
     float3 indirect = radiance - direct;
     uint currentMeshID = pathResult.instanceIndex;
-    //gOutputNormal[launchIndex.xy] = float4((normal + 1) * 0.5f, 1.0f);
-    //gOutputDepth[launchIndex.xy] = depth;
-    //gOutputGeomID[launchIndex.xy] = pathResult.instanceIndex;
+
 #if DO_FILTERING
-    float4 projCoord = mul(float4(position, 1.0f), g_frameData.previousProjView);
-    projCoord /= projCoord.w;
-    float2 prevPixel = float2(projCoord.x, - projCoord.y);
-    prevPixel = (prevPixel + 1) * 0.5;
-    pixel = (pixel + 1) * 0.5;
-    float2 delta = (pixel - prevPixel) * 20;
-    float deltaU = min(abs(delta.x), 1);
-    float deltaV = min(abs(delta.y), 1);
+    gOutputPositionGeomID[launchIndex.xy] = float4(position, currentMeshID);
+    gOutputNormal[launchIndex.xy] = float4(normal, 1.0f);
+    float3 directIllumination = direct / (reflectance + 1e-5);
+    float3 indirectIllumination = indirect / (reflectance + 1e-5);
 
-    uint2 prevPixelCoord = uint2(prevPixel * dims);
+    gDirectIllumination[launchIndex.xy] = float4(directIllumination, 1.0f);
+    gIndirectIllumination[launchIndex.xy] = float4(indirectIllumination, 1.0f);
+    gReflectance[launchIndex.xy] = float4(reflectance, 1.0f);
 
-    uint prevIndex = (g_frameData.totalFrameNumber % 2) == 0 ? 0 : 1;
-    uint currIndex = (prevIndex + 1) % 2;
-
-    float previousMeshID = gOutputPositionGeomID[prevIndex][prevPixelCoord].w;
-    gOutputPositionGeomID[currIndex][launchIndex.xy] = float4(position, currentMeshID);
-
-    float3 previousNormal = gOutputNormal[prevIndex][prevPixelCoord].xyz;
-    gOutputNormal[currIndex][launchIndex.xy] = float4(normal, 1.0f);
-
-    bool consistency = (previousMeshID == currentMeshID) && (dot(normal, previousNormal) > sqrt(2) / 2.0);
-
-
-    //if (g_frameData.totalFrameNumber == 1 || (!consistency)) {
-    //    gAccumCountBuffer[launchIndex.xy] = 1;
-    //}
-    //else {
-    //    gAccumCountBuffer[launchIndex.xy] += 1;
-    //}
-
-    //uint accumulatedFrameCountPixel = gAccumCountBuffer[launchIndex.xy];
-    //float alpha = 1.0f / (float)(accumulatedFrameCountPixel);
-
-    float alpha = max(float(!consistency), 0.2);
-    if (g_frameData.totalFrameNumber == 1) {
-        alpha = 1.0f;
-    }
-    float3 blurredDirect = accumulate(direct, alpha, prevIndex, currIndex, prevPixelCoord, launchIndex.xy);
-    float3 blurredIndirect = accumulate(indirect, alpha, prevIndex + 2, currIndex + 2, prevPixelCoord, launchIndex.xy);
-    
-    //blurredDirect = wavelet(launchIndex.xy, isOdd);
-    //blurredIndirect = waveletIndirect(launchIndex.xy, isOdd);
-
-    radiance = blurredDirect + blurredIndirect;
-
-    float3 radianceLDR = radiance / (radiance + 1);
-    radianceLDR = pow(radianceLDR, 1.f / 2.2f);
-
-    //radiance = gTest[0][launchIndex.xy].xyz;
-
-    switch (g_frameData.renderMode) {
-    case 0:gOutput[launchIndex.xy] = float4(radianceLDR, 1.0f); break;
-    case 1:gOutput[launchIndex.xy] = float4(deltaU, deltaV, 0.0f, 1.0f); break;
-    case 2:gOutput[launchIndex.xy] = float4((previousNormal+1) * 0.5, 1.0f); break;
-    case 3:gOutput[launchIndex.xy] = float4(float(consistency), 0.0f, 0.0f, 1.0f); break;
-    default:gOutput[launchIndex.xy] = float4(radianceLDR, 1.0f); break;
-    }
-#else
+#endif
     if (g_frameData.frameNumber > 1) {
-        float3 oldColor = gOutputHDR[0][launchIndex.xy].xyz;
+        float3 oldColor = gOutputHDR[launchIndex.xy].xyz;
         float a = 1.0f / (float)(g_frameData.frameNumber);
         radiance = lerp(oldColor, radiance, a);
     }
-    gOutputHDR[0][launchIndex.xy] = float4(radiance, 1.0f);
+    gOutputHDR[launchIndex.xy] = float4(radiance, 1.0f);
     radiance = radiance / (radiance + 1);
     radiance = pow(radiance, 1.f / 2.2f);
     gOutput[launchIndex.xy] = float4(radiance, 1.0f);
-#endif
+
     //uint geomIDSeed = pathResult.instanceIndex;
     //float r = nextRand(geomIDSeed);
     //float g = nextRand(geomIDSeed);
@@ -328,9 +237,6 @@ void rayGen()
 [shader("miss")]
 void missEnv(inout RayPayload payload)
 {
-    //float3 direction = mul(payload.direction, (float3x3)g_frameData.envMapTransform);
-    //direction = normalize(direction);
-
     float3 direction = payload.direction;
     float phi = atan2(-direction.x, direction.z);
     float theta = acos(-direction.y);

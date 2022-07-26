@@ -5,6 +5,7 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <fstream>
+#include "Shader.h"
 
 
 #pragma comment(lib, "dinput8.lib")
@@ -46,8 +47,6 @@ private:
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
     } mFrameObjects[kDefaultSwapChainBuffers];
 
-    RenderTexture renderTexture;
-
 
     // Heap data
     struct HeapData
@@ -56,7 +55,7 @@ private:
         uint32_t usedEntries = 0;
     };
     HeapData mRtvHeap;
-    static const uint32_t kRtvHeapSize = 3;
+    static const uint32_t kRtvHeapSize = 30;
 
     void createAccelerationStructures();
     AccelerationStructureBuffers createTopLevelAccelerationStructure();
@@ -80,11 +79,14 @@ private:
     void createTextureShaderResources();
 
     std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
+    std::map<string, int> mSrvHeapIndexMap;
 
 
     ID3D12DescriptorHeapPtr mpSrvUavHeap;
     static const uint32_t kSrvUavHeapSize = 2;
     int mpSrvUavHeapCount = 0;
+    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandler(int index);
+    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandlerByName(const char* name);
 
 
     //void createConstantBuffer();
@@ -92,6 +94,8 @@ private:
     ID3D12ResourcePtr mpMaterialBuffer = nullptr;
     ID3D12ResourcePtr mpGeometryInfoBuffer = nullptr;
     ID3D12ResourcePtr mpLightParametersBuffer = nullptr;
+    ID3D12ResourcePtr mpWaveletParameterBuffer = nullptr;
+
 
     ID3D12ResourcePtr mpIndicesBuffer = nullptr;
     ID3D12ResourcePtr mpVerticesBuffer = nullptr;
@@ -115,17 +119,48 @@ private:
     float elapsedTime[FRAME_ACCUMULATE_NUMBER];
     
     uint renderMode;
-    bool doPostProcess = false;
+    bool doPostProcess = true;
 
     void createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth = 1);
+    void createSRVTexture(DXGI_FORMAT format, std::string name);
+
     D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
 
+    RenderTexture *createRenderTexture(DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
     void createRenderTextures();
+    
+
+    RenderTexture *motionVectorRenderTexture;
+    Shader* motionVectorShader;
+
+    RenderTexture* temporalAccumulationTextureDirect;
+    RenderTexture* temporalAccumulationTextureDirectMoment;
+    RenderTexture* temporalAccumulationTextureIndirect;
+    RenderTexture* temporalAccumulationTextureIndirectMoment;
+
+    Shader* temporalAccumulationShader;
+
+    Shader* reconstructionShader;
+    RenderTexture* reconstructionRenderTexture;
+
+    vector<RenderTexture*> waveletDirect;
+    vector<RenderTexture*> waveletIndirect;
+    int waveletCount = 3;
+    Shader* waveletShader;
+
+
+    Shader* defaultCopyShader;
+    void copyRenderTexture(RenderTexture* dest, RenderTexture* source);
+
+    Shader* tonemapShader;
+
+    // RenderTexture renderTexture;
+
     // PostProcessing
-    ID3D12RootSignature* rootSignature;
+    // ID3D12RootSignature* postProcessRootSignature;
     D3D12_VIEWPORT viewport; // area that output from rasterizer will be stretched to.
     D3D12_RECT scissorRect; // the area to draw in. pixels outside that area will not be drawn onto
-    ID3D12PipelineState* pipelineStateObject; // pso containing a pipeline state
+    // ID3D12PipelineState* pipelineStateObject; // pso containing a pipeline state
     ID3D12Resource* vertexBuffer; // a default buffer in GPU memory that we will load vertex data for our triangle into
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
                                                // the total size of the buffer, and the size of each element (vertex)

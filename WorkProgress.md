@@ -91,3 +91,11 @@ About x1.5 speed up!
 
 ## 20220722
 - Implement postprocessing.
+
+## 20220725
+- Implement postprocessing with multiple shaders.
+- Implementing SVGF using post processing (previously implemented on ray-tracing program).
+
+## 20220726
+- SVGF v1.0 implemented.
+- Visible artifacts exist --> need to correct it.
