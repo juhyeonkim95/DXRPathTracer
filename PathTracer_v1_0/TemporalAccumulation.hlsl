@@ -45,8 +45,12 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     // this adjusts the alpha for the case where insufficient history is available.
     // It boosts the temporal accumulation to give the samples equal weights in
     // the beginning.
-    const float alpha = max(gAlpha, 1.0 / historyLength);
-    const float alphaMoments = max(gMomentsAlpha, 1.0 / historyLength);
+    //const float alpha = max(gAlpha, 1.0 / historyLength);
+    //const float alphaMoments = max(gMomentsAlpha, 1.0 / historyLength);
+
+    const float alpha = max(1 - historyLength, 0.2f);
+    const float alphaMoments = max(1 - historyLength, 0.2f);
+
 
     // compute first two moments of luminance
     float new_luma = luminance(col);

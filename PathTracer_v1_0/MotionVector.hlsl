@@ -49,7 +49,7 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     float2 prevPixel = float2(projCoord.x, -projCoord.y);
     prevPixel = (prevPixel + 1) * 0.5;
 
-    bool consistency = (g_frameData.totalFrameNumber > 1);
+    bool consistency = true;
 
     float3 previousNormal = gNormalPrev.Sample(s1, prevPixel).rgb;
     float3 normal = gNormal.Sample(s1, input.texCoord).rgb;
@@ -84,7 +84,7 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
 
     PS_OUT output;
     output.motionVector = prevPixel;
-    output.historyLength = historyLength;
+    output.historyLength =  float(consistency);
 
     return output;
 }

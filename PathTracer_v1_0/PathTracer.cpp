@@ -615,7 +615,7 @@ void TutorialPathTracer::createShaderResources()
     createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev");
     createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev");
 
-    createSRVTexture(DXGI_FORMAT_R16_FLOAT, "gHistoryLengthPrev");
+    createSRVTexture(DXGI_FORMAT_R32_FLOAT, "gHistoryLengthPrev");
 
     // 15, 16, 17, 18 direct / indirect prev
     createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIlluminationColorHistory");
@@ -749,7 +749,8 @@ void TutorialPathTracer::createRenderTextures()
 {
 
     motionVectorRenderTexture = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
-    historyLengthRenderTexture = this->createRenderTexture(DXGI_FORMAT_R16_FLOAT);
+    historyLengthRenderTexture = this->createRenderTexture(DXGI_FORMAT_R32_FLOAT);
+
     depthDerivativeRenderTexture = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
 
     temporalAccumulationTextureDirect = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -1046,7 +1047,7 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     resourceBarrier(mpCmdList, historyLengthRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(mpCmdList, outputUAVBuffers["gHistoryLengthPrev"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
     mpCmdList->CopyResource(outputUAVBuffers["gHistoryLengthPrev"], historyLengthRenderTexture->mResource);
-    resourceBarrier(mpCmdList, historyLengthRenderTexture->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
+    resourceBarrier(mpCmdList, historyLengthRenderTexture->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     // (2) Temporal Accumulation
     // Direct
