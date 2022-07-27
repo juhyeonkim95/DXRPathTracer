@@ -1178,8 +1178,8 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     mpCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
 
     //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(reconstructionRenderTexture->mSrvDescriptorHandleOffset));
-    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(waveletDirect[waveletDirect.size() - 1]->mSrvDescriptorHandleOffset));
-    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(temporalAccumulationTextureDirect->mSrvDescriptorHandleOffset));
+    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(waveletDirect[waveletDirect.size() - 1]->mSrvDescriptorHandleOffset));
+    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(temporalAccumulationTextureDirect->mSrvDescriptorHandleOffset));
     //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gIndirectIllumination"));
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
