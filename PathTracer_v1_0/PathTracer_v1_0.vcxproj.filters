@@ -279,5 +279,11 @@
     <FxCompile Include="Reconstruction.hlsl">
       <Filter>Postprocessing</Filter>
     </FxCompile>
+    <FxCompile Include="FilterVariance.hlsl">
+      <Filter>Postprocessing</Filter>
+    </FxCompile>
+    <FxCompile Include="DepthDerivative.hlsl">
+      <Filter>Postprocessing</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

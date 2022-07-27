@@ -2,11 +2,15 @@ Texture2D col_history : register(t0);
 Texture2D motion_vectors : register(t1);
 Texture2D current_color : register(t2);
 Texture2D moments_history : register(t3);
+Texture2D length_history : register(t4);
 
 SamplerState s1 : register(s0);
 
-float luma(float3 c) {
-    return dot(c, float3(0.2126, 0.7152, 0.0722));
+static const float   gAlpha = 0.05f;
+static const float   gMomentsAlpha = 0.2f;
+
+float luminance(float3 c) {
+    return c.x * 0.2126 + c.y * 0.7152 + c.z * 0.0722;
 }
 
 struct VS_OUTPUT
@@ -25,26 +29,38 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
 {
     float2 uv = input.texCoord;
     float2 prev_uv = motion_vectors.Sample(s1, uv).rg;
-    float consistency = motion_vectors.Sample(s1, uv).a;
+
+    // float consistency = motion_vectors.Sample(s1, uv).a;
 
     float3 col = current_color.Sample(s1, uv).rgb;
     float3 col_prev = col_history.Sample(s1, prev_uv).rgb;
 
     float2 moment_prev = moments_history.Sample(s1, prev_uv).rg;
+    
+    float historyLength = length_history.Sample(s1, uv).x;
 
-    float new_luma = luma(col);
-    float2 new_moments = float2(new_luma, new_luma * new_luma);
+    // bool success = consistency == 1.0;
+    // historyLength = min(32.0f, success ? historyLength + 1.0f : 1.0f);
 
-    float alpha = max(float(!consistency), 0.2);
+    // this adjusts the alpha for the case where insufficient history is available.
+    // It boosts the temporal accumulation to give the samples equal weights in
+    // the beginning.
+    const float alpha = max(gAlpha, 1.0 / historyLength);
+    const float alphaMoments = max(gMomentsAlpha, 1.0 / historyLength);
+
+    // compute first two moments of luminance
+    float new_luma = luminance(col);
+    float2 moments = float2(new_luma, new_luma * new_luma);
+    
+    // temporal integration of the moments
+    moments = lerp(moment_prev, moments, alphaMoments);
+
+    float variance = max(0.f, moments.g - moments.r * moments.r);
 
     PS_OUT output;
-    output.moment = lerp(moment_prev, new_moments, alpha);
-
-    float mu_1 = output.moment.x;
-    float mu_2 = output.moment.y;
-
-    float variance = abs(mu_2 - mu_1 * mu_1);
-
+    // temporal integration of illumination
+    // output.color = float4(float(historyLength == 1.0), 0, 0, 1);
     output.color = float4(lerp(col_prev, col, alpha), variance);
+    output.moment = moments;
     return output;
 }

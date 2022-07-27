@@ -71,7 +71,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         // (3) hit emission
         if (payload.done || depth >= PATHTRACE_MAX_DEPTH) {
             if (depth <= 2) {
-                pathResult.direct += result;
+                pathResult.direct += emissionWeight * throughput * payload.emission;
             }
             break;
         }
@@ -206,9 +206,10 @@ void rayGen()
 
 #if DO_FILTERING
     gOutputPositionGeomID[launchIndex.xy] = float4(position, currentMeshID);
-    gOutputNormal[launchIndex.xy] = float4(normal, 1.0f);
-    float3 directIllumination = direct / (reflectance + 1e-5);
-    float3 indirectIllumination = indirect / (reflectance + 1e-5);
+    gOutputNormal[launchIndex.xy] = float4(normal, depth);
+
+    float3 directIllumination = direct / max(reflectance, float3(0.001, 0.001, 0.001));
+    float3 indirectIllumination = indirect / max(reflectance, float3(0.001, 0.001, 0.001));
 
     gDirectIllumination[launchIndex.xy] = float4(directIllumination, 1.0f);
     gIndirectIllumination[launchIndex.xy] = float4(indirectIllumination, 1.0f);

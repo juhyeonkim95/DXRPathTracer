@@ -14,6 +14,7 @@ static const float epsilon = 0.00001;
 cbuffer ConstantBuffer : register(b0)
 {
     int level;
+    float2 texelSize;
 };
 
 
@@ -47,9 +48,6 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 pNormal = gNormal.Sample(s1, input.texCoord).rgb;
     float3 pColor = gColorVariance.Sample(s1, input.texCoord).rgb;
     float pLuminance = luma(pColor);
-
-    float2 textureSize = float2(720.0f, 1280.0f);
-    float2 texelSize = 1.0 / textureSize;
 
     int step = 1 << level;
 
@@ -97,12 +95,15 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         }
     }
 
+    float4 cvnext;
+
     if (weights > epsilon) {
-        c /= weights;
+        cvnext.rgb = c / weights;
+        cvnext.a = v / (weights * weights);
     }
     else {
-        c = pColor;
+        cvnext = gColorVariance.Sample(s1, input.texCoord);
     }
 
-    return float4(c, 1.0f);
+    return cvnext;
 }

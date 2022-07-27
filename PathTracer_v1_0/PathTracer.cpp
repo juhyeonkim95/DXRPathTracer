@@ -615,11 +615,13 @@ void TutorialPathTracer::createShaderResources()
     createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev");
     createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev");
 
+    createSRVTexture(DXGI_FORMAT_R16_FLOAT, "gHistoryLengthPrev");
+
     // 15, 16, 17, 18 direct / indirect prev
     createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIlluminationColorHistory");
-    createSRVTexture(DXGI_FORMAT_R32G32_FLOAT, "gDirectIlluminationMomentHistory");
+    createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIlluminationMomentHistory");
     createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIlluminationColorHistory");
-    createSRVTexture(DXGI_FORMAT_R32G32_FLOAT, "gIndirectIlluminationMomentHistory");
+    createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIlluminationMomentHistory");
 
     // HDR
     // createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "HDR", 4);
@@ -746,13 +748,9 @@ RenderTexture *TutorialPathTracer::createRenderTexture(DXGI_FORMAT format)
 void TutorialPathTracer::createRenderTextures()
 {
 
-    //temporalAccumulationTextureDirectHistory = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-    //temporalAccumulationTextureIndirectHistory = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-    //temporalAccumulationTextureDirectMomentHistory = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
-    //temporalAccumulationTextureIndirectMomentHistory = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
-
-
-    motionVectorRenderTexture = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
+    motionVectorRenderTexture = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
+    historyLengthRenderTexture = this->createRenderTexture(DXGI_FORMAT_R16_FLOAT);
+    depthDerivativeRenderTexture = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
 
     temporalAccumulationTextureDirect = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
     temporalAccumulationTextureIndirect = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -987,11 +985,13 @@ void TutorialPathTracer::initPostProcess()
     scissorRect.top = 0;
     scissorRect.right = Width;
     scissorRect.bottom = Height;
+    
+    this->depthDerivativeShader = new Shader(L"VertexShader.hlsl", L"DepthDerivative.hlsl", mpDevice, 1);
 
-    this->motionVectorShader = new Shader(L"VertexShader.hlsl", L"MotionVector.hlsl", mpDevice, 4);
-    this->temporalAccumulationShader = new Shader(L"VertexShader.hlsl", L"TemporalAccumulation.hlsl", mpDevice, 4);
+    this->motionVectorShader = new Shader(L"VertexShader.hlsl", L"MotionVector.hlsl", mpDevice, 5);
+    this->temporalAccumulationShader = new Shader(L"VertexShader.hlsl", L"TemporalAccumulation.hlsl", mpDevice, 5);
     this->waveletShader = new Shader(L"VertexShader.hlsl", L"Wavelet.hlsl", mpDevice, 3);
-    this->reconstructionShader = new Shader(L"VertexShader.hlsl", L"Reconstruction.hlsl", mpDevice, 3);
+    this->reconstructionShader = new Shader(L"VertexShader.hlsl", L"Reconstruction.hlsl", mpDevice, 4);
 
     this->defaultCopyShader = new Shader(L"VertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
     this->tonemapShader = new Shader(L"VertexShader.hlsl", L"Tonemap.hlsl", mpDevice, 1);
@@ -1006,24 +1006,47 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     mpCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
     mpCmdList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
 
+    // (0) depth derivative!
+    //mpCmdList->SetPipelineState(depthDerivativeShader->getPipelineStateObject());
+    //mpCmdList->SetGraphicsRootSignature(depthDerivativeShader->getRootSignature()); // set the root signature
+
+    //mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthDerivativeRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    //
+    //mpCmdList->OMSetRenderTargets(1, &depthDerivativeRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
+
+    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gNormal"));
+
+    //mpCmdList->DrawInstanced(6, 1, 0, 0);
+    //mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthDerivativeRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
 
     // (1) Render to motionVectorRenderTexture !!
     mpCmdList->SetPipelineState(motionVectorShader->getPipelineStateObject());
     mpCmdList->SetGraphicsRootSignature(motionVectorShader->getRootSignature()); // set the root signature
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->OMSetRenderTargets(1, &motionVectorRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
-    mpCmdList->ClearRenderTargetView(motionVectorRenderTexture->mRtvDescriptorHandle, clearColor, 0, nullptr);
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(historyLengthRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE motionVectorRTV[2] = { motionVectorRenderTexture->mRtvDescriptorHandle, historyLengthRenderTexture->mRtvDescriptorHandle };
+    mpCmdList->OMSetRenderTargets(2, motionVectorRTV, FALSE, nullptr);
 
     mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gPositionMeshIDPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(2, getGPUHandlerByName("gNormalPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, getGPUHandlerByName("gNormal"));
+    mpCmdList->SetGraphicsRootDescriptorTable(5, getGPUHandlerByName("gHistoryLengthPrev"));
 
     mpCmdList->SetGraphicsRootConstantBufferView(0, mpCameraConstantBuffer->GetGPUVirtualAddress());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(historyLengthRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+    
+    // Update HistoryLength
+    resourceBarrier(mpCmdList, historyLengthRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    resourceBarrier(mpCmdList, outputUAVBuffers["gHistoryLengthPrev"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    mpCmdList->CopyResource(outputUAVBuffers["gHistoryLengthPrev"], historyLengthRenderTexture->mResource);
+    resourceBarrier(mpCmdList, historyLengthRenderTexture->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
 
     // (2) Temporal Accumulation
     // Direct
@@ -1033,6 +1056,7 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirectMoment->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
     resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationMomentHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     D3D12_CPU_DESCRIPTOR_HANDLE handles[2] = { temporalAccumulationTextureDirect->mRtvDescriptorHandle, temporalAccumulationTextureDirectMoment->mRtvDescriptorHandle };
     mpCmdList->OMSetRenderTargets(2, handles, FALSE, nullptr);
@@ -1041,6 +1065,7 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     mpCmdList->SetGraphicsRootDescriptorTable(2, getGPUHandler(motionVectorRenderTexture->mSrvDescriptorHandleOffset));
     mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gDirectIllumination"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, getGPUHandlerByName("gDirectIlluminationMomentHistory"));
+    mpCmdList->SetGraphicsRootDescriptorTable(5, getGPUHandler(historyLengthRenderTexture->mSrvDescriptorHandleOffset));
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
 
@@ -1051,6 +1076,11 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     resourceBarrier(mpCmdList, temporalAccumulationTextureDirectMoment->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationMomentHistory"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
     mpCmdList->CopyResource(outputUAVBuffers["gDirectIlluminationMomentHistory"], temporalAccumulationTextureDirectMoment->mResource);
+
+    // Update
+    resourceBarrier(mpCmdList, temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    mpCmdList->CopyResource(outputUAVBuffers["gDirectIlluminationColorHistory"], temporalAccumulationTextureDirect->mResource);
 
     // Indirect
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -1075,6 +1105,7 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIlluminationMomentHistory"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
     mpCmdList->CopyResource(outputUAVBuffers["gIndirectIlluminationMomentHistory"], temporalAccumulationTextureIndirectMoment->mResource);
 
+    /*
     // (3) Wavelet
     mpCmdList->SetPipelineState(waveletShader->getPipelineStateObject());
     mpCmdList->SetGraphicsRootSignature(waveletShader->getRootSignature()); // set the root signature
@@ -1083,7 +1114,6 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gPositionMeshID"));
 
 
-    
     if (!this->mpWaveletParameterBuffer)
         mpWaveletParameterBuffer = createBuffer(mpDevice, sizeof(WaveletShaderParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
     
@@ -1131,7 +1161,7 @@ void TutorialPathTracer::postProcess(int rtvIndex)
         }
         WaveletShaderParameters waveletParam;
         waveletParam.level = i;
-
+        waveletParam.texelSize = vec2(1.0f / this->mSwapChainSize.x, 1.0f / this->mSwapChainSize.y);
         uint8_t* pData;
         d3d_call(mpWaveletParameterBuffer->Map(0, nullptr, (void**)&pData));
         memcpy(pData, &waveletParam, sizeof(WaveletShaderParameters));
@@ -1164,9 +1194,10 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(directRenderTexture->mSrvDescriptorHandleOffset));
     mpCmdList->SetGraphicsRootDescriptorTable(2, getGPUHandler(indirectRenderTexture->mSrvDescriptorHandleOffset));
     mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gReflectance"));
+    mpCmdList->SetGraphicsRootDescriptorTable(4, getGPUHandlerByName("gOutputHDR"));
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
+    mpCmdList->DrawInstanced(6, 1, 0, 0);*/
 
 
     // (5) Render to default & tonemap !!
@@ -1178,9 +1209,9 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     mpCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
 
     //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(reconstructionRenderTexture->mSrvDescriptorHandleOffset));
-    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(waveletDirect[waveletDirect.size() - 1]->mSrvDescriptorHandleOffset));
-    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(temporalAccumulationTextureDirect->mSrvDescriptorHandleOffset));
-    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gIndirectIllumination"));
+    // mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(waveletDirect[waveletDirect.size() - 1]->mSrvDescriptorHandleOffset));
+    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(temporalAccumulationTextureDirect->mSrvDescriptorHandleOffset));
+    // mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gDirectIllumination"));
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
 
@@ -1188,40 +1219,11 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshIDPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
     mpCmdList->CopyResource(outputUAVBuffers["gPositionMeshIDPrev"], outputUAVBuffers["gPositionMeshID"]);
     resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-
+    
     resourceBarrier(mpCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(mpCmdList, outputUAVBuffers["gNormalPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
     mpCmdList->CopyResource(outputUAVBuffers["gNormalPrev"], outputUAVBuffers["gNormal"]);
     resourceBarrier(mpCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-
-    /*resourceBarrier(mpCmdList, temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectHistory->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(temporalAccumulationTextureDirectHistory->mResource, temporalAccumulationTextureDirect->mResource);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectHistory->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);*/
-
-    /*resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectHistory->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(temporalAccumulationTextureDirectHistory->mResource, outputUAVBuffers["gDirectIllumination"]);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectHistory->mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);*/
-
-    /*resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gDirectIlluminationColorHistory"], outputUAVBuffers["gDirectIllumination"]);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);*/
-    /*resourceBarrier(mpCmdList, temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gDirectIlluminationColorHistory"], temporalAccumulationTextureDirect->mResource);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);*/
-    /*resourceBarrier(mpCmdList, temporalAccumulationTextureIndirect->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gIndirectIlluminationColorHistory"], temporalAccumulationTextureIndirect->mResource);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);*/
-
 }
 
 void TutorialPathTracer::copyRenderTexture(RenderTexture* dest, RenderTexture* source)

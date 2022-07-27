@@ -131,12 +131,19 @@ private:
     
 
     RenderTexture *motionVectorRenderTexture;
+    RenderTexture *historyLengthRenderTexture;
+
+    Shader* depthDerivativeShader;
+    RenderTexture *depthDerivativeRenderTexture;
+
     Shader* motionVectorShader;
 
     RenderTexture* temporalAccumulationTextureDirect;
     RenderTexture* temporalAccumulationTextureDirectMoment;
+
     RenderTexture* temporalAccumulationTextureIndirect;
     RenderTexture* temporalAccumulationTextureIndirectMoment;
+
 
     Shader* temporalAccumulationShader;
 
@@ -145,7 +152,7 @@ private:
 
     vector<RenderTexture*> waveletDirect;
     vector<RenderTexture*> waveletIndirect;
-    int waveletCount = 3;
+    int waveletCount = 2;
     Shader* waveletShader;
 
 
