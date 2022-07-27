@@ -29,7 +29,7 @@ struct VS_OUTPUT
 
 struct PS_OUT
 {
-    float2 motionVector: SV_Target0;
+    float4 motionVector: SV_Target0;
     float historyLength : SV_Target1;
 };
 
@@ -75,16 +75,12 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
         consistency = false;
     }
 
-    else if (abs(depth - previousDepth) > 0.1) {
-        consistency = false;
-    }
-
     float historyLength = gHistoryLength.Sample(s1, prevPixel).r;
-    historyLength = min(32.0f, consistency ? historyLength + 1.0f : 1.0f);
+    historyLength = min(32.0f, (consistency ? (historyLength + 1.0f) : 1.0f));
 
     PS_OUT output;
-    output.motionVector = prevPixel;
-    output.historyLength =  float(consistency);
+    output.motionVector = float4(prevPixel.x, prevPixel.y, 0, float(consistency));
+    output.historyLength = historyLength;
 
     return output;
 }

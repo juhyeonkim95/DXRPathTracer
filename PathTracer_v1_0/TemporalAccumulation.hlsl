@@ -30,7 +30,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     float2 uv = input.texCoord;
     float2 prev_uv = motion_vectors.Sample(s1, uv).rg;
 
-    // float consistency = motion_vectors.Sample(s1, uv).a;
+    float consistency = motion_vectors.Sample(s1, uv).a;
 
     float3 col = current_color.Sample(s1, uv).rgb;
     float3 col_prev = col_history.Sample(s1, prev_uv).rgb;
@@ -39,18 +39,22 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     
     float historyLength = length_history.Sample(s1, uv).x;
 
-    // bool success = consistency == 1.0;
-    // historyLength = min(32.0f, success ? historyLength + 1.0f : 1.0f);
-
+    bool success = consistency == 1.0;
+    
     // this adjusts the alpha for the case where insufficient history is available.
     // It boosts the temporal accumulation to give the samples equal weights in
     // the beginning.
     //const float alpha = max(gAlpha, 1.0 / historyLength);
     //const float alphaMoments = max(gMomentsAlpha, 1.0 / historyLength);
 
-    const float alpha = max(1 - historyLength, 0.2f);
-    const float alphaMoments = max(1 - historyLength, 0.2f);
+    //const float alpha = max(1 - historyLength, 0.2f);
+    //const float alphaMoments = max(1 - historyLength, 0.2f);
 
+    const float alpha = success ? max(gAlpha, 1.0 / historyLength) :1.0f;
+    const float alphaMoments = success ? max(gMomentsAlpha, 1.0 / historyLength) :1.0f;
+    
+    //const float alpha =  max(gAlpha, 1.0 / historyLength);
+    //const float alphaMoments =  max(gMomentsAlpha, 1.0 / historyLength);
 
     // compute first two moments of luminance
     float new_luma = luminance(col);
@@ -63,7 +67,8 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
 
     PS_OUT output;
     // temporal integration of illumination
-    // output.color = float4(float(historyLength == 1.0), 0, 0, 1);
+    //output.color = float4(float(!success), 0, 0, 1);
+    //output.color = float4(float(historyLength == 1.0), 0, 0, 1);
     output.color = float4(lerp(col_prev, col, alpha), variance);
     output.moment = moments;
     return output;
