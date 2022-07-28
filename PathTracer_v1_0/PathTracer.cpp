@@ -361,6 +361,10 @@ void TutorialPathTracer::createSRVTexture(DXGI_FORMAT format, std::string name) 
 
     int HeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     mSrvHeapIndexMap[name] = HeapOffset;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
+    gpuHandle.ptr += (HeapOffset) * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    gpuHandlesMap[name] = gpuHandle;
+
     srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
@@ -401,9 +405,11 @@ void TutorialPathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, u
         }
     }
     outputUAVBuffers[name] = outputResources;
-        
     int HeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     mSrvHeapIndexMap[name] = HeapOffset - 1;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
+    gpuHandle.ptr += (HeapOffset - 1) * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    gpuHandlesMap[name] = gpuHandle;
 }
 
 void TutorialPathTracer::createShaderResources()
@@ -615,29 +621,6 @@ void TutorialPathTracer::createShaderResources()
     createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev");
     createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev");
 
-    // 15, 16, 17, 18 direct / indirect prev
-    createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIlluminationColorHistory");
-    createSRVTexture(DXGI_FORMAT_R32G32_FLOAT, "gDirectIlluminationMomentHistory");
-    createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIlluminationColorHistory");
-    createSRVTexture(DXGI_FORMAT_R32G32_FLOAT, "gIndirectIlluminationMomentHistory");
-
-    // HDR
-    // createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "HDR", 4);
-    
-    // Moment
-    // createUAVBuffer(DXGI_FORMAT_R16G16_FLOAT, "Moment", 4);
-
-    // Normal
-    // createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gOutputNormal", 2);
-
-    // Index
-    //createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputPositionGeomID", 2);
-    // Depth
-    //createUAVBuffer(DXGI_FORMAT_R32_FLOAT, "gOutputDepth", 2);
-
-    // other
-    // createUAVBuffer(DXGI_FORMAT_R32_UINT, "AccumFrameCount");
-
     textureStartHeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     mpSrvUavHeapCount = textureStartHeapOffset;
 }
@@ -723,51 +706,6 @@ void TutorialPathTracer::createTextureShaderResources()
     }
 }
 
-RenderTexture *TutorialPathTracer::createRenderTexture(DXGI_FORMAT format)
-{
-    RenderTexture* renderTexture = new RenderTexture();
-
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap.pHeap->GetCPUDescriptorHandleForHeapStart();
-    rtvHandle.ptr += mRtvHeap.usedEntries * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    mRtvHeap.usedEntries++;
-
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-    srvHandle.ptr += mpSrvUavHeapCount * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    
-    renderTexture->mpDevice = mpDevice;
-    renderTexture->mRtvDescriptorHandle = rtvHandle;
-    renderTexture->mSrvDescriptorHandle = srvHandle;
-    renderTexture->mSrvDescriptorHandleOffset = mpSrvUavHeapCount;
-    renderTexture->createWithSize(mSwapChainSize.x, mSwapChainSize.y, format);
-    mpSrvUavHeapCount++;
-    return renderTexture;
-}
-
-void TutorialPathTracer::createRenderTextures()
-{
-
-    //temporalAccumulationTextureDirectHistory = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-    //temporalAccumulationTextureIndirectHistory = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-    //temporalAccumulationTextureDirectMomentHistory = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
-    //temporalAccumulationTextureIndirectMomentHistory = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
-
-
-    motionVectorRenderTexture = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-
-    temporalAccumulationTextureDirect = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-    temporalAccumulationTextureIndirect = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-    temporalAccumulationTextureDirectMoment = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
-    temporalAccumulationTextureIndirectMoment = this->createRenderTexture(DXGI_FORMAT_R32G32_FLOAT);
-
-    for (int i = 0; i < waveletCount; i++) {
-        RenderTexture* waveletDirecti = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-        RenderTexture* waveletIndirecti = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-        this->waveletDirect.push_back(waveletDirecti);
-        this->waveletIndirect.push_back(waveletIndirecti);
-    }
-
-    this->reconstructionRenderTexture = this->createRenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT);
-}
 
 //////////////////////////////////////////////////////////////////////////
 // Callbacks
@@ -790,7 +728,6 @@ void TutorialPathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winH
     createShaderTable();
 
     initPostProcess();
-    createRenderTextures();
 
     mpLightParametersBuffer = createBuffer(mpDevice, sizeof(LightParameter) * 20, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
     uint8_t* pData;
@@ -807,21 +744,6 @@ void TutorialPathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winH
     logFile = std::ofstream("../Logs/" + std::string(scene->sceneName) + "_" + std::string(filename) + ".txt");
 
     lastTime = std::chrono::steady_clock::now();
-}
-
-D3D12_GPU_DESCRIPTOR_HANDLE TutorialPathTracer::getGPUHandler(int index)
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE handle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
-    handle.ptr += index * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    return handle;
-}
-D3D12_GPU_DESCRIPTOR_HANDLE TutorialPathTracer::getGPUHandlerByName(const char* name)
-{
-    bool notFound = mSrvHeapIndexMap.find(name) == mSrvHeapIndexMap.end();
-    assert(!notFound);
-    int index = this->mSrvHeapIndexMap[name];
-
-    return getGPUHandler(index);
 }
 
 void TutorialPathTracer::onFrameRender()
@@ -900,346 +822,40 @@ void TutorialPathTracer::onFrameRender()
 
 void TutorialPathTracer::initPostProcess()
 {
-    // Create vertex buffer
 
-    // a triangle
-    vec3 vList[] = {
-        vec3(1.0f, 1.0f, 0.0f),
-        vec3(1.0f, -1.0f, 0.0f),
-        vec3(-1.0f, -1.0f, 0.0f),
+    this->defaultCopyShader = new Shader(L"QuadVertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
 
-        vec3(-1.0f, -1.0f, 0.0f),
-        vec3(-1.0f, 1.0f, 0.0f),
-        vec3(1.0f, 1.0f, 0.0f),
-    };
+    postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
 
-    int vBufferSize = sizeof(vList);
+    svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
+    svgfPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount);
 
-    // create default heap
-    // default heap is memory on the GPU. Only the GPU has access to this memory
-    // To get data into this heap, we will have to upload the data using
-    // an upload heap
-    mpDevice->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-        D3D12_HEAP_FLAG_NONE, // no flags
-        &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
-        D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data
-                                        // from the upload heap to this heap
-        nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
-        IID_PPV_ARGS(&vertexBuffer));
-
-    // we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
-    vertexBuffer->SetName(L"Vertex Buffer Resource Heap");
-
-    // create upload heap
-    // upload heaps are used to upload data to the GPU. CPU can write to it, GPU can read from it
-    // We will upload the vertex buffer using this heap to the default heap
-    ID3D12Resource* vBufferUploadHeap;
-    mpDevice->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-        D3D12_HEAP_FLAG_NONE, // no flags
-        &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
-        D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-        nullptr,
-        IID_PPV_ARGS(&vBufferUploadHeap));
-    vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
-
-    // store vertex buffer in upload heap
-    D3D12_SUBRESOURCE_DATA vertexData = {};
-    vertexData.pData = reinterpret_cast<BYTE*>(vList); // pointer to our vertex array
-    vertexData.RowPitch = vBufferSize; // size of all our triangle vertex data
-    vertexData.SlicePitch = vBufferSize; // also the size of our triangle vertex data
-
-    // we are now creating a command with the command list to copy the data from
-    // the upload heap to the default heap
-    UpdateSubresources(mpCmdList, vertexBuffer, vBufferUploadHeap, 0, 0, 1, &vertexData);
-
-    // transition the vertex buffer data from copy destination state to vertex buffer state
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-
-    // Now we execute the command list to upload the initial assets (triangle data)
-    mpCmdList->Close();
-    ID3D12CommandList* ppCommandLists[] = { mpCmdList };
-    mpCmdQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    // increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
-    mFenceValue++;
-    mpCmdQueue->Signal(mpFence, mFenceValue);
-
-    // create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
-    vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-    vertexBufferView.StrideInBytes = sizeof(vec3);
-    vertexBufferView.SizeInBytes = vBufferSize;
-
-    uint Width = this->mSwapChainSize.x;
-    uint Height = this->mSwapChainSize.y;
-
-    // Fill out the Viewport
-    viewport.TopLeftX = 0;
-    viewport.TopLeftY = 0;
-    viewport.Width = Width;
-    viewport.Height = Height;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-
-    // Fill out a scissor rect
-    scissorRect.left = 0;
-    scissorRect.top = 0;
-    scissorRect.right = Width;
-    scissorRect.bottom = Height;
-
-    this->motionVectorShader = new Shader(L"VertexShader.hlsl", L"MotionVector.hlsl", mpDevice, 4);
-    this->temporalAccumulationShader = new Shader(L"VertexShader.hlsl", L"TemporalAccumulation.hlsl", mpDevice, 4);
-    this->waveletShader = new Shader(L"VertexShader.hlsl", L"Wavelet.hlsl", mpDevice, 3);
-    this->reconstructionShader = new Shader(L"VertexShader.hlsl", L"Reconstruction.hlsl", mpDevice, 3);
-
-    this->defaultCopyShader = new Shader(L"VertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
-    this->tonemapShader = new Shader(L"VertexShader.hlsl", L"Tonemap.hlsl", mpDevice, 1);
+    tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
+    tonemapPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount);
 }
 
 void TutorialPathTracer::postProcess(int rtvIndex)
 {
     const float clearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    
-    mpCmdList->RSSetViewports(1, &viewport); // set the viewports
-    mpCmdList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
-    mpCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
-    mpCmdList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+    postProcessQuad->bind(mpCmdList);
 
-
-    // (1) Render to motionVectorRenderTexture !!
-    mpCmdList->SetPipelineState(motionVectorShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(motionVectorShader->getRootSignature()); // set the root signature
-
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->OMSetRenderTargets(1, &motionVectorRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
-    mpCmdList->ClearRenderTargetView(motionVectorRenderTexture->mRtvDescriptorHandle, clearColor, 0, nullptr);
-
-    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gPositionMeshIDPrev"));
-    mpCmdList->SetGraphicsRootDescriptorTable(2, getGPUHandlerByName("gNormalPrev"));
-    mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gPositionMeshID"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, getGPUHandlerByName("gNormal"));
-
-    mpCmdList->SetGraphicsRootConstantBufferView(0, mpCameraConstantBuffer->GetGPUVirtualAddress());
-
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-    // (2) Temporal Accumulation
-    // Direct
-    mpCmdList->SetPipelineState(temporalAccumulationShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(temporalAccumulationShader->getRootSignature()); // set the root signature
-
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirectMoment->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE handles[2] = { temporalAccumulationTextureDirect->mRtvDescriptorHandle, temporalAccumulationTextureDirectMoment->mRtvDescriptorHandle };
-    mpCmdList->OMSetRenderTargets(2, handles, FALSE, nullptr);
-
-    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gDirectIlluminationColorHistory"));
-    mpCmdList->SetGraphicsRootDescriptorTable(2, getGPUHandler(motionVectorRenderTexture->mSrvDescriptorHandleOffset));
-    mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gDirectIllumination"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, getGPUHandlerByName("gDirectIlluminationMomentHistory"));
-
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
-
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirectMoment->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-    // Update Direct Moment History
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectMoment->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationMomentHistory"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gDirectIlluminationMomentHistory"], temporalAccumulationTextureDirectMoment->mResource);
-
-    // Indirect
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirectMoment->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE handlesIndirect[2] = { temporalAccumulationTextureIndirect->mRtvDescriptorHandle, temporalAccumulationTextureIndirectMoment->mRtvDescriptorHandle };
-    mpCmdList->OMSetRenderTargets(2, handlesIndirect, FALSE, nullptr);
-
-    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gIndirectIlluminationColorHistory"));
-    mpCmdList->SetGraphicsRootDescriptorTable(2, getGPUHandler(motionVectorRenderTexture->mSrvDescriptorHandleOffset));
-    mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gIndirectIllumination"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, getGPUHandlerByName("gIndirectIlluminationMomentHistory"));
-
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
-
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirect->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirectMoment->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-    // Update Indirect Moment History
-    resourceBarrier(mpCmdList, temporalAccumulationTextureIndirectMoment->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIlluminationMomentHistory"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gIndirectIlluminationMomentHistory"], temporalAccumulationTextureIndirectMoment->mResource);
-
-    // (3) Wavelet
-    mpCmdList->SetPipelineState(waveletShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(waveletShader->getRootSignature()); // set the root signature
-
-    mpCmdList->SetGraphicsRootDescriptorTable(2, getGPUHandlerByName("gNormal"));
-    mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gPositionMeshID"));
-
-
-    
-    if (!this->mpWaveletParameterBuffer)
-        mpWaveletParameterBuffer = createBuffer(mpDevice, sizeof(WaveletShaderParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-    
-
-    // Direct
-    for (int i = 0; i < waveletCount; i++) {
-        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletDirect[i]->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-        mpCmdList->OMSetRenderTargets(1, &waveletDirect[i]->mRtvDescriptorHandle, FALSE, nullptr);
-        if (i == 0) {
-            mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(temporalAccumulationTextureDirect->mSrvDescriptorHandleOffset));
-        }
-        else {
-            mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(waveletDirect[i-1]->mSrvDescriptorHandleOffset));
-        }
-        WaveletShaderParameters waveletParam;
-        waveletParam.level = i;
-
-        uint8_t* pData;
-        d3d_call(mpWaveletParameterBuffer->Map(0, nullptr, (void**)&pData));
-        memcpy(pData, &waveletParam, sizeof(WaveletShaderParameters));
-        mpWaveletParameterBuffer->Unmap(0, nullptr);
-
-        mpCmdList->SetGraphicsRootConstantBufferView(0, mpWaveletParameterBuffer->GetGPUVirtualAddress());
-
-        mpCmdList->DrawInstanced(6, 1, 0, 0);
-        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletDirect[i]->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    }
-
-    // Update Direct Color History
-    resourceBarrier(mpCmdList, waveletDirect[0]->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gDirectIlluminationColorHistory"], waveletDirect[0]->mResource);
-
-    // Indirect
-    for (int i = 0; i < waveletCount; i++) {
-        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletIndirect[i]->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-        mpCmdList->OMSetRenderTargets(1, &waveletIndirect[i]->mRtvDescriptorHandle, FALSE, nullptr);
-        if (i == 0) {
-            mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(temporalAccumulationTextureIndirect->mSrvDescriptorHandleOffset));
-        }
-        else {
-            mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(waveletIndirect[i - 1]->mSrvDescriptorHandleOffset));
-        }
-        WaveletShaderParameters waveletParam;
-        waveletParam.level = i;
-
-        uint8_t* pData;
-        d3d_call(mpWaveletParameterBuffer->Map(0, nullptr, (void**)&pData));
-        memcpy(pData, &waveletParam, sizeof(WaveletShaderParameters));
-        mpWaveletParameterBuffer->Unmap(0, nullptr);
-
-        mpCmdList->SetGraphicsRootConstantBufferView(0, mpWaveletParameterBuffer->GetGPUVirtualAddress());
-
-        mpCmdList->DrawInstanced(6, 1, 0, 0);
-        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletIndirect[i]->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    }
-
-    // Update Indirect Color History
-    resourceBarrier(mpCmdList, waveletIndirect[0]->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gIndirectIlluminationColorHistory"], waveletIndirect[0]->mResource);
-
-    // (4) Reconstruction!
-    mpCmdList->SetPipelineState(reconstructionShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(reconstructionShader->getRootSignature()); // set the root signature
-
-    RenderTexture* directRenderTexture = waveletDirect[waveletDirect.size() - 1];
-    RenderTexture* indirectRenderTexture = waveletIndirect[waveletIndirect.size() - 1];
-
-
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-    mpCmdList->OMSetRenderTargets(1, &reconstructionRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
-    mpCmdList->ClearRenderTargetView(reconstructionRenderTexture->mRtvDescriptorHandle, clearColor, 0, nullptr);
-
-    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(directRenderTexture->mSrvDescriptorHandleOffset));
-    mpCmdList->SetGraphicsRootDescriptorTable(2, getGPUHandler(indirectRenderTexture->mSrvDescriptorHandleOffset));
-    mpCmdList->SetGraphicsRootDescriptorTable(3, getGPUHandlerByName("gReflectance"));
-
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
-
-
-    // (5) Render to default & tonemap !!
-    mpCmdList->SetPipelineState(tonemapShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(tonemapShader->getRootSignature()); // set the root signature
-
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->OMSetRenderTargets(1, &mFrameObjects[rtvIndex].rtvHandle, FALSE, nullptr);
-    mpCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
-
-    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(reconstructionRenderTexture->mSrvDescriptorHandleOffset));
-    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(waveletDirect[waveletDirect.size() - 1]->mSrvDescriptorHandleOffset));
-    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(temporalAccumulationTextureDirect->mSrvDescriptorHandleOffset));
-    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gIndirectIllumination"));
-
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
+    svgfPass->setViewPort(mpCmdList);
+    svgfPass->forward(mpCmdList, gpuHandlesMap, outputUAVBuffers, mpCameraConstantBuffer);
+    D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
+    tonemapPass->forward(mpCmdList, inputHandle, mFrameObjects[rtvIndex].rtvHandle, mFrameObjects[rtvIndex].pSwapChainBuffer);
 
     resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshIDPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
     mpCmdList->CopyResource(outputUAVBuffers["gPositionMeshIDPrev"], outputUAVBuffers["gPositionMeshID"]);
     resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-
+    
     resourceBarrier(mpCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(mpCmdList, outputUAVBuffers["gNormalPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
     mpCmdList->CopyResource(outputUAVBuffers["gNormalPrev"], outputUAVBuffers["gNormal"]);
     resourceBarrier(mpCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-
-    /*resourceBarrier(mpCmdList, temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectHistory->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(temporalAccumulationTextureDirectHistory->mResource, temporalAccumulationTextureDirect->mResource);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectHistory->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);*/
-
-    /*resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectHistory->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(temporalAccumulationTextureDirectHistory->mResource, outputUAVBuffers["gDirectIllumination"]);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirectHistory->mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);*/
-
-    /*resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gDirectIlluminationColorHistory"], outputUAVBuffers["gDirectIllumination"]);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);*/
-    /*resourceBarrier(mpCmdList, temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gDirectIlluminationColorHistory"], temporalAccumulationTextureDirect->mResource);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    resourceBarrier(mpCmdList, temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);*/
-    /*resourceBarrier(mpCmdList, temporalAccumulationTextureIndirect->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gIndirectIlluminationColorHistory"], temporalAccumulationTextureIndirect->mResource);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIlluminationColorHistory"], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);*/
-
 }
 
-void TutorialPathTracer::copyRenderTexture(RenderTexture* dest, RenderTexture* source)
-{
-    mpCmdList->SetPipelineState(defaultCopyShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(defaultCopyShader->getRootSignature()); // set the root signature
 
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(dest->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(source->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-
-    mpCmdList->OMSetRenderTargets(1, &dest->mRtvDescriptorHandle, FALSE, nullptr);
-    
-    mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(source->mSrvDescriptorHandleOffset));
-
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(source->mResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
-}
 
 void TutorialPathTracer::onShutdown()
 {

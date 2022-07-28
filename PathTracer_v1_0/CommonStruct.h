@@ -63,8 +63,3 @@ struct LightParameter
     vec4 emission;
     vec4 normalAndPdf;
 };
-
-struct WaveletShaderParameters
-{
-    int level;
-};

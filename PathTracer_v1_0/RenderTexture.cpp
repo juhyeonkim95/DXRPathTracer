@@ -31,3 +31,38 @@ void RenderTexture::createWithSize(size_t width, size_t height, DXGI_FORMAT form
     mWidth = width;
     mHeight = height;
 }
+
+D3D12_GPU_DESCRIPTOR_HANDLE RenderTexture::getGPUSrvHandler() {
+    D3D12_GPU_DESCRIPTOR_HANDLE handle = mpSrvHeap->GetGPUDescriptorHandleForHeapStart();
+    handle.ptr += this->mSrvDescriptorHandleOffset * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    return handle;
+}
+
+RenderTexture* createRenderTexture(
+	ID3D12Device5Ptr pDevice,
+	ID3D12DescriptorHeapPtr pRTVHeap,
+	uint32_t& usedRTVHeapEntries,
+	ID3D12DescriptorHeapPtr pSRVHeap,
+	uint32_t& usedSRVHeapEntries,
+	uvec2 size,
+	DXGI_FORMAT format
+)
+{
+	RenderTexture* renderTexture = new RenderTexture();
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRTVHeap->GetCPUDescriptorHandleForHeapStart();
+	rtvHandle.ptr += usedRTVHeapEntries * pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = pSRVHeap->GetCPUDescriptorHandleForHeapStart();
+	srvHandle.ptr += usedSRVHeapEntries * pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	renderTexture->mpDevice = pDevice;
+	renderTexture->mRtvDescriptorHandle = rtvHandle;
+	renderTexture->mSrvDescriptorHandle = srvHandle;
+	renderTexture->mSrvDescriptorHandleOffset = usedSRVHeapEntries;
+	renderTexture->createWithSize(size.x, size.y, format);
+	renderTexture->mpSrvHeap = pSRVHeap;
+	usedRTVHeapEntries++;
+	usedSRVHeapEntries++;
+
+	return renderTexture;
+}
