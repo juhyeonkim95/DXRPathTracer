@@ -160,6 +160,7 @@
     <ClCompile Include="Diffuse.cpp" />
     <ClCompile Include="DX12Helper.cpp" />
     <ClCompile Include="DX12Initializer.cpp" />
+    <ClCompile Include="HeapData.cpp" />
     <ClCompile Include="light_utils.cpp" />
     <ClCompile Include="loader_utils.cpp" />
     <ClCompile Include="Mesh.cpp" />

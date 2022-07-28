@@ -40,14 +40,23 @@ void TutorialPathTracer::initDX12(HWND winHandle, uint32_t winWidth, uint32_t wi
     mpSwapChain = createDxgiSwapChain(pDxgiFactory, mHwnd, winWidth, winHeight, DXGI_FORMAT_R8G8B8A8_UNORM, mpCmdQueue);
 
     // Create a RTV descriptor heap
-    mRtvHeap.pHeap = createDescriptorHeap(mpDevice, kRtvHeapSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
+    mRtvHeap = new HeapData(mpDevice, kRtvHeapSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
 
     // Create the per-frame objects
     for (uint32_t i = 0; i < kDefaultSwapChainBuffers; i++)
     {
         d3d_call(mpDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mFrameObjects[i].pCmdAllocator)));
         d3d_call(mpSwapChain->GetBuffer(i, IID_PPV_ARGS(&mFrameObjects[i].pSwapChainBuffer)));
-        mFrameObjects[i].rtvHandle = createRTV(mpDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+        D3D12_RENDER_TARGET_VIEW_DESC desc = {};
+        desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.Texture2D.MipSlice = 0;
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->addDescriptorHandle();
+
+        mpDevice->CreateRenderTargetView(mFrameObjects[i].pSwapChainBuffer, &desc, rtvHandle);
+
+        mFrameObjects[i].rtvHandle = rtvHandle;
     }
 
     // Create the command-list
@@ -56,15 +65,12 @@ void TutorialPathTracer::initDX12(HWND winHandle, uint32_t winWidth, uint32_t wi
     // Create a fence and the event
     d3d_call(mpDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mpFence)));
     mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-
-    //RenderTargetState rtState(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM);
-    //std::unique_ptr<BasicPostProcess> postProcess = std::make_unique<BasicPostProcess>(mpDevice, rtState, BasicPostProcess::Sepia);
 }
 
 uint32_t TutorialPathTracer::beginFrame()
 {
     // Bind the descriptor heaps
-    ID3D12DescriptorHeap* heaps[] = { mpSrvUavHeap };
+    ID3D12DescriptorHeap* heaps[] = { mSrvUavHeap->getDescriptorHeap() };
     mpCmdList->SetDescriptorHeaps(arraysize(heaps), heaps);
     return mpSwapChain->GetCurrentBackBufferIndex();
 }
@@ -282,7 +288,7 @@ void TutorialPathTracer::createShaderTable()
 
     // Entry 0 - ray-gen program ID and descriptor data
     memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-    uint64_t heapStart = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart().ptr;
+    uint64_t heapStart = mSrvUavHeap->getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart().ptr;
     *(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
 
     // Entry 1 - miss program
@@ -303,8 +309,6 @@ void TutorialPathTracer::createShaderTable()
         memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8;            // The location of the root-descriptor
         assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
-
-        D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
         
         Mesh& mesh = scene->meshes[i];
         std::string meshRefID = scene->meshRefID[i];
@@ -314,16 +318,14 @@ void TutorialPathTracer::createShaderTable()
         if (meshBSDF->diffuseReflectanceTexturePath.length() > 0) {
             int textureID = scene->textureIDDictionary[meshBSDF->diffuseReflectanceTexturePath];
             Texture* texture = scene->textures[textureID];
-            uint32_t descriptorOffset = texture->descriptorHandleOffset;
-            descriptorHandle.ptr += descriptorOffset * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            *(uint64_t*)(pCbDesc) = descriptorHandle.ptr;
-        } else {
-            descriptorHandle.ptr += (textureStartHeapOffset) * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            *(uint64_t*)(pCbDesc) = descriptorHandle.ptr;
+            *(uint64_t*)(pCbDesc) = mSrvUavHeap->getGPUHandleByName(texture->name.c_str()).ptr;
+        }
+        else {
+            *(uint64_t*)(pCbDesc) = mpTextureStartHandle.ptr;
         }
 
         uint8_t* pCbDescAccel = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-        D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle2 = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
+        D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle2 = mSrvUavHeap->getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
         descriptorHandle2.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         *(uint64_t*)(pCbDescAccel) = descriptorHandle2.ptr;
 
@@ -334,38 +336,6 @@ void TutorialPathTracer::createShaderTable()
 
     // Unmap
     mpShaderTable->Unmap(0, nullptr);
-}
-
-void TutorialPathTracer::createSRVTexture(DXGI_FORMAT format, std::string name) {
-    auto const heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    const D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format,
-        static_cast<UINT64>(mSwapChainSize.x),
-        static_cast<UINT>(mSwapChainSize.y),
-        1, 1, 1, 0, D3D12_RESOURCE_FLAG_NONE);
-
-    ID3D12ResourcePtr outputResources;
-    // Create a render target
-    mpDevice->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE,
-        &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&outputResources));
-
-    outputUAVBuffers[name] = outputResources;
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = format;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-
-    // Create SRV.
-    mpDevice->CreateShaderResourceView(outputResources, &srvDesc, srvHandle);
-
-    int HeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    mSrvHeapIndexMap[name] = HeapOffset;
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
-    gpuHandle.ptr += (HeapOffset) * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    gpuHandlesMap[name] = gpuHandle;
-
-    srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 
@@ -389,8 +359,7 @@ void TutorialPathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, u
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
-        mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, mSrvUavHeap->addDescriptorHandle(name.c_str()));
     }
     else {
         for (int i = 0; i < depth; i++) {
@@ -400,23 +369,22 @@ void TutorialPathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, u
             uavDesc.Texture2DArray.ArraySize = 1;
             uavDesc.Texture2DArray.FirstArraySlice = UINT(i);
             uavDesc.Texture2DArray.PlaneSlice = 0;
-            mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, srvHandle);
-            srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+            mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, mSrvUavHeap->addDescriptorHandle(name.c_str()));
         }
     }
     outputUAVBuffers[name] = outputResources;
-    int HeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    mSrvHeapIndexMap[name] = HeapOffset - 1;
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
-    gpuHandle.ptr += (HeapOffset - 1) * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    gpuHandlesMap[name] = gpuHandle;
+    //int HeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
+
 
 void TutorialPathTracer::createShaderResources()
 {
     // Create an SRV/UAV descriptor heap
-    mpSrvUavHeap = createDescriptorHeap(mpDevice, 100, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
-    srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
+    mSrvUavHeap = new HeapData(mpDevice, 100, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+
+    //mSrvUavHeap.pHeap = createDescriptorHeap(mpDevice, 100, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+    //mSrvUavHeap.srvHandle = 
+    //srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
 
     // 1. Create the output resource. The dimensions and format should match the swap-chain
     createUAVBuffer(DXGI_FORMAT_R8G8B8A8_UNORM, "output");
@@ -426,8 +394,7 @@ void TutorialPathTracer::createShaderResources()
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS->GetGPUVirtualAddress();
-    mpDevice->CreateShaderResourceView(nullptr, &srvDesc, srvHandle);
-    srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    mpDevice->CreateShaderResourceView(nullptr, &srvDesc, mSrvUavHeap->addDescriptorHandle("AccelerationStructure"));
 
     // 3. Material Data
     {
@@ -481,10 +448,7 @@ void TutorialPathTracer::createShaderResources()
         srvDesc.Buffer.StructureByteStride = sizeof(materialData[0]);
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        //D3D12_CPU_DESCRIPTOR_HANDLE g_SceneMaterialInfo = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-        //g_SceneMaterialInfo.ptr += 2 * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        mpDevice->CreateShaderResourceView(mpMaterialBuffer, &srvDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        mpDevice->CreateShaderResourceView(mpMaterialBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("MaterialData"));
 
     }
     
@@ -530,10 +494,7 @@ void TutorialPathTracer::createShaderResources()
         srvDesc.Buffer.StructureByteStride = sizeof(geometryInfoData[0]);
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        //D3D12_CPU_DESCRIPTOR_HANDLE g_SceneMeshInfo = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-        //g_SceneMeshInfo.ptr += 3 * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        mpDevice->CreateShaderResourceView(mpGeometryInfoBuffer, &srvDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        mpDevice->CreateShaderResourceView(mpGeometryInfoBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("GeometryData"));
     }
 
     // 5. Indices Data
@@ -560,10 +521,7 @@ void TutorialPathTracer::createShaderResources()
         srvDesc.Buffer.NumElements = indicesData.size();
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        //D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-        //descriptorHandle.ptr += 4 * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        mpDevice->CreateShaderResourceView(mpIndicesBuffer, &srvDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        mpDevice->CreateShaderResourceView(mpIndicesBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("IndicesData"));
     }
 
     // 6. Vertices Data
@@ -595,8 +553,7 @@ void TutorialPathTracer::createShaderResources()
 
         //D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
         //descriptorHandle.ptr += 5 * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        mpDevice->CreateShaderResourceView(mpVerticesBuffer, &srvDesc, srvHandle);
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        mpDevice->CreateShaderResourceView(mpVerticesBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("VerticesData"));
     }
 
     // 7. HDR
@@ -621,12 +578,14 @@ void TutorialPathTracer::createShaderResources()
     createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev");
     createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev");
 
-    textureStartHeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    mpSrvUavHeapCount = textureStartHeapOffset;
+    // textureStartHeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    // mpSrvUavHeapCount = textureStartHeapOffset;
 }
 
 void TutorialPathTracer::createTextureShaderResources()
 {
+    mpTextureStartHandle = mSrvUavHeap->getLastGPUHandle();
+
     mpTextureBuffers.resize(scene->textures.size());
     for (int i = 0; i < scene->textures.size(); i++)
     {
@@ -692,17 +651,13 @@ void TutorialPathTracer::createTextureShaderResources()
 
         // 4. SRV Descriptor
         // D3D12_CPU_DESCRIPTOR_HANDLE handle = m_pSRV->GetCPUDescriptorHandleForHeapStart();
-        D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-        descriptorHandle.ptr += mpSrvUavHeapCount * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        texture->descriptorHandleOffset = mpSrvUavHeapCount;
-        mpSrvUavHeapCount++;
-
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srvDesc.Format = texture->textureImage->GetMetadata().format;
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
         srvDesc.Texture2D.MipLevels = 1;
-        mpDevice->CreateShaderResourceView(mpTextureBuffers[i], &srvDesc, descriptorHandle);
+
+        mpDevice->CreateShaderResourceView(mpTextureBuffers[i], &srvDesc, mSrvUavHeap->addDescriptorHandle(texture->name.c_str()));
     }
 }
 
@@ -788,14 +743,10 @@ void TutorialPathTracer::onFrameRender()
 
 
     // mpSrvUavHeap 2,3,4,5
-    D3D12_GPU_DESCRIPTOR_HANDLE g_SceneMeshInfo = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
-    g_SceneMeshInfo.ptr += 2 * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    mpCmdList->SetComputeRootDescriptorTable(2, g_SceneMeshInfo);//2 at createGlobalRootDesc
+    mpCmdList->SetComputeRootDescriptorTable(2, mSrvUavHeap->getGPUHandleByName("MaterialData"));//2 at createGlobalRootDesc
 
     // UAV
-    D3D12_GPU_DESCRIPTOR_HANDLE g_SceneOutput = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
-    g_SceneOutput.ptr += 6 * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    mpCmdList->SetComputeRootDescriptorTable(3, g_SceneOutput);//3 at createGlobalRootDesc
+    mpCmdList->SetComputeRootDescriptorTable(3, mSrvUavHeap->getGPUHandleByName("gOutputHDR"));//3 at createGlobalRootDesc
 
 
     // Dispatch
@@ -828,19 +779,20 @@ void TutorialPathTracer::initPostProcess()
     postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
 
     svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
-    svgfPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount);
+    svgfPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
 
     tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
-    tonemapPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount);
+    // tonemapPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
 }
 
 void TutorialPathTracer::postProcess(int rtvIndex)
 {
-    const float clearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    postProcessQuad->bind(mpCmdList);
+    map<string, D3D12_GPU_DESCRIPTOR_HANDLE> & gpuHandlesMap = mSrvUavHeap->getGPUHandleMap();
 
+    postProcessQuad->bind(mpCmdList);
     svgfPass->setViewPort(mpCmdList);
     svgfPass->forward(mpCmdList, gpuHandlesMap, outputUAVBuffers, mpCameraConstantBuffer);
+
     D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
     tonemapPass->forward(mpCmdList, inputHandle, mFrameObjects[rtvIndex].rtvHandle, mFrameObjects[rtvIndex].pSwapChainBuffer);
 
@@ -1020,7 +972,7 @@ void TutorialPathTracer::update()
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
     //Scene* scene = new Scene("material-testball");
-    //Scene* scene = new Scene("cornell-box");
+    // Scene* scene = new Scene("cornell-box");
     //Scene* scene = new Scene("kitchen");
     //Scene* scene = new Scene("living-room-2");
     Scene* scene = new Scene("staircase");

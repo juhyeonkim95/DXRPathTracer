@@ -9,5 +9,6 @@ public:
 	int width, height, nrChannels;
 	unsigned char* data;
 	std::unique_ptr<ScratchImage> textureImage;
-	uint32_t descriptorHandleOffset;
+	// uint32_t descriptorHandleOffset;
+	std::string name;
 };

@@ -7,6 +7,8 @@
 #include <fstream>
 #include "SVGFPass.h"
 #include "ToneMapper.h"
+#include "HeapData.h"
+
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -49,13 +51,15 @@ private:
 
 
     // Heap data
-    struct HeapData
-    {
-        ID3D12DescriptorHeapPtr pHeap;
-        uint32_t usedEntries = 0;
-    };
-    HeapData mRtvHeap;
+    HeapData *mRtvHeap;
     static const uint32_t kRtvHeapSize = 30;
+    HeapData *mSrvUavHeap;
+
+    //ID3D12DescriptorHeapPtr mpSrvUavHeap;
+    //static const uint32_t kSrvUavHeapSize = 2;
+    //uint32_t mpSrvUavHeapCount = 0;
+    //D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
+
 
     void createAccelerationStructures();
     AccelerationStructureBuffers createTopLevelAccelerationStructure();
@@ -79,14 +83,8 @@ private:
     void createTextureShaderResources();
 
     std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
-    std::map<string, int> mSrvHeapIndexMap;
-    std::map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandlesMap;
-
-
-    ID3D12DescriptorHeapPtr mpSrvUavHeap;
-    static const uint32_t kSrvUavHeapSize = 2;
-    uint32_t mpSrvUavHeapCount = 0;
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
+    //std::map<string, int> mSrvHeapIndexMap;
+    //std::map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandlesMap;
 
     ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
     ID3D12ResourcePtr mpMaterialBuffer = nullptr;
@@ -97,7 +95,9 @@ private:
     ID3D12ResourcePtr mpIndicesBuffer = nullptr;
     ID3D12ResourcePtr mpVerticesBuffer = nullptr;
     std::vector<ID3D12ResourcePtr> mpTextureBuffers;
-    int textureStartHeapOffset;
+    D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;
+
+    // int textureStartHeapOffset;
 
     IDirectInput8A* mpInput = 0;
     IDirectInputDevice8A* mpKeyboard = 0;

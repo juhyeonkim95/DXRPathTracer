@@ -49,11 +49,11 @@
     <Filter Include="SVGF">
       <UniqueIdentifier>{db1ceff4-1119-42fc-b621-6208e3832b51}</UniqueIdentifier>
     </Filter>
-    <Filter Include="External\Emitter">
-      <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tonemapper">
       <UniqueIdentifier>{1ea8afc7-c8ea-4a39-99e7-071519a48a88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emitter">
+      <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +132,9 @@
     <ClCompile Include="ToneMapper.cpp">
       <Filter>Tonemapper</Filter>
     </ClCompile>
+    <ClCompile Include="HeapData.cpp">
+      <Filter>dx12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PathTracer.h">
@@ -201,7 +204,7 @@
       <Filter>Shape</Filter>
     </ClInclude>
     <ClInclude Include="Emitter.h">
-      <Filter>External\Emitter</Filter>
+      <Filter>Emitter</Filter>
     </ClInclude>
     <ClInclude Include="light_utils.h">
       <Filter>Utils</Filter>

@@ -1,5 +1,6 @@
 #pragma once
 #include "PostProcessPass.h"
+#include "HeapData.h"
 
 struct WaveletShaderParameters
 {
@@ -18,10 +19,8 @@ public:
 		ID3D12ResourcePtr mpCameraConstantBuffer
 	);
 	void createRenderTextures(
-		ID3D12DescriptorHeapPtr pRTVHeap,
-		uint32_t& usedRTVHeapEntries,
-		ID3D12DescriptorHeapPtr pSRVHeap,
-		uint32_t& usedSRVHeapEntries);
+		HeapData *rtvHeap,
+		HeapData *srvHeap);
 
 	Shader* motionVectorShader;
 	Shader* temporalAccumulationShader;

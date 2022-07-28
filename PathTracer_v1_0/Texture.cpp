@@ -49,6 +49,7 @@ Texture::Texture(const char* filePath)
 	//std::cout << "Width: " << width << std::endl;
 	//std::cout << "Height: " << height << std::endl;
 	//std::cout << "Channel: " << nrChannels << std::endl;
+    this->name = filePath;
     std::string ext = getFileExt(std::string(filePath));
 	TEX_FILTER_FLAGS dwFilter = TEX_FILTER_DEFAULT;
 	WIC_FLAGS wicFlags = WIC_FLAGS_NONE | dwFilter;
