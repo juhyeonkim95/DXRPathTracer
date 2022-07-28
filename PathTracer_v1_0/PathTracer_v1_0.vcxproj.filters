@@ -28,9 +28,6 @@
     <Filter Include="Shape">
       <UniqueIdentifier>{16973aef-102b-41df-af66-266316fa621b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Emitter">
-      <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{39e921ed-9403-49df-86fa-32acda58320e}</UniqueIdentifier>
     </Filter>
@@ -51,6 +48,12 @@
     </Filter>
     <Filter Include="SVGF">
       <UniqueIdentifier>{db1ceff4-1119-42fc-b621-6208e3832b51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\Emitter">
+      <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tonemapper">
+      <UniqueIdentifier>{1ea8afc7-c8ea-4a39-99e7-071519a48a88}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +129,9 @@
     <ClCompile Include="DX12Initializer.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
+    <ClCompile Include="ToneMapper.cpp">
+      <Filter>Tonemapper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PathTracer.h">
@@ -195,7 +201,7 @@
       <Filter>Shape</Filter>
     </ClInclude>
     <ClInclude Include="Emitter.h">
-      <Filter>Emitter</Filter>
+      <Filter>External\Emitter</Filter>
     </ClInclude>
     <ClInclude Include="light_utils.h">
       <Filter>Utils</Filter>
@@ -224,7 +230,7 @@
     <ClInclude Include="DxilLibrary.h">
       <Filter>dx12</Filter>
     </ClInclude>
-    <ClInclude Include="PostProcessing.h">
+    <ClInclude Include="PostProcessPass.h">
       <Filter>Postprocessing</Filter>
     </ClInclude>
     <ClInclude Include="RenderTexture.h">
@@ -238,6 +244,9 @@
     </ClInclude>
     <ClInclude Include="HeapData.h">
       <Filter>dx12</Filter>
+    </ClInclude>
+    <ClInclude Include="ToneMapper.h">
+      <Filter>Tonemapper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -279,9 +288,6 @@
     <FxCompile Include="QuadVertexShader.hlsl">
       <Filter>Postprocessing</Filter>
     </FxCompile>
-    <FxCompile Include="Tonemap.hlsl">
-      <Filter>Postprocessing</Filter>
-    </FxCompile>
     <FxCompile Include="CopyShader.hlsl">
       <Filter>Postprocessing</Filter>
     </FxCompile>
@@ -302,6 +308,9 @@
     </FxCompile>
     <FxCompile Include="SVGFFilterVariance.hlsl">
       <Filter>SVGF</Filter>
+    </FxCompile>
+    <FxCompile Include="Tonemap.hlsl">
+      <Filter>Tonemapper</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

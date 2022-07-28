@@ -973,16 +973,14 @@ void TutorialPathTracer::initPostProcess()
     
     // this->depthDerivativeShader = new Shader(L"VertexShader.hlsl", L"DepthDerivative.hlsl", mpDevice, 1);
 
-    //this->motionVectorShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFMotionVector.hlsl", mpDevice, 5);
-    //this->temporalAccumulationShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFTemporalAccumulation.hlsl", mpDevice, 5);
-    //this->waveletShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFATrousWavelet.hlsl", mpDevice, 3);
-    //this->reconstructionShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFReconstruction.hlsl", mpDevice, 4);
-
     this->defaultCopyShader = new Shader(L"QuadVertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
-    this->tonemapShader = new Shader(L"QuadVertexShader.hlsl", L"Tonemap.hlsl", mpDevice, 1);
+    //this->tonemapShader = new Shader(L"QuadVertexShader.hlsl", L"Tonemap.hlsl", mpDevice, 1);
 
     svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
     svgfPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount);
+
+    tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
+    tonemapPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount);
 }
 
 void TutorialPathTracer::postProcess(int rtvIndex)
@@ -1009,21 +1007,8 @@ void TutorialPathTracer::postProcess(int rtvIndex)
 
 
     svgfPass->forward(mpCmdList, gpuHandlesMap, outputUAVBuffers, mpCameraConstantBuffer);
-
-    // (5) Render to default & tonemap !!
-    mpCmdList->SetPipelineState(tonemapShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(tonemapShader->getRootSignature()); // set the root signature
-
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->OMSetRenderTargets(1, &mFrameObjects[rtvIndex].rtvHandle, FALSE, nullptr);
-    mpCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
-
-    mpCmdList->SetGraphicsRootDescriptorTable(1, svgfPass->reconstructionRenderTexture->getGPUSrvHandler());
-    // mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(waveletDirect[waveletDirect.size() - 1]->mSrvDescriptorHandleOffset));
-    // mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandler(temporalAccumulationTextureDirect->mSrvDescriptorHandleOffset));
-    // mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gDirectIllumination"));
-
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
+    D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
+    tonemapPass->forward(mpCmdList, inputHandle, mFrameObjects[rtvIndex].rtvHandle, mFrameObjects[rtvIndex].pSwapChainBuffer);
 
     resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshIDPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);

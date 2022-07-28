@@ -6,6 +6,7 @@
 #include <dinput.h>
 #include <fstream>
 #include "SVGFPass.h"
+#include "ToneMapper.h"
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -86,11 +87,6 @@ private:
     static const uint32_t kSrvUavHeapSize = 2;
     uint32_t mpSrvUavHeapCount = 0;
 
-    //D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandler(int index);
-    //D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandlerByName(const char* name);
-
-
-    //void createConstantBuffer();
     ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
     ID3D12ResourcePtr mpMaterialBuffer = nullptr;
     ID3D12ResourcePtr mpGeometryInfoBuffer = nullptr;
@@ -102,8 +98,6 @@ private:
     ID3D12ResourcePtr mpVerticesBuffer = nullptr;
     std::vector<ID3D12ResourcePtr> mpTextureBuffers;
     int textureStartHeapOffset;
-
-    //std::vector<ID3D12ResourcePtr> mpMaterialConstantBuffer;
 
     IDirectInput8A* mpInput = 0;
     IDirectInputDevice8A* mpKeyboard = 0;
@@ -126,39 +120,12 @@ private:
     void createSRVTexture(DXGI_FORMAT format, std::string name);
 
     D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
+    
     SVGFPass* svgfPass;
-    /*RenderTexture *motionVectorRenderTexture;
-    RenderTexture *historyLengthRenderTexture;
-
-    Shader* depthDerivativeShader;
-    RenderTexture *depthDerivativeRenderTexture;
-
-    Shader* motionVectorShader;
-
-    RenderTexture* temporalAccumulationTextureDirect;
-    RenderTexture* temporalAccumulationTextureDirectMoment;
-
-    RenderTexture* temporalAccumulationTextureIndirect;
-    RenderTexture* temporalAccumulationTextureIndirectMoment;
-
-
-    Shader* temporalAccumulationShader;
-
-    Shader* reconstructionShader;
-    RenderTexture* reconstructionRenderTexture;
-
-    vector<RenderTexture*> waveletDirect;
-    vector<RenderTexture*> waveletIndirect;
-    int waveletCount = 3;
-    Shader* waveletShader;*/
-
+    ToneMapper* tonemapPass;
 
     Shader* defaultCopyShader;
-    //void copyRenderTexture(RenderTexture* dest, RenderTexture* source);
 
-    Shader* tonemapShader;
-
-    // RenderTexture renderTexture;
 
     // PostProcessing
     // ID3D12RootSignature* postProcessRootSignature;

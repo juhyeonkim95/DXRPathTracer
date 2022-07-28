@@ -4,16 +4,13 @@
 #include "DX12Helper.h"
 
 SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size)
+    : PostProcessPass(mpDevice, size)
 {
-	this->mpDevice = mpDevice;
-
     // Create Shaders
     this->motionVectorShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFMotionVector.hlsl", mpDevice, 5);
     this->temporalAccumulationShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFTemporalAccumulation.hlsl", mpDevice, 5);
     this->waveletShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFATrousWavelet.hlsl", mpDevice, 3);
     this->reconstructionShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFReconstruction.hlsl", mpDevice, 4);
-
-    this->size = size;
 }
 
 void SVGFPass::createRenderTextures(

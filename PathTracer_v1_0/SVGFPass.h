@@ -1,10 +1,5 @@
 #pragma once
-#include "Shader.h"
-#include "Framework.h"
-#include "RenderTexture.h"
-#include <map>
-
-using namespace std;
+#include "PostProcessPass.h"
 
 struct WaveletShaderParameters
 {
@@ -12,7 +7,7 @@ struct WaveletShaderParameters
 	vec2 texelSize;
 };
 
-class SVGFPass
+class SVGFPass : public PostProcessPass
 {
 public:
 	SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size);
@@ -27,9 +22,6 @@ public:
 		uint32_t& usedRTVHeapEntries,
 		ID3D12DescriptorHeapPtr pSRVHeap,
 		uint32_t& usedSRVHeapEntries);
-
-	ID3D12Device5Ptr mpDevice;
-	uvec2 size;
 
 	Shader* motionVectorShader;
 	Shader* temporalAccumulationShader;
