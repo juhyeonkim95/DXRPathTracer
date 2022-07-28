@@ -981,8 +981,8 @@ void TutorialPathTracer::initPostProcess()
     this->defaultCopyShader = new Shader(L"QuadVertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
     this->tonemapShader = new Shader(L"QuadVertexShader.hlsl", L"Tonemap.hlsl", mpDevice, 1);
 
-    svgfPass = new SVGFPass(mpDevice);
-    svgfPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount, mSwapChainSize);
+    svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
+    svgfPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount);
 }
 
 void TutorialPathTracer::postProcess(int rtvIndex)

@@ -3,7 +3,7 @@
 #include "DX12Initializer.h"
 #include "DX12Helper.h"
 
-SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice)
+SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size)
 {
 	this->mpDevice = mpDevice;
 
@@ -12,14 +12,15 @@ SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice)
     this->temporalAccumulationShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFTemporalAccumulation.hlsl", mpDevice, 5);
     this->waveletShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFATrousWavelet.hlsl", mpDevice, 3);
     this->reconstructionShader = new Shader(L"QuadVertexShader.hlsl", L"SVGFReconstruction.hlsl", mpDevice, 4);
+
+    this->size = size;
 }
 
 void SVGFPass::createRenderTextures(
     ID3D12DescriptorHeapPtr pRTVHeap,
     uint32_t& usedRTVHeapEntries,
     ID3D12DescriptorHeapPtr pSRVHeap,
-    uint32_t& usedSRVHeapEntries,
-    uvec2 size)
+    uint32_t& usedSRVHeapEntries)
 {
 
     motionVectorRenderTexture = createRenderTexture(mpDevice, pRTVHeap, usedRTVHeapEntries, pSRVHeap, usedSRVHeapEntries, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -155,6 +156,7 @@ void SVGFPass::forward(
         }
         WaveletShaderParameters waveletParam;
         waveletParam.level = i;
+        waveletParam.texelSize = vec2(1.0f / size.x, 1.0f / size.y);
 
         uint8_t* pData;
         d3d_call(mpWaveletParameterBuffer->Map(0, nullptr, (void**)&pData));
@@ -185,7 +187,8 @@ void SVGFPass::forward(
         }
         WaveletShaderParameters waveletParam;
         waveletParam.level = i;
-        waveletParam.texelSize = vec2(1.0f / this->width, 1.0f / this->height);
+        waveletParam.texelSize = vec2(1.0f / size.x, 1.0f / size.y);
+
         uint8_t* pData;
         d3d_call(mpWaveletParameterBuffer->Map(0, nullptr, (void**)&pData));
         memcpy(pData, &waveletParam, sizeof(WaveletShaderParameters));

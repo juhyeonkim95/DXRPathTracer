@@ -15,7 +15,7 @@ struct WaveletShaderParameters
 class SVGFPass
 {
 public:
-	SVGFPass(ID3D12Device5Ptr mpDevice);
+	SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size);
 	void forward(
 		ID3D12GraphicsCommandList4Ptr mpCmdList,
 		map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandles,
@@ -26,10 +26,10 @@ public:
 		ID3D12DescriptorHeapPtr pRTVHeap,
 		uint32_t& usedRTVHeapEntries,
 		ID3D12DescriptorHeapPtr pSRVHeap,
-		uint32_t& usedSRVHeapEntries,
-		uvec2 size);
+		uint32_t& usedSRVHeapEntries);
 
 	ID3D12Device5Ptr mpDevice;
+	uvec2 size;
 
 	Shader* motionVectorShader;
 	Shader* temporalAccumulationShader;
@@ -50,8 +50,6 @@ public:
 	int waveletCount = 3;
 
 	RenderTexture* reconstructionRenderTexture;
-	int width;
-	int height;
 
 	ID3D12ResourcePtr mpWaveletParameterBuffer = nullptr;
 };
