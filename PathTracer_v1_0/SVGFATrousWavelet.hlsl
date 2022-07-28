@@ -1,22 +1,14 @@
-Texture2D gColorVariance : register(t0);
-Texture2D gNormal : register(t1);
-Texture2D gPositionMeshID : register(t2);
+#include "SVGFCommon.hlsli"
 
 SamplerState s1 : register(s0);
 
 static const int support = 2;
-static const float sigmaP = 1.0;
-static const float sigmaN = 128.0;
-static const float sigmaL = 4.0;
-
-static const float epsilon = 0.00001;
 
 cbuffer ConstantBuffer : register(b0)
 {
     int level;
     float2 texelSize;
 };
-
 
 static const float h[25] = { 1.0 / 256.0, 1.0 / 64.0, 3.0 / 128.0, 1.0 / 64.0, 1.0 / 256.0,
     1.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 16.0, 1.0 / 64.0,
@@ -55,6 +47,14 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float v = 0.0f;
     float weights = 0.0f;
 
+    float var = 0.0;
+    for (int y0 = -1; y0 <= 1; y0++) {
+        for (int x0 = -1; x0 <= 1; x0++) {
+            var += gaussKernel[x0 + 3 * y0 + 4] * gColorVariance.Sample(s1, input.texCoord + float2(x0, y0) * texelSize).a;
+        }
+    }
+    float customSigmaL = (sigmaL * sqrt(var) + epsilon);
+
     for (int offsetx = -support; offsetx <= support; offsetx++) {
         for (int offsety = -support; offsety <= support; offsety++) {
             float2 loc = input.texCoord + texelSize * float2(offsetx, offsety) * step;
@@ -70,22 +70,8 @@ float4 main(VS_OUTPUT input) : SV_TARGET
                 float qVariance = gColorVariance.Sample(s1, loc).a;
                 float qLuminance = luma(qColor);
 
-                float3 t = pPosition - qPosition;
-                float dist2 = dot(t, t) + t.z * t.z;
-                float wp = min(exp(-(dist2 / sigmaP)), 1.0);
+                float w = calculateWeight(pPosition, qPosition, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
-                float wn = pow(max(0.0, dot(pNormal, qNormal)), sigmaN);
-
-                float gvl = 0.001;
-                for (int y0 = -1; y0 <= 1; y0++) {
-                    for (int x0 = -1; x0 <= 1; x0++) {
-                        gvl += gaussKernel[x0 + 3 * y0 + 4] * gColorVariance.Sample(s1, loc + float2(x0, y0) * texelSize).a;
-                    }
-                }
-
-                float wl = min(1.0, exp(-abs(pLuminance - qLuminance) / (sigmaL * sqrt(gvl) + epsilon) ));
-
-                float w = wp * wn * wl;
                 float weight = h[5 * (offsety + support) + offsetx + support] * w;
 
                 c += weight * qColor;

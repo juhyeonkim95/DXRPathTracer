@@ -49,6 +49,9 @@
     <Filter Include="Postprocessing">
       <UniqueIdentifier>{277b88d6-4151-4953-8ff5-8c5720551f11}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SVGF">
+      <UniqueIdentifier>{db1ceff4-1119-42fc-b621-6208e3832b51}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PathTracer.cpp">
@@ -116,6 +119,12 @@
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SVGFPass.cpp">
+      <Filter>SVGF</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Initializer.cpp">
+      <Filter>dx12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -224,6 +233,12 @@
     <ClInclude Include="Shader.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
+    <ClInclude Include="SVGFPass.h">
+      <Filter>SVGF</Filter>
+    </ClInclude>
+    <ClInclude Include="HeapData.h">
+      <Filter>dx12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\ShaderUtils.hlsli">
@@ -253,37 +268,40 @@
     <None Include="..\WorkProgress.md">
       <Filter>markdown</Filter>
     </None>
+    <None Include="SVGFCommon.hlsli">
+      <Filter>SVGF</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Data\TutorialShader.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="Wavelet.hlsl">
-      <Filter>Postprocessing</Filter>
-    </FxCompile>
-    <FxCompile Include="VertexShader.hlsl">
+    <FxCompile Include="QuadVertexShader.hlsl">
       <Filter>Postprocessing</Filter>
     </FxCompile>
     <FxCompile Include="Tonemap.hlsl">
       <Filter>Postprocessing</Filter>
     </FxCompile>
-    <FxCompile Include="MotionVector.hlsl">
-      <Filter>Postprocessing</Filter>
-    </FxCompile>
-    <FxCompile Include="TemporalAccumulation.hlsl">
-      <Filter>Postprocessing</Filter>
-    </FxCompile>
     <FxCompile Include="CopyShader.hlsl">
-      <Filter>Postprocessing</Filter>
-    </FxCompile>
-    <FxCompile Include="Reconstruction.hlsl">
-      <Filter>Postprocessing</Filter>
-    </FxCompile>
-    <FxCompile Include="FilterVariance.hlsl">
       <Filter>Postprocessing</Filter>
     </FxCompile>
     <FxCompile Include="DepthDerivative.hlsl">
       <Filter>Postprocessing</Filter>
+    </FxCompile>
+    <FxCompile Include="SVGFMotionVector.hlsl">
+      <Filter>SVGF</Filter>
+    </FxCompile>
+    <FxCompile Include="SVGFReconstruction.hlsl">
+      <Filter>SVGF</Filter>
+    </FxCompile>
+    <FxCompile Include="SVGFTemporalAccumulation.hlsl">
+      <Filter>SVGF</Filter>
+    </FxCompile>
+    <FxCompile Include="SVGFATrousWavelet.hlsl">
+      <Filter>SVGF</Filter>
+    </FxCompile>
+    <FxCompile Include="SVGFFilterVariance.hlsl">
+      <Filter>SVGF</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

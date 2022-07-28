@@ -5,8 +5,7 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <fstream>
-#include "Shader.h"
-
+#include "SVGFPass.h"
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -80,13 +79,15 @@ private:
 
     std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
     std::map<string, int> mSrvHeapIndexMap;
+    std::map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandlesMap;
 
 
     ID3D12DescriptorHeapPtr mpSrvUavHeap;
     static const uint32_t kSrvUavHeapSize = 2;
-    int mpSrvUavHeapCount = 0;
-    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandler(int index);
-    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandlerByName(const char* name);
+    uint32_t mpSrvUavHeapCount = 0;
+
+    //D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandler(int index);
+    //D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandlerByName(const char* name);
 
 
     //void createConstantBuffer();
@@ -125,12 +126,8 @@ private:
     void createSRVTexture(DXGI_FORMAT format, std::string name);
 
     D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
-
-    RenderTexture *createRenderTexture(DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
-    void createRenderTextures();
-    
-
-    RenderTexture *motionVectorRenderTexture;
+    SVGFPass* svgfPass;
+    /*RenderTexture *motionVectorRenderTexture;
     RenderTexture *historyLengthRenderTexture;
 
     Shader* depthDerivativeShader;
@@ -152,12 +149,12 @@ private:
 
     vector<RenderTexture*> waveletDirect;
     vector<RenderTexture*> waveletIndirect;
-    int waveletCount = 2;
-    Shader* waveletShader;
+    int waveletCount = 3;
+    Shader* waveletShader;*/
 
 
     Shader* defaultCopyShader;
-    void copyRenderTexture(RenderTexture* dest, RenderTexture* source);
+    //void copyRenderTexture(RenderTexture* dest, RenderTexture* source);
 
     Shader* tonemapShader;
 

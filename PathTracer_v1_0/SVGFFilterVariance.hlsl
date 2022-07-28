@@ -24,7 +24,7 @@ float4 main(VS_OUTPUT input) : SV_Target
     float2 uv = input.texCoord;
 
     float historyLength = gHistoryLength.Sample(s1, uv).x;
-    float2 texelSize = float();
+    float2 texelSize = float(1 / 720.0f, 1 / 1280.0f);
 
     if (historyLength < 4.0) {
         float sumWIllumination = 0.0;
@@ -59,7 +59,6 @@ float4 main(VS_OUTPUT input) : SV_Target
                     const float3 luminanceP = luminance(illuminationP);
                     const float zP = gNormalDepth.Sample(s1, p).w;
                     const float nP = gNormalDepth.Sample(s1, p).rgb;
-
                 }
             }
         }

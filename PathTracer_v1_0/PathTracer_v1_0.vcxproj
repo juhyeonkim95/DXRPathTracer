@@ -159,6 +159,7 @@
     <ClCompile Include="Dielectric.cpp" />
     <ClCompile Include="Diffuse.cpp" />
     <ClCompile Include="DX12Helper.cpp" />
+    <ClCompile Include="DX12Initializer.cpp" />
     <ClCompile Include="light_utils.cpp" />
     <ClCompile Include="loader_utils.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -176,6 +177,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Shape.cpp" />
+    <ClCompile Include="SVGFPass.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="ThinDielectric.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
@@ -190,6 +192,7 @@
     <ClInclude Include="DX12Initializer.h" />
     <ClInclude Include="DxilLibrary.h" />
     <ClInclude Include="Emitter.h" />
+    <ClInclude Include="HeapData.h" />
     <ClInclude Include="HlslCompat.h" />
     <ClInclude Include="light_utils.h" />
     <ClInclude Include="loader_bsdf.h" />
@@ -212,6 +215,7 @@
     <ClInclude Include="Shape.h" />
     <ClInclude Include="SharedTypes.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="SVGFPass.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="ThinDielectric.h" />
     <ClInclude Include="tinyxml2.h" />
@@ -220,6 +224,9 @@
   <ItemGroup>
     <None Include="..\README.md" />
     <None Include="..\WorkProgress.md" />
+    <None Include="SVGFCommon.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="Data\BSDF.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
@@ -252,25 +259,25 @@
     <FxCompile Include="DepthDerivative.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="FilterVariance.hlsl">
+    <FxCompile Include="SVGFFilterVariance.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="Reconstruction.hlsl">
+    <FxCompile Include="SVGFReconstruction.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="Tonemap.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="MotionVector.hlsl">
+    <FxCompile Include="SVGFMotionVector.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="Wavelet.hlsl">
+    <FxCompile Include="SVGFATrousWavelet.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="TemporalAccumulation.hlsl">
+    <FxCompile Include="SVGFTemporalAccumulation.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="VertexShader.hlsl">
+    <FxCompile Include="QuadVertexShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>

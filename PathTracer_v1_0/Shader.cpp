@@ -16,7 +16,7 @@ void Shader::compileShaderFile(const wchar_t* vertexShaderPath, const wchar_t* p
     ID3DBlob* errorBuff; // a buffer holding the error data if any
     hr = D3DCompileFromFile(vertexShaderPath,
         nullptr,
-        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
         "main",
         "vs_5_0",
         D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
@@ -38,7 +38,7 @@ void Shader::compileShaderFile(const wchar_t* vertexShaderPath, const wchar_t* p
     ID3DBlob* pixelShader;
     hr = D3DCompileFromFile(pixelShaderPath,
         nullptr,
-        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
         "main",
         "ps_5_0",
         D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,

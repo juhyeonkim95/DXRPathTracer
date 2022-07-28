@@ -74,6 +74,9 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     else if (distance(normal, previousNormal) > 1e-1f) {
         consistency = false;
     }
+    bool outside = (prevPixel.x < 0) || (prevPixel.x > 1) || (prevPixel.y < 0) || (prevPixel.y > 1);
+    consistency = !outside && (meshID == previousMeshID) && (dot(normal, previousNormal) > sqrt(2) / 2.0);
+
 
     float historyLength = gHistoryLength.Sample(s1, prevPixel).r;
     historyLength = min(32.0f, (consistency ? (historyLength + 1.0f) : 1.0f));

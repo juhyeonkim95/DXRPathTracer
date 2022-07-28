@@ -99,3 +99,8 @@ About x1.5 speed up!
 ## 20220726
 - SVGF v1.0 implemented.
 - Visible artifacts exist --> need to correct it.
+
+## 20220727
+- Trying to resolve artifacts
+- Material specific problem --> do not demodulate non-diffuse materials.
+- Temporal unstability --> improved by adopting historyLength instead of fixed value (0.2)

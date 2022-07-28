@@ -55,6 +55,10 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.direct = float3(0, 0, 0);
     pathResult.reflectance = payload.attenuation;
 
+    if (g_materialinfo[payload.materialIndex].materialType != BSDF_TYPE_DIFFUSE) {
+        pathResult.reflectance = float3(1, 1, 1);
+    }
+
 #if USE_NEXT_EVENT_ESTIMATION
     LightSample lightSample;
     RayDesc shadowRay;
