@@ -1,14 +1,11 @@
 #include "SVGFCommon.hlsli"
+Texture2D gColorVariance : register(t0);
+Texture2D gNormal : register(t1);
+Texture2D gPositionMeshID : register(t2);
 
 SamplerState s1 : register(s0);
 
 static const int support = 2;
-
-cbuffer ConstantBuffer : register(b0)
-{
-    int level;
-    float2 texelSize;
-};
 
 static const float h[25] = { 1.0 / 256.0, 1.0 / 64.0, 3.0 / 128.0, 1.0 / 64.0, 1.0 / 256.0,
     1.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 16.0, 1.0 / 64.0,
@@ -17,9 +14,7 @@ static const float h[25] = { 1.0 / 256.0, 1.0 / 64.0, 3.0 / 128.0, 1.0 / 64.0, 1
     1.0 / 256.0, 1.0 / 64.0, 3.0 / 128.0, 1.0 / 64.0, 1.0 / 256.0 };
 static const float gaussKernel[9] = { 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 4.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0 };
 
-float luma(float3 c) {
-    return dot(c, float3(0.2126, 0.7152, 0.0722));
-}
+
 
 bool eps_equal(float a, float b) {
     return round(a) == round(b);

@@ -86,13 +86,13 @@ private:
     ID3D12DescriptorHeapPtr mpSrvUavHeap;
     static const uint32_t kSrvUavHeapSize = 2;
     uint32_t mpSrvUavHeapCount = 0;
+    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
 
     ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
     ID3D12ResourcePtr mpMaterialBuffer = nullptr;
     ID3D12ResourcePtr mpGeometryInfoBuffer = nullptr;
     ID3D12ResourcePtr mpLightParametersBuffer = nullptr;
     ID3D12ResourcePtr mpWaveletParameterBuffer = nullptr;
-
 
     ID3D12ResourcePtr mpIndicesBuffer = nullptr;
     ID3D12ResourcePtr mpVerticesBuffer = nullptr;
@@ -118,22 +118,12 @@ private:
 
     void createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth = 1);
     void createSRVTexture(DXGI_FORMAT format, std::string name);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
     
+    // Post processing
+    PostProcessQuad* postProcessQuad;
     SVGFPass* svgfPass;
     ToneMapper* tonemapPass;
 
     Shader* defaultCopyShader;
-
-
-    // PostProcessing
-    // ID3D12RootSignature* postProcessRootSignature;
-    D3D12_VIEWPORT viewport; // area that output from rasterizer will be stretched to.
-    D3D12_RECT scissorRect; // the area to draw in. pixels outside that area will not be drawn onto
-    // ID3D12PipelineState* pipelineStateObject; // pso containing a pipeline state
-    ID3D12Resource* vertexBuffer; // a default buffer in GPU memory that we will load vertex data for our triangle into
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
-                                               // the total size of the buffer, and the size of each element (vertex)
 
 };

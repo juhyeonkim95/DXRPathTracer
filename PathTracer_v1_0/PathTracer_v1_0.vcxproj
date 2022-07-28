@@ -166,8 +166,8 @@
     <ClCompile Include="PathTracer.cpp" />
     <ClCompile Include="Perspective.cpp" />
     <ClCompile Include="Plastic.cpp" />
-    <ClCompile Include="PostProcessing.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    <ClCompile Include="PostProcessPass.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="RenderTexture.cpp" />

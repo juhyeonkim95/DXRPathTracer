@@ -621,31 +621,6 @@ void TutorialPathTracer::createShaderResources()
     createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev");
     createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev");
 
-    createSRVTexture(DXGI_FORMAT_R16_FLOAT, "gHistoryLengthPrev");
-
-    // 15, 16, 17, 18 direct / indirect prev
-    createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIlluminationColorHistory");
-    createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIlluminationMomentHistory");
-    createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIlluminationColorHistory");
-    createSRVTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIlluminationMomentHistory");
-
-    // HDR
-    // createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "HDR", 4);
-    
-    // Moment
-    // createUAVBuffer(DXGI_FORMAT_R16G16_FLOAT, "Moment", 4);
-
-    // Normal
-    // createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gOutputNormal", 2);
-
-    // Index
-    //createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputPositionGeomID", 2);
-    // Depth
-    //createUAVBuffer(DXGI_FORMAT_R32_FLOAT, "gOutputDepth", 2);
-
-    // other
-    // createUAVBuffer(DXGI_FORMAT_R32_UINT, "AccumFrameCount");
-
     textureStartHeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     mpSrvUavHeapCount = textureStartHeapOffset;
 }
@@ -731,27 +706,6 @@ void TutorialPathTracer::createTextureShaderResources()
     }
 }
 
-//RenderTexture *TutorialPathTracer::createRenderTexture(DXGI_FORMAT format)
-//{
-//    RenderTexture* renderTexture = new RenderTexture();
-//
-//    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap.pHeap->GetCPUDescriptorHandleForHeapStart();
-//    rtvHandle.ptr += mRtvHeap.usedEntries * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-//    mRtvHeap.usedEntries++;
-//
-//    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-//    srvHandle.ptr += mpSrvUavHeapCount * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-//    
-//    renderTexture->mpDevice = mpDevice;
-//    renderTexture->mRtvDescriptorHandle = rtvHandle;
-//    renderTexture->mSrvDescriptorHandle = srvHandle;
-//    renderTexture->mpSrvHeap = mpSrvUavHeap;
-//    renderTexture->mSrvDescriptorHandleOffset = mpSrvUavHeapCount;
-//    renderTexture->createWithSize(mSwapChainSize.x, mSwapChainSize.y, format);
-//    mpSrvUavHeapCount++;
-//    return renderTexture;
-//}
-
 
 //////////////////////////////////////////////////////////////////////////
 // Callbacks
@@ -791,21 +745,6 @@ void TutorialPathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winH
 
     lastTime = std::chrono::steady_clock::now();
 }
-
-//D3D12_GPU_DESCRIPTOR_HANDLE TutorialPathTracer::getGPUHandler(int index)
-//{
-//    D3D12_GPU_DESCRIPTOR_HANDLE handle = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
-//    handle.ptr += index * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-//    return handle;
-//}
-//D3D12_GPU_DESCRIPTOR_HANDLE TutorialPathTracer::getGPUHandlerByName(const char* name)
-//{
-//    bool notFound = mSrvHeapIndexMap.find(name) == mSrvHeapIndexMap.end();
-//    assert(!notFound);
-//    int index = this->mSrvHeapIndexMap[name];
-//
-//    return getGPUHandler(index);
-//}
 
 void TutorialPathTracer::onFrameRender()
 {
@@ -883,98 +822,10 @@ void TutorialPathTracer::onFrameRender()
 
 void TutorialPathTracer::initPostProcess()
 {
-    // Create vertex buffer
-
-    // a triangle
-    vec3 vList[] = {
-        vec3(1.0f, 1.0f, 0.0f),
-        vec3(1.0f, -1.0f, 0.0f),
-        vec3(-1.0f, -1.0f, 0.0f),
-
-        vec3(-1.0f, -1.0f, 0.0f),
-        vec3(-1.0f, 1.0f, 0.0f),
-        vec3(1.0f, 1.0f, 0.0f),
-    };
-
-    int vBufferSize = sizeof(vList);
-
-    // create default heap
-    // default heap is memory on the GPU. Only the GPU has access to this memory
-    // To get data into this heap, we will have to upload the data using
-    // an upload heap
-    mpDevice->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-        D3D12_HEAP_FLAG_NONE, // no flags
-        &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
-        D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data
-                                        // from the upload heap to this heap
-        nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
-        IID_PPV_ARGS(&vertexBuffer));
-
-    // we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
-    vertexBuffer->SetName(L"Vertex Buffer Resource Heap");
-
-    // create upload heap
-    // upload heaps are used to upload data to the GPU. CPU can write to it, GPU can read from it
-    // We will upload the vertex buffer using this heap to the default heap
-    ID3D12Resource* vBufferUploadHeap;
-    mpDevice->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-        D3D12_HEAP_FLAG_NONE, // no flags
-        &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
-        D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-        nullptr,
-        IID_PPV_ARGS(&vBufferUploadHeap));
-    vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
-
-    // store vertex buffer in upload heap
-    D3D12_SUBRESOURCE_DATA vertexData = {};
-    vertexData.pData = reinterpret_cast<BYTE*>(vList); // pointer to our vertex array
-    vertexData.RowPitch = vBufferSize; // size of all our triangle vertex data
-    vertexData.SlicePitch = vBufferSize; // also the size of our triangle vertex data
-
-    // we are now creating a command with the command list to copy the data from
-    // the upload heap to the default heap
-    UpdateSubresources(mpCmdList, vertexBuffer, vBufferUploadHeap, 0, 0, 1, &vertexData);
-
-    // transition the vertex buffer data from copy destination state to vertex buffer state
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-
-    // Now we execute the command list to upload the initial assets (triangle data)
-    mpCmdList->Close();
-    ID3D12CommandList* ppCommandLists[] = { mpCmdList };
-    mpCmdQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    // increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
-    mFenceValue++;
-    mpCmdQueue->Signal(mpFence, mFenceValue);
-
-    // create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
-    vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-    vertexBufferView.StrideInBytes = sizeof(vec3);
-    vertexBufferView.SizeInBytes = vBufferSize;
-
-    uint Width = this->mSwapChainSize.x;
-    uint Height = this->mSwapChainSize.y;
-
-    // Fill out the Viewport
-    viewport.TopLeftX = 0;
-    viewport.TopLeftY = 0;
-    viewport.Width = Width;
-    viewport.Height = Height;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-
-    // Fill out a scissor rect
-    scissorRect.left = 0;
-    scissorRect.top = 0;
-    scissorRect.right = Width;
-    scissorRect.bottom = Height;
-    
-    // this->depthDerivativeShader = new Shader(L"VertexShader.hlsl", L"DepthDerivative.hlsl", mpDevice, 1);
 
     this->defaultCopyShader = new Shader(L"QuadVertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
-    //this->tonemapShader = new Shader(L"QuadVertexShader.hlsl", L"Tonemap.hlsl", mpDevice, 1);
+
+    postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
 
     svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
     svgfPass->createRenderTextures(mRtvHeap.pHeap, mRtvHeap.usedEntries, mpSrvUavHeap, mpSrvUavHeapCount);
@@ -986,26 +837,9 @@ void TutorialPathTracer::initPostProcess()
 void TutorialPathTracer::postProcess(int rtvIndex)
 {
     const float clearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    
-    mpCmdList->RSSetViewports(1, &viewport); // set the viewports
-    mpCmdList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
-    mpCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
-    mpCmdList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+    postProcessQuad->bind(mpCmdList);
 
-    // (0) depth derivative!
-    //mpCmdList->SetPipelineState(depthDerivativeShader->getPipelineStateObject());
-    //mpCmdList->SetGraphicsRootSignature(depthDerivativeShader->getRootSignature()); // set the root signature
-
-    //mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthDerivativeRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    //
-    //mpCmdList->OMSetRenderTargets(1, &depthDerivativeRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
-
-    //mpCmdList->SetGraphicsRootDescriptorTable(1, getGPUHandlerByName("gNormal"));
-
-    //mpCmdList->DrawInstanced(6, 1, 0, 0);
-    //mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthDerivativeRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-
+    svgfPass->setViewPort(mpCmdList);
     svgfPass->forward(mpCmdList, gpuHandlesMap, outputUAVBuffers, mpCameraConstantBuffer);
     D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
     tonemapPass->forward(mpCmdList, inputHandle, mFrameObjects[rtvIndex].rtvHandle, mFrameObjects[rtvIndex].pSwapChainBuffer);

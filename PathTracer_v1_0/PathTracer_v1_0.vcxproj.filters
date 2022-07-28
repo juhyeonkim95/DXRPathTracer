@@ -114,7 +114,7 @@
     <ClCompile Include="DX12Helper.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcessing.cpp">
+    <ClCompile Include="PostProcessPass.cpp">
       <Filter>Postprocessing</Filter>
     </ClCompile>
     <ClCompile Include="RenderTexture.cpp">

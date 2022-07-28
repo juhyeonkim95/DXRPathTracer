@@ -100,7 +100,22 @@ About x1.5 speed up!
 - SVGF v1.0 implemented.
 - Visible artifacts exist --> need to correct it.
 
+![20220727_svgf_v1_0](assets/20220727_svgf_v1.0.gif)
+
 ## 20220727
 - Trying to resolve artifacts
 - Material specific problem --> do not demodulate non-diffuse materials.
 - Temporal unstability --> improved by adopting historyLength instead of fixed value (0.2)
+
+
+## 20220728
+- Post processing code refactoring
+- SVGF artifact resolving.
+- If pixel has been just disoccluded, it's tend to be so noisy as the figure below.
+![20220728_disoccluded_no_filter](assets/20220728_disoccluded_no_filter.jpg)
+
+- Before applying variance filter
+![20220728_disoccluded_no_filter_video](assets/20220728_disoccluded_no_filter_video.gif)
+
+- After applying variance filter
+![20220728_disoccluded_filter_video](assets/20220728_disoccluded_filter_video.gif)

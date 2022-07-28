@@ -25,17 +25,28 @@ public:
 
 	Shader* motionVectorShader;
 	Shader* temporalAccumulationShader;
+	Shader* varianceFilterShader;
 	Shader* waveletShader;
 	Shader* reconstructionShader;
 
 	RenderTexture* motionVectorRenderTexture;
 	RenderTexture* historyLengthRenderTexture;
+	RenderTexture* historyLengthRenderTexturePrev;
 
 	RenderTexture* temporalAccumulationTextureDirect;
+	RenderTexture* temporalAccumulationTextureDirectPrev;
+
 	RenderTexture* temporalAccumulationTextureDirectMoment;
+	RenderTexture* temporalAccumulationTextureDirectMomentPrev;
 
 	RenderTexture* temporalAccumulationTextureIndirect;
+	RenderTexture* temporalAccumulationTextureIndirectPrev;
+
 	RenderTexture* temporalAccumulationTextureIndirectMoment;
+	RenderTexture* temporalAccumulationTextureIndirectMomentPrev;
+
+	RenderTexture* temporalAccumulationTextureDirectVarianceFilter;
+	RenderTexture* temporalAccumulationTextureIndirectVarianceFilter;
 
 	vector<RenderTexture*> waveletDirect;
 	vector<RenderTexture*> waveletIndirect;

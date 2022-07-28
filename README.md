@@ -1,6 +1,21 @@
 # DXRPathTracer
 This is a real-time path tracer based on DirectX RayTracing.
-Daily work process could be found [here](WorkProgress.md).
+Detailed daily work process could be found [here](WorkProgress.md).
+
+## Project Overview
+The goal of this project is to implement a scalable path tracer that runs in real-time.
+Implementing path tracer largely refered from [Mitsuba renderer](https://github.com/mitsuba-renderer/mitsuba)
+and my previous custom [path tracer](https://github.com/juhyeonkim95/MitsubaPyOptiX).
+In order to achieve real-timeness, I try two approahces.
+First is to exploit denoising techniques.
+Second is to employ better sampling strategies.
+Among the various methods, I choose to implement SVGF and ReSTIR respectively.
+
+## Project Timeline
+- Week 1~3 : Implement basic path tracer using DirectX12.
+- Week 4,5 : Denoising based on SVGF.
+- Week 6,7 : Enhance sampling quality using ReSTIR.
+- Week 8 : Write a report.
 
 ## Requirements
 This project is implemented based on the framework of [DxrTutorials](https://github.com/NVIDIAGameWorks/DxrTutorials).
@@ -20,15 +35,15 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 ![20220713_mis_cornellbox](https://user-images.githubusercontent.com/59192387/178707155-974f0043-6cdd-4e84-8580-280826ca9310.PNG)
 
 ## Implementation Progress
-### Shape
+### (Week 1~3) Core Path Tracer
+#### Shape
 - [x] Mesh
 - [x] Rectangle
 - [x] Cube
 - [ ] Sphere
 - [ ] Disk
 - [ ] Cylinder
-
-### BSDF
+#### BSDF
 - [x] Diffuse
 - [x] Conductor
 - [x] Rough Conductor
@@ -37,20 +52,27 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 - [x] Plastic
 - [ ] Rough Plastic
 - [ ] Disney
-
-### Emitter
+#### Emitter
 - [x] Area (rectangle only)
 - [x] Environment
 - [ ] Point
 - [ ] Directional
 - [ ] Spotlight
-
-
-### Integrator (Rendering Equation Estimator)
+#### Integrator (Rendering Equation Estimator)
 - [x] Path Tracer
 - [x] Path Tracer with MIS (direct light sampling)
 - [ ] Path Tracer with MIS / multiple lights
 - [ ] Guided Path Tracer
 
+### (Week 4, 5) Denoising (SVGF)
+- [x] Basic SVGF
+- [x] Variance filtering
+
+### (Week 6, 7) Enhancing Sampling Quality (ReSTIR)
+- [ ] Basic ReSTIR
+
 ## Usage
 (WIP)
+
+## Acknowledgement
+This project was supported by [PearlAbyss](https://www.pearlabyss.com/ko-kr).
