@@ -60,20 +60,6 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     float previousMeshID = gPositionMeshIDPrev.Sample(s1, prevPixel).w;
     float meshID = gPositionMeshID.Sample(s1, input.texCoord).w;
 
-    // check whether reprojected pixel is inside of the screen
-    if (prevPixel.x < 0 || prevPixel.x > 1 || prevPixel.y < 0 || prevPixel.y > 1) {
-        consistency = false;
-    }
-
-    // check if deviation of depths is acceptable
-    else if (meshID != previousMeshID) {
-        consistency = false;
-    }
-
-    // reject if the normal deviation is not acceptable
-    else if (distance(normal, previousNormal) > 1e-1f) {
-        consistency = false;
-    }
     bool outside = (prevPixel.x < 0) || (prevPixel.x > 1) || (prevPixel.y < 0) || (prevPixel.y > 1);
     consistency = !outside && (meshID == previousMeshID) && (dot(normal, previousNormal) > sqrt(2) / 2.0);
 

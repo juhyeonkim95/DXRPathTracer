@@ -61,7 +61,6 @@ RenderTexture* createRenderTexture(
 	renderTexture->mSrvDescriptorHandleOffset = usedSRVHeapEntries;
 	renderTexture->createWithSize(size.x, size.y, format);
 	renderTexture->mpSrvHeap = pSRVHeap;
-
 	usedRTVHeapEntries++;
 	usedSRVHeapEntries++;
 
