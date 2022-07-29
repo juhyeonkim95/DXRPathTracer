@@ -3,6 +3,8 @@
 #include "Shader.h"
 #include "RenderTexture.h"
 #include <map>
+#include "imgui.h"
+
 using namespace std;
 
 class PostProcessQuad {
@@ -40,6 +42,7 @@ public:
 		scissorRect.right = size.x;
 		scissorRect.bottom = size.y;
 	};
+	virtual void processGUI() = 0;
 
 	void setViewPort(ID3D12GraphicsCommandList4Ptr mpCmdList) {
 		mpCmdList->RSSetViewports(1, &viewport); // set the viewports

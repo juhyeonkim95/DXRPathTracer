@@ -7,11 +7,13 @@ SamplerState s1 : register(s0);
 
 static const int support = 2;
 
-static const float h[25] = { 1.0 / 256.0, 1.0 / 64.0, 3.0 / 128.0, 1.0 / 64.0, 1.0 / 256.0,
-    1.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 16.0, 1.0 / 64.0,
-    3.0 / 128.0, 3.0 / 32.0, 9.0 / 64.0, 3.0 / 32.0, 3.0 / 128.0,
-    1.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 16.0, 1.0 / 64.0,
-    1.0 / 256.0, 1.0 / 64.0, 3.0 / 128.0, 1.0 / 64.0, 1.0 / 256.0 };
+//static const float h[25] = { 1.0 / 256.0, 1.0 / 64.0, 3.0 / 128.0, 1.0 / 64.0, 1.0 / 256.0,
+//    1.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 16.0, 1.0 / 64.0,
+//    3.0 / 128.0, 3.0 / 32.0, 9.0 / 64.0, 3.0 / 32.0, 3.0 / 128.0,
+//    1.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 16.0, 1.0 / 64.0,
+//    1.0 / 256.0, 1.0 / 64.0, 3.0 / 128.0, 1.0 / 64.0, 1.0 / 256.0 };
+
+static const float kernelWeights[3] = { 1.0, 2.0 / 3.0, 1.0 / 6.0 };
 static const float gaussKernel[9] = { 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 4.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0 };
 
 
@@ -48,6 +50,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
             var += gaussKernel[x0 + 3 * y0 + 4] * gColorVariance.Sample(s1, input.texCoord + float2(x0, y0) * texelSize).a;
         }
     }
+
     float customSigmaL = (sigmaL * sqrt(var) + epsilon);
 
     for (int offsetx = -support; offsetx <= support; offsetx++) {
@@ -67,7 +70,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
                 float w = calculateWeight(pPosition, qPosition, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
-                float weight = h[5 * (offsety + support) + offsetx + support] * w;
+                float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;// h[5 * (offsety + support) + offsetx + support] * w;
 
                 c += weight * qColor;
                 v += weight * weight * qVariance;

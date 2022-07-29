@@ -16,6 +16,11 @@ void ToneMapper::createRenderTextures(
     // tonemapRenderTexture = createRenderTexture(mpDevice, pRTVHeap, usedRTVHeapEntries, pSRVHeap, usedSRVHeapEntries, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 }
 
+void ToneMapper::processGUI()
+{
+
+}
+
 void ToneMapper::forward(
     ID3D12GraphicsCommandList4Ptr mpCmdList,
     D3D12_GPU_DESCRIPTOR_HANDLE input,

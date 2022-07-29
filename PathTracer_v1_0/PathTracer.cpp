@@ -17,6 +17,11 @@
 #include <DirectXMath.h>
 #include <string>
 
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx12.h"
+
+
 void TutorialPathTracer::initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 {
     mHwnd = winHandle;
@@ -372,6 +377,26 @@ void TutorialPathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winH
     logFile = std::ofstream("../Logs/" + std::string(scene->sceneName) + "_" + std::string(filename) + ".txt");
 
     lastTime = std::chrono::steady_clock::now();
+
+
+    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    desc.NumDescriptors = 2;
+    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+    mpDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pd3dSrvDescHeap));
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImGui_ImplWin32_Init(winHandle);
+
+    ImGui_ImplDX12_Init(mpDevice, kDefaultSwapChainBuffers,
+        DXGI_FORMAT_R8G8B8A8_UNORM, g_pd3dSrvDescHeap,
+        g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
+        g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void TutorialPathTracer::onFrameRender()
@@ -439,6 +464,63 @@ void TutorialPathTracer::onFrameRender()
         resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
         mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, mpOutputResource);
     }
+
+    // Start the Dear ImGui frame
+    ImGui_ImplDX12_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
+
+    //D3D12_RESOURCE_BARRIER barrier = {};
+    //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    //barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    //barrier.Transition.pResource = mFrameObjects[rtvIndex].pSwapChainBuffer;
+    //barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    //barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+    //barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    
+    //mFrameObjects[bufferIndex].pCmdAllocator->Reset();
+    // mpCmdList->Reset(mFrameObjects[bufferIndex].pCmdAllocator, nullptr);
+    //mpCmdList->SetPipelineState(nullptr);
+    // mpCmdList->ResourceBarrier(1, &barrier);
+    resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+    svgfPass->processGUI();
+
+    //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+    //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+    //ImGui::Checkbox("Another Window", &show_another_window);
+    //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+    //ImGui::CollapsingHeader("Help");
+    //if (ImGui::CollapsingHeader("Window options"))
+    //{
+    //    ImGui::Text("USER GUIDE:");
+    //    ImGui::Text("USER GUIDE3:");
+    //}
+
+    ImGui::End();
+
+    ImGui::Render();
+
+    //// Render Dear ImGui graphics
+
+    //ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ////const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
+    ////mpCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clear_color_with_alpha, 0, nullptr);
+    mpCmdList->OMSetRenderTargets(1, &mFrameObjects[rtvIndex].rtvHandle, FALSE, nullptr);
+    // Bind the descriptor heaps
+    ID3D12DescriptorHeap* heaps[] = { g_pd3dSrvDescHeap };
+    mpCmdList->SetDescriptorHeaps(arraysize(heaps), heaps);
+    // mpCmdList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mpCmdList);
+
+    //barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    //barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+    //g_pd3dCommandList->ResourceBarrier(1, &barrier);
+    //g_pd3dCommandList->Close();
+
     endFrame(rtvIndex);
 }
 

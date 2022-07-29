@@ -52,20 +52,12 @@ private:
 
     // Heap data
     HeapData *mRtvHeap;
-    static const uint32_t kRtvHeapSize = 30;
+    static const uint32_t kRtvHeapSize = 50;
     HeapData *mSrvUavHeap;
 
-    //ID3D12DescriptorHeapPtr mpSrvUavHeap;
-    //static const uint32_t kSrvUavHeapSize = 2;
-    //uint32_t mpSrvUavHeapCount = 0;
-    //D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
     SceneResourceManager* sceneResourceManager;
 
-    //void createAccelerationStructures();
-    //AccelerationStructureBuffers createTopLevelAccelerationStructure();
     ID3D12ResourcePtr mpVertexBuffer;
-    //ID3D12ResourcePtr mpTopLevelAS;
-    //std::vector<ID3D12ResourcePtr> mpBottomLevelAS;
 
     // uint64_t mTlasSize = 0;
 
@@ -120,4 +112,9 @@ private:
 
     Shader* defaultCopyShader;
 
+
+    ID3D12DescriptorHeapPtr g_pd3dSrvDescHeap;
+
+    bool show_demo_window = false;
+    bool show_another_window = false;
 };

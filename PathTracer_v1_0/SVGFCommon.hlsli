@@ -1,11 +1,12 @@
-static const float sigmaP = 1.0;
-static const float sigmaN = 128.0;
-static const float sigmaL = 4.0;
-
 static const float epsilon = 0.00001;
 
 cbuffer ConstantBuffer : register(b0)
 {
+	float gAlpha;
+	float gMomentsAlpha;
+	float sigmaP;
+	float sigmaN;
+	float sigmaL;
 	int level;
 	float2 texelSize;
 };

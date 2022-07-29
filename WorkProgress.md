@@ -119,3 +119,7 @@ About x1.5 speed up!
 
 - After applying variance filter
 ![20220728_disoccluded_filter_video](assets/20220728_disoccluded_filter_video.gif)
+
+## 20220729
+- Code refactoring.
+- GUI using ImGui.

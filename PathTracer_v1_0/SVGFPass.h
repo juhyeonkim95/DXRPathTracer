@@ -2,8 +2,14 @@
 #include "PostProcessPass.h"
 #include "HeapData.h"
 
-struct WaveletShaderParameters
+struct SVGFParameters
 {
+	float alpha;
+	float momentsAlpha;
+	float sigmaP;
+	float sigmaN;
+	float sigmaL;
+
 	int level;
 	vec2 texelSize;
 };
@@ -21,6 +27,8 @@ public:
 	void createRenderTextures(
 		HeapData *rtvHeap,
 		HeapData *srvHeap);
+
+	void processGUI() override;
 
 	Shader* motionVectorShader;
 	Shader* temporalAccumulationShader;
@@ -49,10 +57,28 @@ public:
 
 	vector<RenderTexture*> waveletDirect;
 	vector<RenderTexture*> waveletIndirect;
+
+	
+
+	// SVGF parameters
+	SVGFParameters param;
+	SVGFParameters defaultParam;
+
+	//float mAlpha = 0.05f;
+	//float mMomentsAlpha = 0.2f;
+	//float sigmaP = 1.0f;
+	//float sigmaN = 128.0f;
+	//float sigmaL = 4.0f;
+
+	bool mEnabled = false;
+	bool mEnableVarianceFilter = true;
+
+	const int maxWaveletCount = 5;
 	int waveletCount = 3;
 
 	RenderTexture* reconstructionRenderTexture;
 
-	ID3D12ResourcePtr mpWaveletParameterBuffer = nullptr;
-};
+	ID3D12ResourcePtr mSVGFParameterBuffer = nullptr;
 
+	void uploadParams();
+};

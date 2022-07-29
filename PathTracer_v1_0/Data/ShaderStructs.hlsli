@@ -4,12 +4,16 @@
 #define USE_NEXT_EVENT_ESTIMATION 1
 #define USE_RUSSIAN_ROULETTE 0
 
-#define PATHTRACE_MAX_DEPTH 8
 #define PATHTRACE_RR_BEGIN_DEPTH 4
 
 #define PATHTRACE_SPP 1
 
 #define DO_FILTERING 1
+
+static const uint PATHTRACE_MAX_DEPTH = 10;
+static const uint PATHTRACE_MAX_DEPTH_DIFFUSE = 4;
+static const uint PATHTRACE_MAX_DEPTH_SPECULAR = 4;
+static const uint PATHTRACE_MAX_DEPTH_TRANSMITTANCE = 10;
 
 static const float M_PIf = 3.14159265358979323846f;
 static const float M_1_PIf = 0.318309886183790671538f;

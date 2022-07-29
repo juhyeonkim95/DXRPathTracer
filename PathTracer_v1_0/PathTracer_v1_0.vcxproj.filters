@@ -13,23 +13,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Sensor">
-      <UniqueIdentifier>{0206e3de-8f79-4bb5-b104-e1ecd69a1522}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{47dd3480-ec29-43eb-9d15-891793ef19f1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="BSDF">
-      <UniqueIdentifier>{77ba1171-9e53-4329-8168-704660a1da6d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Texture">
-      <UniqueIdentifier>{9efe0d1f-ed52-4c32-b0be-54cf783dfbee}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Shape">
-      <UniqueIdentifier>{16973aef-102b-41df-af66-266316fa621b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core">
-      <UniqueIdentifier>{39e921ed-9403-49df-86fa-32acda58320e}</UniqueIdentifier>
     </Filter>
     <Filter Include="External">
       <UniqueIdentifier>{ca1c7cc4-2eed-4158-929a-12f11a5730e8}</UniqueIdentifier>
@@ -40,23 +25,47 @@
     <Filter Include="markdown">
       <UniqueIdentifier>{cc83341f-3d2a-47ad-a34e-0546a1ebe66b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader">
-      <UniqueIdentifier>{da728bf9-5623-4581-b74a-f2cff2d988b2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Postprocessing">
-      <UniqueIdentifier>{277b88d6-4151-4953-8ff5-8c5720551f11}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SVGF">
-      <UniqueIdentifier>{db1ceff4-1119-42fc-b621-6208e3832b51}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Tonemapper">
-      <UniqueIdentifier>{1ea8afc7-c8ea-4a39-99e7-071519a48a88}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Emitter">
-      <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Input">
       <UniqueIdentifier>{802e6758-9236-43d4-aa49-3a59ebebf88a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\imgui">
+      <UniqueIdentifier>{030ab9be-7c24-4a40-999c-5b6c88b69a93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPass">
+      <UniqueIdentifier>{fa44e990-5df2-4b8d-8ed4-ba992a2b1f56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPass\Tonemapper">
+      <UniqueIdentifier>{1ea8afc7-c8ea-4a39-99e7-071519a48a88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPass\SVGF">
+      <UniqueIdentifier>{db1ceff4-1119-42fc-b621-6208e3832b51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPass\Postprocessing">
+      <UniqueIdentifier>{277b88d6-4151-4953-8ff5-8c5720551f11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{f8439707-e4bb-4912-84dd-20feee47338b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Sensor">
+      <UniqueIdentifier>{0206e3de-8f79-4bb5-b104-e1ecd69a1522}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Shape">
+      <UniqueIdentifier>{16973aef-102b-41df-af66-266316fa621b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Texture">
+      <UniqueIdentifier>{9efe0d1f-ed52-4c32-b0be-54cf783dfbee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Scene">
+      <UniqueIdentifier>{42251d96-7730-41b6-ac90-ed6f86debe36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\BSDF">
+      <UniqueIdentifier>{77ba1171-9e53-4329-8168-704660a1da6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Emitter">
+      <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPass\PathTracer">
+      <UniqueIdentifier>{da728bf9-5623-4581-b74a-f2cff2d988b2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -64,52 +73,49 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Perspective.cpp">
-      <Filter>Sensor</Filter>
+      <Filter>Core\Sensor</Filter>
     </ClCompile>
     <ClCompile Include="Diffuse.cpp">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="loader_utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="Plastic.cpp">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="RoughPlastic.cpp">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="Conductor.cpp">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="RoughConductor.cpp">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="Dielectric.cpp">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="RoughDielectric.cpp">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="ThinDielectric.cpp">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
-      <Filter>Shape</Filter>
+      <Filter>Core\Shape</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
-      <Filter>Texture</Filter>
+      <Filter>Core\Texture</Filter>
     </ClCompile>
     <ClCompile Include="Rectangle.cpp">
-      <Filter>Shape</Filter>
+      <Filter>Core\Shape</Filter>
     </ClCompile>
     <ClCompile Include="Shape.cpp">
-      <Filter>Shape</Filter>
+      <Filter>Core\Shape</Filter>
     </ClCompile>
     <ClCompile Include="light_utils.cpp">
       <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="tinyxml2.cpp">
       <Filter>External</Filter>
@@ -118,22 +124,22 @@
       <Filter>dx12</Filter>
     </ClCompile>
     <ClCompile Include="PostProcessPass.cpp">
-      <Filter>Postprocessing</Filter>
+      <Filter>RenderPass\Postprocessing</Filter>
     </ClCompile>
     <ClCompile Include="RenderTexture.cpp">
-      <Filter>Postprocessing</Filter>
+      <Filter>RenderPass\Postprocessing</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="SVGFPass.cpp">
-      <Filter>SVGF</Filter>
+      <Filter>RenderPass\SVGF</Filter>
     </ClCompile>
     <ClCompile Include="DX12Initializer.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
     <ClCompile Include="ToneMapper.cpp">
-      <Filter>Tonemapper</Filter>
+      <Filter>RenderPass\Tonemapper</Filter>
     </ClCompile>
     <ClCompile Include="HeapData.cpp">
       <Filter>dx12</Filter>
@@ -141,8 +147,32 @@
     <ClCompile Include="KeyboardInputManager.cpp">
       <Filter>Input</Filter>
     </ClCompile>
+    <ClCompile Include="..\Framework\Externals\imgui\imgui.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\Externals\imgui\imgui_demo.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\Externals\imgui\imgui_draw.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\Externals\imgui\imgui_tables.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\Externals\imgui\imgui_widgets.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\Externals\imgui\backends\imgui_impl_dx12.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\Externals\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Core\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="SceneResourceManager.cpp">
-      <Filter>Core</Filter>
+      <Filter>Core\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -153,19 +183,19 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Perspective.h">
-      <Filter>Sensor</Filter>
+      <Filter>Core\Sensor</Filter>
     </ClInclude>
     <ClInclude Include="loader_utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Sensor.h">
-      <Filter>Sensor</Filter>
+      <Filter>Core\Sensor</Filter>
     </ClInclude>
     <ClInclude Include="BSDF.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="Diffuse.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="loader_bsdf.h">
       <Filter>Utils</Filter>
@@ -177,52 +207,49 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Plastic.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="RoughPlastic.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="Conductor.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="RoughConductor.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="Dielectric.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="RoughDielectric.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="ThinDielectric.h">
-      <Filter>BSDF</Filter>
+      <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
-      <Filter>Texture</Filter>
+      <Filter>Core\Texture</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
-      <Filter>Shape</Filter>
+      <Filter>Core\Shape</Filter>
     </ClInclude>
     <ClInclude Include="CommonStruct.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Shape.h">
-      <Filter>Shape</Filter>
+      <Filter>Core\Shape</Filter>
     </ClInclude>
     <ClInclude Include="Rectangle.h">
-      <Filter>Shape</Filter>
+      <Filter>Core\Shape</Filter>
     </ClInclude>
     <ClInclude Include="Emitter.h">
-      <Filter>Emitter</Filter>
+      <Filter>Core\Emitter</Filter>
     </ClInclude>
     <ClInclude Include="light_utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="loader_shape.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene.h">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="tinyxml2.h">
       <Filter>External</Filter>
@@ -243,51 +270,81 @@
       <Filter>dx12</Filter>
     </ClInclude>
     <ClInclude Include="PostProcessPass.h">
-      <Filter>Postprocessing</Filter>
+      <Filter>RenderPass\Postprocessing</Filter>
     </ClInclude>
     <ClInclude Include="RenderTexture.h">
-      <Filter>Postprocessing</Filter>
+      <Filter>RenderPass\Postprocessing</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
     <ClInclude Include="SVGFPass.h">
-      <Filter>SVGF</Filter>
+      <Filter>RenderPass\SVGF</Filter>
     </ClInclude>
     <ClInclude Include="HeapData.h">
       <Filter>dx12</Filter>
     </ClInclude>
     <ClInclude Include="ToneMapper.h">
-      <Filter>Tonemapper</Filter>
+      <Filter>RenderPass\Tonemapper</Filter>
     </ClInclude>
     <ClInclude Include="KeyboardInputManager.h">
       <Filter>Input</Filter>
     </ClInclude>
+    <ClInclude Include="ImGuiManager.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\Externals\imgui\imconfig.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\Externals\imgui\imgui.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\Externals\imgui\imgui_internal.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\Externals\imgui\imstb_rectpack.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\Externals\imgui\imstb_textedit.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\Externals\imgui\imstb_truetype.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\Externals\imgui\backends\imgui_impl_dx12.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\Externals\imgui\backends\imgui_impl_win32.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Core\Scene</Filter>
+    </ClInclude>
     <ClInclude Include="SceneResourceManager.h">
-      <Filter>Core</Filter>
+      <Filter>Core\Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\ShaderUtils.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>RenderPass\PathTracer</Filter>
     </None>
     <None Include="Data\ShaderStructs.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>RenderPass\PathTracer</Filter>
     </None>
     <None Include="Data\BSDF.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>RenderPass\PathTracer</Filter>
     </None>
     <None Include="Data\SampleLight.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>RenderPass\PathTracer</Filter>
     </None>
     <None Include="Data\Fresnel.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>RenderPass\PathTracer</Filter>
     </None>
     <None Include="Data\Microfacet.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>RenderPass\PathTracer</Filter>
     </None>
     <None Include="Data\Constants.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>RenderPass\PathTracer</Filter>
     </None>
     <None Include="..\README.md">
       <Filter>markdown</Filter>
@@ -296,39 +353,39 @@
       <Filter>markdown</Filter>
     </None>
     <None Include="SVGFCommon.hlsli">
-      <Filter>SVGF</Filter>
+      <Filter>RenderPass\SVGF</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Data\TutorialShader.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>RenderPass\PathTracer</Filter>
     </FxCompile>
     <FxCompile Include="QuadVertexShader.hlsl">
-      <Filter>Postprocessing</Filter>
+      <Filter>RenderPass\Postprocessing</Filter>
     </FxCompile>
     <FxCompile Include="CopyShader.hlsl">
-      <Filter>Postprocessing</Filter>
+      <Filter>RenderPass\Postprocessing</Filter>
     </FxCompile>
     <FxCompile Include="DepthDerivative.hlsl">
-      <Filter>Postprocessing</Filter>
+      <Filter>RenderPass\Postprocessing</Filter>
     </FxCompile>
     <FxCompile Include="SVGFMotionVector.hlsl">
-      <Filter>SVGF</Filter>
+      <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
     <FxCompile Include="SVGFReconstruction.hlsl">
-      <Filter>SVGF</Filter>
+      <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
     <FxCompile Include="SVGFTemporalAccumulation.hlsl">
-      <Filter>SVGF</Filter>
+      <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
     <FxCompile Include="SVGFATrousWavelet.hlsl">
-      <Filter>SVGF</Filter>
+      <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
     <FxCompile Include="SVGFFilterVariance.hlsl">
-      <Filter>SVGF</Filter>
+      <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
     <FxCompile Include="Tonemap.hlsl">
-      <Filter>Tonemapper</Filter>
+      <Filter>RenderPass\Tonemapper</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

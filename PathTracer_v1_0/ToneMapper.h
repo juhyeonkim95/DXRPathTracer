@@ -16,6 +16,7 @@ public:
 		uint32_t& usedRTVHeapEntries,
 		ID3D12DescriptorHeapPtr pSRVHeap,
 		uint32_t& usedSRVHeapEntries);
+	void processGUI() override;
 
 	Shader* tonemapShader;
 	RenderTexture* tonemapRenderTexture = nullptr;

@@ -55,7 +55,19 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.direct = float3(0, 0, 0);
     pathResult.reflectance = payload.attenuation;
 
-    if (g_materialinfo[payload.materialIndex].materialType != BSDF_TYPE_DIFFUSE) {
+
+    uint materialType = g_materialinfo[payload.materialIndex].materialType;
+    uint maxDepth = PATHTRACE_MAX_DEPTH;
+    switch (materialType) {
+    case BSDF_TYPE_DIFFUSE:             maxDepth = PATHTRACE_MAX_DEPTH_DIFFUSE; break;
+    case BSDF_TYPE_CONDUCTOR:           maxDepth = PATHTRACE_MAX_DEPTH_SPECULAR; break;
+    case BSDF_TYPE_ROUGH_CONDUCTOR:     maxDepth = PATHTRACE_MAX_DEPTH_SPECULAR; break;
+    case BSDF_TYPE_DIELECTRIC:          maxDepth = PATHTRACE_MAX_DEPTH_TRANSMITTANCE; break;
+    case BSDF_TYPE_ROUGH_DIELECTRIC:    maxDepth = PATHTRACE_MAX_DEPTH_TRANSMITTANCE; break;
+    case BSDF_TYPE_PLASTIC:             maxDepth = PATHTRACE_MAX_DEPTH_DIFFUSE; break;
+    }
+
+    if (materialType != BSDF_TYPE_DIFFUSE) {
         pathResult.reflectance = float3(1, 1, 1);
     }
 
@@ -64,7 +76,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     RayDesc shadowRay;
     shadowRay.TMin = SCENE_T_MIN;
 #endif
-    float depth = 1;
+    uint depth = 1;
     while (true) {
         // ---------------- Intersection with emitters ----------------
         result += emissionWeight * throughput * payload.emission;
@@ -73,7 +85,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         // (1) over max depth
         // (2) ray missed
         // (3) hit emission
-        if (payload.done || depth >= PATHTRACE_MAX_DEPTH) {
+        if (payload.done || depth >= maxDepth) {
             if (depth <= 2) {
                 pathResult.direct += emissionWeight * throughput * payload.emission;
             }
@@ -140,7 +152,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         ray.Direction = payload.direction;
         ray.Origin = payload.origin;
         float scatterPdf = payload.scatterPdf;
-        depth += material.materialType & BSDF_TRANSMISSION ? 0.5f : 1.0f;
+        depth += 1;// material.materialType& BSDF_TRANSMISSION ? 0.5f : 1.0f;
 
         TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2, 0, ray, payload);
 #if USE_NEXT_EVENT_ESTIMATION

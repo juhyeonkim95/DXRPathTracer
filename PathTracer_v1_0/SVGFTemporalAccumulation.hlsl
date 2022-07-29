@@ -1,3 +1,5 @@
+#include "SVGFCommon.hlsli"
+
 Texture2D col_history : register(t0);
 Texture2D motion_vectors : register(t1);
 Texture2D current_color : register(t2);
@@ -6,12 +8,9 @@ Texture2D length_history : register(t4);
 
 SamplerState s1 : register(s0);
 
-static const float   gAlpha = 0.05f;
-static const float   gMomentsAlpha = 0.2f;
+//static const float   gAlpha = 0.05f;
+//static const float   gMomentsAlpha = 0.2f;
 
-float luminance(float3 c) {
-    return c.x * 0.2126 + c.y * 0.7152 + c.z * 0.0722;
-}
 
 struct VS_OUTPUT
 {
@@ -57,7 +56,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     //const float alphaMoments =  max(gMomentsAlpha, 1.0 / historyLength);
 
     // compute first two moments of luminance
-    float new_luma = luminance(col);
+    float new_luma = luma(col);
     float2 moments = float2(new_luma, new_luma * new_luma);
     
     // temporal integration of the moments
