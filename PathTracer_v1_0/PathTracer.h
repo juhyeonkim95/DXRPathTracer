@@ -8,7 +8,7 @@
 #include "SVGFPass.h"
 #include "ToneMapper.h"
 #include "HeapData.h"
-
+#include "SceneResourceManager.h"
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -59,15 +59,15 @@ private:
     //static const uint32_t kSrvUavHeapSize = 2;
     //uint32_t mpSrvUavHeapCount = 0;
     //D3D12_CPU_DESCRIPTOR_HANDLE srvHandle;
+    SceneResourceManager* sceneResourceManager;
 
-
-    void createAccelerationStructures();
-    AccelerationStructureBuffers createTopLevelAccelerationStructure();
+    //void createAccelerationStructures();
+    //AccelerationStructureBuffers createTopLevelAccelerationStructure();
     ID3D12ResourcePtr mpVertexBuffer;
-    ID3D12ResourcePtr mpTopLevelAS;
-    std::vector<ID3D12ResourcePtr> mpBottomLevelAS;
+    //ID3D12ResourcePtr mpTopLevelAS;
+    //std::vector<ID3D12ResourcePtr> mpBottomLevelAS;
 
-    uint64_t mTlasSize = 0;
+    // uint64_t mTlasSize = 0;
 
     Scene *scene;
 
@@ -80,20 +80,14 @@ private:
     uint32_t mShaderTableEntrySize = 0;
 
     void createShaderResources();
-    void createTextureShaderResources();
-
     std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
-    //std::map<string, int> mSrvHeapIndexMap;
-    //std::map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandlesMap;
 
     ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
-    ID3D12ResourcePtr mpMaterialBuffer = nullptr;
-    ID3D12ResourcePtr mpGeometryInfoBuffer = nullptr;
+    
+
     ID3D12ResourcePtr mpLightParametersBuffer = nullptr;
     ID3D12ResourcePtr mpWaveletParameterBuffer = nullptr;
 
-    ID3D12ResourcePtr mpIndicesBuffer = nullptr;
-    ID3D12ResourcePtr mpVerticesBuffer = nullptr;
     std::vector<ID3D12ResourcePtr> mpTextureBuffers;
     D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;
 

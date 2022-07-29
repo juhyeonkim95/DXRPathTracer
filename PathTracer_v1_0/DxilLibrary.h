@@ -252,34 +252,34 @@ RootSignatureDesc createHitRootDesc()
 {
     RootSignatureDesc desc;
 
-    desc.range.resize(2);
+    desc.range.resize(1);
 
     // SRV for gRtScene
-    desc.range[0].BaseShaderRegister = 0;
+    //desc.range[0].BaseShaderRegister = 0;
+    //desc.range[0].NumDescriptors = 1;
+    //desc.range[0].RegisterSpace = 0;
+    //desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //desc.range[0].OffsetInDescriptorsFromTableStart = 0;
+    
+    // SRV for texture
+    desc.range[0].BaseShaderRegister = 6;
     desc.range[0].NumDescriptors = 1;
     desc.range[0].RegisterSpace = 0;
     desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     desc.range[0].OffsetInDescriptorsFromTableStart = 0;
-    
-    // SRV for texture
-    desc.range[1].BaseShaderRegister = 6;
-    desc.range[1].NumDescriptors = 1;
-    desc.range[1].RegisterSpace = 0;
-    desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    desc.range[1].OffsetInDescriptorsFromTableStart = 0;
  
 
-    desc.rootParams.resize(2);
+    desc.rootParams.resize(1);
 
     desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     desc.rootParams[0].DescriptorTable.NumDescriptorRanges = 1;
     desc.rootParams[0].DescriptorTable.pDescriptorRanges = &desc.range[0];
 
-    desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    desc.rootParams[1].DescriptorTable.NumDescriptorRanges = 1;
-    desc.rootParams[1].DescriptorTable.pDescriptorRanges = &desc.range[1];
+    //desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    //desc.rootParams[1].DescriptorTable.NumDescriptorRanges = 1;
+    //desc.rootParams[1].DescriptorTable.pDescriptorRanges = &desc.range[1];
 
-    desc.desc.NumParameters = 2;
+    desc.desc.NumParameters = 1;
     desc.desc.pParameters = desc.rootParams.data();
     desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
@@ -330,7 +330,7 @@ RootSignatureDesc createGlobalRootDesc()
     desc.rootParams[3].DescriptorTable.pDescriptorRanges = &desc.range[1];
 
 
-    CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
+    CD3DX12_STATIC_SAMPLER_DESC bilinearClamp(
         0,
         D3D12_FILTER_ANISOTROPIC,
         D3D12_TEXTURE_ADDRESS_MODE_WRAP,
@@ -344,7 +344,7 @@ RootSignatureDesc createGlobalRootDesc()
     desc.desc.pParameters = desc.rootParams.data();
     desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
     desc.desc.NumStaticSamplers = 1;
-    desc.desc.pStaticSamplers = &anisotropicClamp;
+    desc.desc.pStaticSamplers = &bilinearClamp;
 
     return desc;
 }

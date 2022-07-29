@@ -161,6 +161,7 @@
     <ClCompile Include="DX12Helper.cpp" />
     <ClCompile Include="DX12Initializer.cpp" />
     <ClCompile Include="HeapData.cpp" />
+    <ClCompile Include="KeyboardInputManager.cpp" />
     <ClCompile Include="light_utils.cpp" />
     <ClCompile Include="loader_utils.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -178,6 +179,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Shape.cpp" />
+    <ClCompile Include="SceneResourceManager.cpp" />
     <ClCompile Include="SVGFPass.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="ThinDielectric.cpp" />
@@ -196,6 +198,7 @@
     <ClInclude Include="Emitter.h" />
     <ClInclude Include="HeapData.h" />
     <ClInclude Include="HlslCompat.h" />
+    <ClInclude Include="KeyboardInputManager.h" />
     <ClInclude Include="light_utils.h" />
     <ClInclude Include="loader_bsdf.h" />
     <ClInclude Include="loader_shape.h" />
@@ -216,6 +219,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Shape.h" />
     <ClInclude Include="SharedTypes.h" />
+    <ClInclude Include="SceneResourceManager.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="SVGFPass.h" />
     <ClInclude Include="Texture.h" />

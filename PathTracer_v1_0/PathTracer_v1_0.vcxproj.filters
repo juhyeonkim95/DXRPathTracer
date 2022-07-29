@@ -55,6 +55,9 @@
     <Filter Include="Emitter">
       <UniqueIdentifier>{63087125-9258-4ced-856e-322a34761c56}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{802e6758-9236-43d4-aa49-3a59ebebf88a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PathTracer.cpp">
@@ -134,6 +137,12 @@
     </ClCompile>
     <ClCompile Include="HeapData.cpp">
       <Filter>dx12</Filter>
+    </ClCompile>
+    <ClCompile Include="KeyboardInputManager.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneResourceManager.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -250,6 +259,12 @@
     </ClInclude>
     <ClInclude Include="ToneMapper.h">
       <Filter>Tonemapper</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyboardInputManager.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneResourceManager.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
