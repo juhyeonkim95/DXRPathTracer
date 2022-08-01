@@ -67,6 +67,9 @@
     <Filter Include="RenderPass\PathTracer">
       <UniqueIdentifier>{da728bf9-5623-4581-b74a-f2cff2d988b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderPass\ReSTIR">
+      <UniqueIdentifier>{4982c57e-8346-4449-8f35-ac954a2ecf94}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PathTracer.cpp">
@@ -173,6 +176,9 @@
     </ClCompile>
     <ClCompile Include="SceneResourceManager.cpp">
       <Filter>Core\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="ReSTIR.cpp">
+      <Filter>RenderPass\ReSTIR</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -323,6 +329,9 @@
     <ClInclude Include="SceneResourceManager.h">
       <Filter>Core\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="ReSTIR.h">
+      <Filter>RenderPass\ReSTIR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\ShaderUtils.hlsli">
@@ -357,7 +366,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Data\TutorialShader.hlsl">
+    <FxCompile Include="Data\PathTracer.hlsl">
       <Filter>RenderPass\PathTracer</Filter>
     </FxCompile>
     <FxCompile Include="QuadVertexShader.hlsl">
@@ -386,6 +395,12 @@
     </FxCompile>
     <FxCompile Include="Tonemap.hlsl">
       <Filter>RenderPass\Tonemapper</Filter>
+    </FxCompile>
+    <FxCompile Include="ReSTIRInitalTemporal.hlsl">
+      <Filter>RenderPass\ReSTIR</Filter>
+    </FxCompile>
+    <FxCompile Include="ReSTIRPathTracer.hlsl">
+      <Filter>RenderPass\ReSTIR</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -180,6 +180,7 @@
     </ClCompile>
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
+    <ClCompile Include="ReSTIR.cpp" />
     <ClCompile Include="RoughConductor.cpp" />
     <ClCompile Include="RoughDielectric.cpp" />
     <ClCompile Include="RoughPlastic.cpp" />
@@ -227,6 +228,7 @@
     <ClInclude Include="PostProcessPass.h" />
     <ClInclude Include="Rectangle.h" />
     <ClInclude Include="RenderTexture.h" />
+    <ClInclude Include="ReSTIR.h" />
     <ClInclude Include="RoughConductor.h" />
     <ClInclude Include="RoughDielectric.h" />
     <ClInclude Include="RoughPlastic.h" />
@@ -276,10 +278,16 @@
     <FxCompile Include="CopyShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="Data\TutorialShader.hlsl">
+    <FxCompile Include="Data\PathTracer.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="DepthDerivative.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="ReSTIRInitalTemporal.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="ReSTIRPathTracer.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="SVGFFilterVariance.hlsl">

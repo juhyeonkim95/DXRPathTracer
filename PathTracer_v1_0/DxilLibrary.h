@@ -108,7 +108,7 @@ ID3DBlobPtr compileLibrary(const WCHAR* filename, const WCHAR* targetEntry, cons
 DxilLibrary createDxilLibrary()
 {
     // Compile the shader
-    ID3DBlobPtr pDxilLib = compileLibrary(L"Data/TutorialShader.hlsl", L"", L"lib_6_3");
+    ID3DBlobPtr pDxilLib = compileLibrary(L"Data/PathTracer.hlsl", L"", L"lib_6_3");
     const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kMissEnvShader, kClosestHitShader, kShadowMiss, kShadowChs };
     return DxilLibrary(pDxilLib, entryPoints, arraysize(entryPoints));
 }
