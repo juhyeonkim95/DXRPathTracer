@@ -302,7 +302,7 @@ void TutorialPathTracer::createShaderResources()
     sceneResourceManager->createSceneAccelerationStructure(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
 
     // 1. Create the output resource. The dimensions and format should match the swap-chain
-    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_UNORM, "output");
+    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_UNORM, "gOutput");
 
     // 2. Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -402,7 +402,7 @@ void TutorialPathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winH
 void TutorialPathTracer::onFrameRender()
 {
     uint32_t rtvIndex = beginFrame();
-    ID3D12ResourcePtr mpOutputResource = outputUAVBuffers["output"];
+    ID3D12ResourcePtr mpOutputResource = outputUAVBuffers["gOutput"];
 
     update();
 
@@ -547,6 +547,8 @@ void TutorialPathTracer::postProcess(int rtvIndex)
     svgfPass->forward(mpCmdList, gpuHandlesMap, outputUAVBuffers, mpCameraConstantBuffer);
 
     D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
+    // D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->waveletDirect[4]->getGPUSrvHandler();
+
     tonemapPass->forward(mpCmdList, inputHandle, mFrameObjects[rtvIndex].rtvHandle, mFrameObjects[rtvIndex].pSwapChainBuffer);
 
     resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
