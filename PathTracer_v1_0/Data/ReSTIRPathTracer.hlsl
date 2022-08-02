@@ -46,7 +46,7 @@ RWStructuredBuffer<Reservoir> gPrevReserviors : register(u7);
 
 void UpdateReservoir(inout Reservoir r, in LightSample lightSample, float weight, inout uint seed)
 {
-    weight = max(weight, 1e-6);
+    weight = max(weight, 1e-10);
     r.wSum += weight;
     r.M += 1;
     if (nextRand(seed) <= weight / r.wSum)
@@ -73,6 +73,7 @@ float getPHat(in LightSample lightSample, in RayPayload payload)
     float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
     const float3 f = bsdf::Eval(material, payload, wo);
     float p_hat = length(f * lightSample.Li / (Ldist * Ldist));
+    p_hat = min(p_hat, 1.0f);
     return p_hat;
 }
 
@@ -92,9 +93,6 @@ void CopyReservoirs(inout Reservoir s, in Reservoir r)
 
 void CombineReservoirs(in RayPayload payload, in Reservoir r1, in Reservoir r2, inout Reservoir s)
 {
-    //CopyReservoirs(s, r2);
-    //return;
-
     UpdateReservoir(s, r1.lightSample, getPHat(r1.lightSample, payload) * r1.W * r1.M, payload.seed);
     UpdateReservoir(s, r2.lightSample, getPHat(r2.lightSample, payload) * r2.W * r2.M, payload.seed);
     s.M = r1.M + r2.M;
@@ -128,16 +126,16 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.reflectance = payload.attenuation;
     if (payload.done)
     {
-        if (dot(payload.emission, payload.emission) > 0)
+        /*if (dot(payload.emission, payload.emission) > 0)
         {
             pathResult.radiance = getRandomColor(payload.lightIndex);
         }
         else
         {
             pathResult.radiance = payload.emission;
-        }
+        }*/
 
-        // pathResult.radiance = payload.emission;
+        pathResult.radiance = payload.emission;
         return;
     }
 
@@ -201,41 +199,32 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     prevPixel = (prevPixel + 1) * 0.5;
 
 
-    uint prevPixelCoordX = clamp(0, uint((prevPixel.x * dims.x)), dims.x - 1);
-    uint prevPixelCoordY = clamp(0, uint((prevPixel.y * dims.y)), dims.y - 1);
+    uint prevPixelCoordX = uint((prevPixel.x * dims.x));// clamp(0, uint((prevPixel.x * dims.x)), dims.x - 1);
+    uint prevPixelCoordY = uint((prevPixel.y * dims.y));// clamp(0, uint((prevPixel.y * dims.y)), dims.y - 1);
     uint2 prevPixelCoord = uint2(prevPixelCoordX, prevPixelCoordY);
 
     uint linearIndexPrev = prevPixelCoordX + prevPixelCoordY * launchDim.x;
     uint linearIndex = launchIndex.x + launchIndex.y * launchDim.x;
 
     Reservoir previousReservoir = gPrevReserviors[linearIndex];
-    // CopyReservoirs(previousReservoir, gPrevReserviors[linearIndex]);
-
-    /*previousReservoir.lightSample.position = gPrevReserviorsPosition[prevPixelCoord].rgb;
-    previousReservoir.lightSample.lightIndex = (uint) (gPrevReserviorsPosition[prevPixelCoord].a);
-    previousReservoir.lightSample.normal = gPrevReserviorsNormal[prevPixelCoord].rgb;
-    previousReservoir.lightSample.Li = gPrevReserviorsLi[prevPixelCoord].rgb;
-    previousReservoir.M = gPrevReserviorsRIS[prevPixelCoord].r;
-    previousReservoir.W = gPrevReserviorsRIS[prevPixelCoord].g;
-    previousReservoir.wSum = gPrevReserviorsRIS[prevPixelCoord].b;*/
 
     Reservoir newReservoir;
     newReservoir.M = 0;
     newReservoir.wSum = 0;
     newReservoir.W = 0;
-    
-    // newReservoir = previousReservoir;
 
-    if (g_frameData.frameNumber > 1) 
+    bool inside = prevPixelCoordX >= 0 && prevPixelCoordX < dims.x&& prevPixelCoordY >= 0 && prevPixelCoordY < dims.y;
+
+    if (g_frameData.frameNumber > 1 && inside)
     {
         switch (g_frameData.renderMode)
         {
         case 0: CombineReservoirs(payload, reservoir, previousReservoir, newReservoir); break;
-        case 1: CopyReservoirs(newReservoir, reservoir); break;
+        case 1: newReservoir = reservoir; break;
         }
     }
     else {
-        CopyReservoirs(newReservoir, reservoir);
+        newReservoir = reservoir;
     }
     
     if (newReservoir.W > 0)
