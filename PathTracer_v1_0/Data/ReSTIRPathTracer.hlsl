@@ -46,10 +46,10 @@ RWStructuredBuffer<Reservoir> gPrevReserviors : register(u7);
 
 void UpdateReservoir(inout Reservoir r, in LightSample lightSample, float weight, inout uint seed)
 {
-    weight = max(weight, 1e-10);
+    weight = max(weight, 1e-6);
     r.wSum += weight;
     r.M += 1;
-    if ((r.M == 1) || nextRand(seed) < weight / r.wSum)
+    if (nextRand(seed) <= weight / r.wSum)
     {
         r.lightSample.position = lightSample.position;
         r.lightSample.Li = lightSample.Li;
@@ -92,8 +92,8 @@ void CopyReservoirs(inout Reservoir s, in Reservoir r)
 
 void CombineReservoirs(in RayPayload payload, in Reservoir r1, in Reservoir r2, inout Reservoir s)
 {
-    CopyReservoirs(s, r2);
-    return;
+    //CopyReservoirs(s, r2);
+    //return;
 
     UpdateReservoir(s, r1.lightSample, getPHat(r1.lightSample, payload) * r1.W * r1.M, payload.seed);
     UpdateReservoir(s, r2.lightSample, getPHat(r2.lightSample, payload) * r2.W * r2.M, payload.seed);
@@ -201,15 +201,15 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     prevPixel = (prevPixel + 1) * 0.5;
 
 
-    uint prevPixelCoordX = clamp(0, uint(round(prevPixel.x * dims.x)), dims.x - 1);
-    uint prevPixelCoordY = clamp(0, uint(round(prevPixel.y * dims.y)), dims.y - 1);
+    uint prevPixelCoordX = clamp(0, uint((prevPixel.x * dims.x)), dims.x - 1);
+    uint prevPixelCoordY = clamp(0, uint((prevPixel.y * dims.y)), dims.y - 1);
     uint2 prevPixelCoord = uint2(prevPixelCoordX, prevPixelCoordY);
 
     uint linearIndexPrev = prevPixelCoordX + prevPixelCoordY * launchDim.x;
     uint linearIndex = launchIndex.x + launchIndex.y * launchDim.x;
 
-    Reservoir previousReservoir;
-    CopyReservoirs(previousReservoir, gPrevReserviors[linearIndex]);
+    Reservoir previousReservoir = gPrevReserviors[linearIndex];
+    // CopyReservoirs(previousReservoir, gPrevReserviors[linearIndex]);
 
     /*previousReservoir.lightSample.position = gPrevReserviorsPosition[prevPixelCoord].rgb;
     previousReservoir.lightSample.lightIndex = (uint) (gPrevReserviorsPosition[prevPixelCoord].a);
@@ -226,7 +226,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     
     // newReservoir = previousReservoir;
 
-    /*if (g_frameData.totalFrameNumber > 1) 
+    if (g_frameData.frameNumber > 1) 
     {
         switch (g_frameData.renderMode)
         {
@@ -236,32 +236,31 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     }
     else {
         CopyReservoirs(newReservoir, reservoir);
-    }*/
+    }
     
-    //if (newReservoir.W > 0)
-    //{
-    //    Ldist = length(newReservoir.lightSample.position - payload.origin);
-    //    L = normalize(newReservoir.lightSample.position - payload.origin);
+    if (newReservoir.W > 0)
+    {
+        Ldist = length(newReservoir.lightSample.position - payload.origin);
+        L = normalize(newReservoir.lightSample.position - payload.origin);
 
-    //    shadowRay.Origin = payload.origin;
-    //    shadowRay.Direction = L;
-    //    shadowRay.TMax = Ldist - SCENE_T_MIN;
-    //    shadowPayload.hit = false;
-    //    TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
-    //    if (!shadowPayload.hit) {
-    //        float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
-    //        // const float scatterPdf = bsdf::Pdf(material, payload, wo);
-    //        const float3 f = bsdf::Eval(material, payload, wo);
+        shadowRay.Origin = payload.origin;
+        shadowRay.Direction = L;
+        shadowRay.TMax = Ldist - SCENE_T_MIN;
+        shadowPayload.hit = false;
+        TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
+        if (!shadowPayload.hit) {
+            float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
+            const float3 f = bsdf::Eval(material, payload, wo);
 
-    //        const float3 L = newReservoir.lightSample.Li* f * newReservoir.W;
-    //        result += L;
-    //        result = float3(1.0f, 1.0f, 1.0f);
-    //    }
-    //}
+            const float3 L = newReservoir.lightSample.Li * f * newReservoir.W;
+            result += L;
+        }
+    }
 
-    pathResult.radiance = getRandomColor(previousReservoir.lightSample.lightIndex);
-    //pathResult.radiance = result;
-    /*switch (g_frameData.renderMode) 
+    //pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex);
+    pathResult.radiance = result;
+    
+    /*switch (g_frameData.renderMode)
     {
     case 0: pathResult.radiance = result;  break;
     case 1: pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex); break;
@@ -269,9 +268,9 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     }*/
     
     // gPrevReserviors[linearIndex] = reservoir;
-    CopyReservoirs(gPrevReserviors[linearIndex], reservoir);
+    // CopyReservoirs(gPrevReserviors[linearIndex], reservoir);
 
-    // gPrevReserviors[linearIndex].lightSample = reservoir.lightSample;
+    gPrevReserviors[linearIndex] = newReservoir;
 
     return;
 }
@@ -346,6 +345,7 @@ void rayGen()
     //    float a = 1.0f / (float)(g_frameData.frameNumber);
     //    radiance = lerp(oldColor, radiance, a);
     //}
+
     gOutputHDR[launchIndex.xy] = float4(radiance, 1.0f);
     radiance = radiance / (radiance + 1);
     radiance = pow(radiance, 1.f / 2.2f);

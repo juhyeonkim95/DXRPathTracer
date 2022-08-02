@@ -355,12 +355,14 @@ void TutorialPathTracer::createShaderResources()
     // 12. Normal
     createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormal", 1);
 
+    // 15 prev reserviors
+    createUAVBuffer(DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
+
+
     // 13, 14 Prev buffer
     createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev", 1);
     createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev", 1);
 
-    // 15 prev reserviors
-    createUAVBuffer(DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
     
 
     mpTextureStartHandle = mSrvUavHeap->getLastGPUHandle();

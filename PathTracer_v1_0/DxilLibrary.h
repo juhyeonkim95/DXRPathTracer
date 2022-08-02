@@ -305,7 +305,7 @@ RootSignatureDesc createGlobalRootDesc()
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
-    desc.rootParams.resize(5);
+    desc.rootParams.resize(4);
 
     // camera 
     desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
