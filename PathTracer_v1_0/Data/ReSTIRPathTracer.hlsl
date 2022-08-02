@@ -32,6 +32,78 @@
 #include "SampleLight.hlsli"
 
 
+RWStructuredBuffer<Reservoir> gPrevReserviors : register(u7);
+
+//RWStructuredBuffer<Reservoir> gPrevReserviors : register(u7);
+//RWStructuredBuffer<Reservoir> gPrevReserviors : register(u7);
+//RWStructuredBuffer<Reservoir> gPrevReserviors : register(u7);
+
+//RWTexture2D<float4> gPrevReserviorsPosition : register(u7);
+//RWTexture2D<float4> gPrevReserviorsNormal : register(u8);
+//RWTexture2D<float4> gPrevReserviorsLi : register(u9);
+//RWTexture2D<float4> gPrevReserviorsRIS : register(u10);
+
+
+void UpdateReservoir(inout Reservoir r, in LightSample lightSample, float weight, inout uint seed)
+{
+    weight = max(weight, 1e-10);
+    r.wSum += weight;
+    r.M += 1;
+    if ((r.M == 1) || nextRand(seed) < weight / r.wSum)
+    {
+        r.lightSample.position = lightSample.position;
+        r.lightSample.Li = lightSample.Li;
+        r.lightSample.normal = lightSample.normal;
+        r.lightSample.lightIndex = lightSample.lightIndex;
+    }
+    return;
+}
+
+float getPHat(in LightSample lightSample, in RayPayload payload)
+{
+    Material material = g_materialinfo[payload.materialIndex];
+
+    const float Ldist = length(lightSample.position - payload.origin);
+    const float3 L = normalize(lightSample.position - payload.origin);
+    const float nDl = dot(payload.normal, L);
+    const float LnDl = -dot(lightSample.normal, L);
+    if (LnDl <= 0.0f) {
+        return 0.0f;
+    }
+    float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
+    const float3 f = bsdf::Eval(material, payload, wo);
+    float p_hat = length(f * lightSample.Li / (Ldist * Ldist));
+    return p_hat;
+}
+
+
+void CopyReservoirs(inout Reservoir s, in Reservoir r)
+{
+    s.M = r.M;
+    s.W = r.W;
+    s.wSum = r.wSum;
+    s.lightSample.position = r.lightSample.position;
+    s.lightSample.Li = r.lightSample.Li;
+    s.lightSample.normal = r.lightSample.normal;
+    s.lightSample.lightIndex = r.lightSample.lightIndex;
+
+    return;
+}
+
+void CombineReservoirs(in RayPayload payload, in Reservoir r1, in Reservoir r2, inout Reservoir s)
+{
+    CopyReservoirs(s, r2);
+    return;
+
+    UpdateReservoir(s, r1.lightSample, getPHat(r1.lightSample, payload) * r1.W * r1.M, payload.seed);
+    UpdateReservoir(s, r2.lightSample, getPHat(r2.lightSample, payload) * r2.W * r2.M, payload.seed);
+    s.M = r1.M + r2.M;
+    float pHat = getPHat(s.lightSample, payload);
+    s.W = (pHat == 0) ? 0: (1 / pHat) * (s.wSum / s.M);
+    return;
+}
+
+
 void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult)
 {
     float emissionWeight = 1.0f;
@@ -54,140 +126,156 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.position = payload.origin;
     pathResult.direct = float3(0, 0, 0);
     pathResult.reflectance = payload.attenuation;
-
-
-    // initial candidate generation
-    for (int i = 0; i < min(gLightsCount, 32); i++)
+    if (payload.done)
     {
-        uint lightIndex = (uint) (nextRand(payload.seed) * g_frameData.lightNumber);
-        
-        LightParameter light = lights[lightIndex];
-        SampleLight(payload.origin, light, payload.seed, lightSample);
+        if (dot(payload.emission, payload.emission) > 0)
+        {
+            pathResult.radiance = getRandomColor(payload.lightIndex);
+        }
+        else
+        {
+            pathResult.radiance = payload.emission;
+        }
 
-        const float Ldist = length(lightSample.position - payload.origin);
-        const float3 L = normalize(lightSample.position - payload.origin);
-        const float nDl = dot(payload.normal, L);
-        const float LnDl = -dot(lightSample.normal, L);
-
-        float lightPdf = Ldist * Ldist / LnDl * lightSample.pdf / g_frameData.lightNumber;
-
-        const float scatterPdf = bsdf::Pdf(material, payload, wo);
-        const float3 f = bsdf::Eval(material, payload, wo);
-
-        float p_hat = length(f * lightSample.Li / (Ldist * Ldist) );
+        // pathResult.radiance = payload.emission;
+        return;
     }
 
-    uint materialType = g_materialinfo[payload.materialIndex].materialType;
-    uint maxDepth = PATHTRACE_MAX_DEPTH;
-    switch (materialType) {
-    case BSDF_TYPE_DIFFUSE:             maxDepth = PATHTRACE_MAX_DEPTH_DIFFUSE; break;
-    case BSDF_TYPE_CONDUCTOR:           maxDepth = PATHTRACE_MAX_DEPTH_SPECULAR; break;
-    case BSDF_TYPE_ROUGH_CONDUCTOR:     maxDepth = PATHTRACE_MAX_DEPTH_SPECULAR; break;
-    case BSDF_TYPE_DIELECTRIC:          maxDepth = PATHTRACE_MAX_DEPTH_TRANSMITTANCE; break;
-    case BSDF_TYPE_ROUGH_DIELECTRIC:    maxDepth = PATHTRACE_MAX_DEPTH_TRANSMITTANCE; break;
-    case BSDF_TYPE_PLASTIC:             maxDepth = PATHTRACE_MAX_DEPTH_DIFFUSE; break;
-    }
+    Material material = g_materialinfo[payload.materialIndex];
 
-    if (materialType != BSDF_TYPE_DIFFUSE) {
-        pathResult.reflectance = float3(1, 1, 1);
-    }
-
-#if USE_NEXT_EVENT_ESTIMATION
     LightSample lightSample;
+
     RayDesc shadowRay;
     shadowRay.TMin = SCENE_T_MIN;
-#endif
-    uint depth = 1;
-    while (true) {
-        // ---------------- Intersection with emitters ----------------
-        result += emissionWeight * throughput * payload.emission;
 
-        // ---------------- Terminate ray tracing ----------------
-        // (1) over max depth
-        // (2) ray missed
-        // (3) hit emission
-        if (payload.done || depth >= maxDepth) {
-            if (depth <= 2) {
-                pathResult.direct += emissionWeight * throughput * payload.emission;
-            }
-            break;
-        }
+    Reservoir reservoir;
+    reservoir.M = 0;
+    reservoir.wSum = 0;
+    reservoir.W = 0;
 
-        // (4) Russian roulette termination
-#if USE_RUSSIAN_ROULETTE
-        if (depth >= PATHTRACE_RR_BEGIN_DEPTH) {
-            float pcont = max(max(throughput.x, throughput.y), throughput.z);
-            pcont = max(pcont, 0.05f);  // Russian roulette minimum.
-            if (nextRand(payload.seed) >= pcont)
-                break;
-            throughput /= pcont;
-        }
-#endif
-        Material material = g_materialinfo[payload.materialIndex];
+    // float4 reservoir = float4(0.0f);
+    bool doNEE = material.materialType & BSDF_TYPE_DIFFUSE || material.materialType & BSDF_TYPE_ROUGH_CONDUCTOR;
+    
+    uint M = min(g_frameData.lightNumber, 8);
 
-#if USE_NEXT_EVENT_ESTIMATION
-        // --------------------- Emitter sampling ---------------------
-
-        // (1) Select light index (currently uniform sampling) & sample light point within selected light.
+    // (1) Initial candidates generation
+    for (int i = 0; i < M; i++)
+    {
         uint lightIndex = (uint) (nextRand(payload.seed) * g_frameData.lightNumber);
+        lightIndex = min(lightIndex, g_frameData.lightNumber - 1);
 
         LightParameter light = lights[lightIndex];
         SampleLight(payload.origin, light, payload.seed, lightSample);
+        lightSample.lightIndex = lightIndex;
 
-        const float Ldist = length(lightSample.position - payload.origin);
-        const float3 L = normalize(lightSample.position - payload.origin);
-        const float nDl = dot(payload.normal, L);
-        const float LnDl = -dot(lightSample.normal, L);
+        float p = lightSample.pdf / ((float) g_frameData.lightNumber);
+        float pHat = getPHat(lightSample, payload);
 
-        float lightPdf = Ldist * Ldist / LnDl * lightSample.pdf / g_frameData.lightNumber;
-
-        if (LnDl > 0 && nDl > 0 && (material.materialType & BSDF_TYPE_GLOSSY))
-        {
-            shadowRay.Origin = payload.origin;
-            shadowRay.Direction = L;
-            shadowRay.TMax = Ldist - SCENE_T_MIN;
-            ShadowPayload shadowPayload;
-            shadowPayload.hit = false;
-            TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
-            if (!shadowPayload.hit) {
-                float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
-                const float scatterPdf = bsdf::Pdf(material, payload, wo);
-                const float3 f = bsdf::Eval(material, payload, wo);
-
-                const float weight = powerHeuristic(lightPdf, scatterPdf);
-
-                const float3 L = weight * lightSample.Li * f / lightPdf * throughput;
-                result += L;
-                if (depth == 1) {
-                    pathResult.direct += L;
-                }
-            }
-        }
-#endif
-        throughput *= payload.attenuation;
-
-        if (dot(throughput, throughput) == 0.0) {
-            break;
-        }
-
-        ray.Direction = payload.direction;
-        ray.Origin = payload.origin;
-        float scatterPdf = payload.scatterPdf;
-        depth += 1;// material.materialType& BSDF_TRANSMISSION ? 0.5f : 1.0f;
-
-        TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2, 0, ray, payload);
-#if USE_NEXT_EVENT_ESTIMATION
-        if (payload.lightIndex >= 0 && scatterPdf > 0.0f) {
-            float lightPdfArea = lights[payload.lightIndex].normalAndPdf.w / g_frameData.lightNumber;
-            float lightPdf = (payload.t * payload.t) / dot(payload.normal, -ray.Direction) * lightPdfArea;
-            emissionWeight = powerHeuristic(scatterPdf, lightPdf);
-        }
-#endif
+        UpdateReservoir(reservoir, lightSample, pHat / p, payload.seed);
     }
-    pathResult.radiance = result;
+    
+    float pHat = getPHat(reservoir.lightSample, payload);
+    reservoir.W = (pHat == 0) ? 0 : (1.0f / pHat) * (reservoir.wSum / reservoir.M);
+
+    float Ldist = length(reservoir.lightSample.position - payload.origin);
+    float3 L = normalize(reservoir.lightSample.position - payload.origin);
+
+    shadowRay.Origin = payload.origin;
+    shadowRay.Direction = L;
+    shadowRay.TMax = Ldist - SCENE_T_MIN;
+    ShadowPayload shadowPayload;
+    shadowPayload.hit = false;
+
+    TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
+    if (shadowPayload.hit) {
+        reservoir.W = 0.0f;
+    }
+
+    uint3 launchDim = DispatchRaysDimensions();
+    uint3 launchIndex = DispatchRaysIndex();
+    float2 dims = float2(launchDim.xy);
+
+    float4 projCoord = mul(float4(pathResult.position, 1.0f), g_frameData.previousProjView);
+    projCoord /= projCoord.w;
+    float2 prevPixel = float2(projCoord.x, -projCoord.y);
+    prevPixel = (prevPixel + 1) * 0.5;
+
+
+    uint prevPixelCoordX = clamp(0, uint(round(prevPixel.x * dims.x)), dims.x - 1);
+    uint prevPixelCoordY = clamp(0, uint(round(prevPixel.y * dims.y)), dims.y - 1);
+    uint2 prevPixelCoord = uint2(prevPixelCoordX, prevPixelCoordY);
+
+    uint linearIndexPrev = prevPixelCoordX + prevPixelCoordY * launchDim.x;
+    uint linearIndex = launchIndex.x + launchIndex.y * launchDim.x;
+
+    Reservoir previousReservoir;
+    CopyReservoirs(previousReservoir, gPrevReserviors[linearIndex]);
+
+    /*previousReservoir.lightSample.position = gPrevReserviorsPosition[prevPixelCoord].rgb;
+    previousReservoir.lightSample.lightIndex = (uint) (gPrevReserviorsPosition[prevPixelCoord].a);
+    previousReservoir.lightSample.normal = gPrevReserviorsNormal[prevPixelCoord].rgb;
+    previousReservoir.lightSample.Li = gPrevReserviorsLi[prevPixelCoord].rgb;
+    previousReservoir.M = gPrevReserviorsRIS[prevPixelCoord].r;
+    previousReservoir.W = gPrevReserviorsRIS[prevPixelCoord].g;
+    previousReservoir.wSum = gPrevReserviorsRIS[prevPixelCoord].b;*/
+
+    Reservoir newReservoir;
+    newReservoir.M = 0;
+    newReservoir.wSum = 0;
+    newReservoir.W = 0;
+    
+    // newReservoir = previousReservoir;
+
+    /*if (g_frameData.totalFrameNumber > 1) 
+    {
+        switch (g_frameData.renderMode)
+        {
+        case 0: CombineReservoirs(payload, reservoir, previousReservoir, newReservoir); break;
+        case 1: CopyReservoirs(newReservoir, reservoir); break;
+        }
+    }
+    else {
+        CopyReservoirs(newReservoir, reservoir);
+    }*/
+    
+    //if (newReservoir.W > 0)
+    //{
+    //    Ldist = length(newReservoir.lightSample.position - payload.origin);
+    //    L = normalize(newReservoir.lightSample.position - payload.origin);
+
+    //    shadowRay.Origin = payload.origin;
+    //    shadowRay.Direction = L;
+    //    shadowRay.TMax = Ldist - SCENE_T_MIN;
+    //    shadowPayload.hit = false;
+    //    TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
+    //    if (!shadowPayload.hit) {
+    //        float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
+    //        // const float scatterPdf = bsdf::Pdf(material, payload, wo);
+    //        const float3 f = bsdf::Eval(material, payload, wo);
+
+    //        const float3 L = newReservoir.lightSample.Li* f * newReservoir.W;
+    //        result += L;
+    //        result = float3(1.0f, 1.0f, 1.0f);
+    //    }
+    //}
+
+    pathResult.radiance = getRandomColor(previousReservoir.lightSample.lightIndex);
+    //pathResult.radiance = result;
+    /*switch (g_frameData.renderMode) 
+    {
+    case 0: pathResult.radiance = result;  break;
+    case 1: pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex); break;
+    default: break;
+    }*/
+    
+    // gPrevReserviors[linearIndex] = reservoir;
+    CopyReservoirs(gPrevReserviors[linearIndex], reservoir);
+
+    // gPrevReserviors[linearIndex].lightSample = reservoir.lightSample;
 
     return;
 }
+
 
 [shader("raygeneration")]
 void rayGen()
@@ -253,11 +341,11 @@ void rayGen()
     gReflectance[launchIndex.xy] = float4(reflectance, 1.0f);
 
 #endif
-    if (g_frameData.frameNumber > 1) {
-        float3 oldColor = gOutputHDR[launchIndex.xy].xyz;
-        float a = 1.0f / (float)(g_frameData.frameNumber);
-        radiance = lerp(oldColor, radiance, a);
-    }
+    //if (g_frameData.frameNumber > 1) {
+    //    float3 oldColor = gOutputHDR[launchIndex.xy].xyz;
+    //    float a = 1.0f / (float)(g_frameData.frameNumber);
+    //    radiance = lerp(oldColor, radiance, a);
+    //}
     gOutputHDR[launchIndex.xy] = float4(radiance, 1.0f);
     radiance = radiance / (radiance + 1);
     radiance = pow(radiance, 1.f / 2.2f);
@@ -351,13 +439,13 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     //uint diffuseReflectanceTextureID = materialInfo.diffuseReflectanceTextureID;
     //float3 diffuseReflectance = diffuseReflectanceTextureID ? g_textures.SampleLevel(g_s0, payload.uv, 0.0f).xyz : materialInfo.diffuseReflectance;
 
-
-
+    
+    
     payload.bitangent = getBinormal(normal);
     payload.tangent = cross(payload.bitangent, normal);
     float3 wi = -rayDir;
     payload.wi = float3(dot(payload.tangent, wi), dot(payload.bitangent, wi), dot(payload.normal, wi));
-
+    
     BSDFSample bs;
 
     bsdf::Sample(materialInfo, payload, payload.seed, bs);

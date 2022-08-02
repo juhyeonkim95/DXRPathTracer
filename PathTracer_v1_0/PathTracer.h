@@ -75,10 +75,9 @@ private:
     std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
 
     ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
-    
-
     ID3D12ResourcePtr mpLightParametersBuffer = nullptr;
-    ID3D12ResourcePtr mpWaveletParameterBuffer = nullptr;
+    ID3D12ResourcePtr mpPrevReservoirBuffer = nullptr;
+
 
     std::vector<ID3D12ResourcePtr> mpTextureBuffers;
     D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;
@@ -99,10 +98,10 @@ private:
 
     float elapsedTime[FRAME_ACCUMULATE_NUMBER];
     
-    uint renderMode;
-    bool doPostProcess = true;
+    uint renderMode = 0;
+    bool doPostProcess = false;
 
-    void createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth = 1);
+    void createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth, uint struct_size=0);
     void createSRVTexture(DXGI_FORMAT format, std::string name);
     
     // Post processing

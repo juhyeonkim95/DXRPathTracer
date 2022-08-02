@@ -108,7 +108,8 @@ ID3DBlobPtr compileLibrary(const WCHAR* filename, const WCHAR* targetEntry, cons
 DxilLibrary createDxilLibrary()
 {
     // Compile the shader
-    ID3DBlobPtr pDxilLib = compileLibrary(L"Data/PathTracer.hlsl", L"", L"lib_6_3");
+    // ID3DBlobPtr pDxilLib = compileLibrary(L"Data/PathTracer.hlsl", L"", L"lib_6_3");
+    ID3DBlobPtr pDxilLib = compileLibrary(L"Data/ReSTIRPathTracer.hlsl", L"", L"lib_6_3");
     const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kMissEnvShader, kClosestHitShader, kShadowMiss, kShadowChs };
     return DxilLibrary(pDxilLib, entryPoints, arraysize(entryPoints));
 }
@@ -300,11 +301,11 @@ RootSignatureDesc createGlobalRootDesc()
 
     // UAV
     desc.range[1].BaseShaderRegister = 1;
-    desc.range[1].NumDescriptors = 6;
+    desc.range[1].NumDescriptors = 7;
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
-    desc.rootParams.resize(4);
+    desc.rootParams.resize(5);
 
     // camera 
     desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -329,7 +330,6 @@ RootSignatureDesc createGlobalRootDesc()
     desc.rootParams[3].DescriptorTable.NumDescriptorRanges = 1;
     desc.rootParams[3].DescriptorTable.pDescriptorRanges = &desc.range[1];
 
-
     CD3DX12_STATIC_SAMPLER_DESC bilinearClamp(
         0,
         D3D12_FILTER_ANISOTROPIC,
@@ -340,7 +340,7 @@ RootSignatureDesc createGlobalRootDesc()
         4
     );
 
-    desc.desc.NumParameters = 4;
+    desc.desc.NumParameters = desc.rootParams.size();
     desc.desc.pParameters = desc.rootParams.data();
     desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
     desc.desc.NumStaticSamplers = 1;

@@ -99,12 +99,12 @@ struct PerFrameData
     float4 v;
     float4 w;
     float4 cameraPosition;
+    float4x4 envMapTransform;
+    float4x4 previousProjView;
     uint frameNumber;
     uint totalFrameNumber;
     uint lightNumber;
     uint renderMode;
-    float4x4 envMapTransform;
-    float4x4 previousProjView;
 };
 
 struct LightParameter
@@ -119,10 +119,22 @@ struct LightParameter
 struct LightSample
 {
     float3 position;
-    float3 normal;
-    float3 Li;
     float pdf;
+    float3 normal;
+    uint lightIndex;
+    float3 Li;
+    uint unused;
 };
+
+struct Reservoir
+{
+    float wSum;
+    float W;
+    float M;
+    float unused;
+    LightSample lightSample;
+};
+
 
 struct SurfaceInteraction
 {

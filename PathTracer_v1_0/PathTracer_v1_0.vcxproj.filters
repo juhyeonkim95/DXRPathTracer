@@ -399,7 +399,7 @@
     <FxCompile Include="ReSTIRInitalTemporal.hlsl">
       <Filter>RenderPass\ReSTIR</Filter>
     </FxCompile>
-    <FxCompile Include="ReSTIRPathTracer.hlsl">
+    <FxCompile Include="Data\ReSTIRPathTracer.hlsl">
       <Filter>RenderPass\ReSTIR</Filter>
     </FxCompile>
   </ItemGroup>

@@ -114,4 +114,13 @@ float luminance(in float3 c)
 {
 	return dot(c, float3(0.2126, 0.7152, 0.0722));
 }
+
+float3 getRandomColor(uint index)
+{
+	uint seed = initRand(index, index + 100, 16);
+	float r = nextRand(seed);
+	float g = nextRand(seed);
+	float b = nextRand(seed);
+	return float3(r, g, b);
+}
 #endif

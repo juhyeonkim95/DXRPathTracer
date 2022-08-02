@@ -256,7 +256,7 @@ void TutorialPathTracer::createShaderTable()
 }
 
 
-void TutorialPathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth)
+void TutorialPathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth, uint structSize)
 {
     ID3D12ResourcePtr outputResources;
 
@@ -265,17 +265,40 @@ void TutorialPathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, u
     resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
     resDesc.Format = format;
     resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-    resDesc.Width = mSwapChainSize.x;
-    resDesc.Height = mSwapChainSize.y;
-    resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
+    if (structSize == 0) {
+        resDesc.Width = mSwapChainSize.x;
+        resDesc.Height = mSwapChainSize.y;
+        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    }
+    else {
+        resDesc.Alignment = 0;
+        resDesc.DepthOrArraySize = 1;
+        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        resDesc.Height = 1;
+        resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        resDesc.SampleDesc.Quality = 0;
+        resDesc.Width = structSize * mSwapChainSize.x * mSwapChainSize.y;
+    }
     resDesc.MipLevels = 1;
     resDesc.SampleDesc.Count = 1;
     d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&outputResources))); // Starting as copy-source to simplify onFrameRender()
 
     if (depth == 1) {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
+        if (structSize == 0) {
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+        }
+        else {
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+            uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+            uavDesc.Buffer.StructureByteStride = structSize;
+            uavDesc.Buffer.NumElements = mSwapChainSize.x * mSwapChainSize.y;
+            uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+        }
+        
         mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, mSrvUavHeap->addDescriptorHandle(name.c_str()));
     }
     else {
@@ -302,7 +325,7 @@ void TutorialPathTracer::createShaderResources()
     sceneResourceManager->createSceneAccelerationStructure(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
 
     // 1. Create the output resource. The dimensions and format should match the swap-chain
-    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_UNORM, "gOutput");
+    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_UNORM, "gOutput", 1);
 
     // 2. Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -315,26 +338,30 @@ void TutorialPathTracer::createShaderResources()
     sceneResourceManager->createSceneSRVs();
 
     // 7. HDR
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputHDR");
+    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputHDR", 1);
 
     // 8. Direct Illumination
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIllumination");
+    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIllumination", 1);
 
     // 9. Indirect Illumination
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIllumination");
+    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIllumination", 1);
 
     // 10. Reflectance
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gReflectance");
+    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gReflectance", 1);
 
     // 11. Position / ID
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID");
+    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
 
     // 12. Normal
-    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormal");
+    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormal", 1);
 
     // 13, 14 Prev buffer
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev");
-    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev");
+    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev", 1);
+    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev", 1);
+
+    // 15 prev reserviors
+    createUAVBuffer(DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
+    
 
     mpTextureStartHandle = mSrvUavHeap->getLastGPUHandle();
     sceneResourceManager->createSceneTextureResources(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
@@ -367,6 +394,13 @@ void TutorialPathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winH
     d3d_call(mpLightParametersBuffer->Map(0, nullptr, (void**)&pData));
     memcpy(pData, scene->lights.data(), sizeof(LightParameter) * scene->lights.size());
     mpLightParametersBuffer->Unmap(0, nullptr);
+
+    //mpPrevReservoirBuffer = createBuffer(mpDevice, sizeof(Reservoir) * mSwapChainSize.x * mSwapChainSize.y, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+    //uint8_t* pData;
+    //d3d_call(mpPrevResevoirBuffer->Map(0, nullptr, (void**)&pData));
+    //memcpy(pData, scene->lights.data(), sizeof(LightParameter) * scene->lights.size());
+    //mpPrevResevoirBuffer->Unmap(0, nullptr);
+
 
     // Create a Log File
     char filename[40];
@@ -443,7 +477,7 @@ void TutorialPathTracer::onFrameRender()
     // mpSrvUavHeap 2,3,4,5
     mpCmdList->SetComputeRootDescriptorTable(2, sceneResourceManager->getSRVStartHandle());//2 at createGlobalRootDesc
 
-    // UAV
+    // UAVs
     mpCmdList->SetComputeRootDescriptorTable(3, mSrvUavHeap->getGPUHandleByName("gOutputHDR"));//3 at createGlobalRootDesc
 
     // Dispatch
@@ -719,7 +753,7 @@ void TutorialPathTracer::update()
     stream2 << std::fixed << std::setprecision(2) << elapsedTimeMicrosec / 1000;
     std::string ElapsedTimes = stream2.str();
 
-    std::string windowText = "FPS:" + FPSs + " Current Frame: " + ElapsedTimes + " ms" + " Accum Frame: " + std::to_string(mFrameNumber) + " PostProcess: " + std::to_string(doPostProcess);
+    std::string windowText = "FPS:" + FPSs + " Current Frame: " + ElapsedTimes + " ms" + " Accum Frame: " + std::to_string(mFrameNumber) + " PostProcess: " + std::to_string(doPostProcess) + " Render Mode: " + std::to_string(renderMode);
     SetWindowTextA(mHwnd, windowText.c_str());
 }
 
@@ -729,7 +763,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // Scene* scene = new Scene("cornell-box");
     //Scene* scene = new Scene("kitchen");
     //Scene* scene = new Scene("living-room-2");
-    Scene* scene = new Scene("staircase");
+    // Scene* scene = new Scene("staircase");
+
+    Scene* scene = new Scene("cornell-box-multi");
 
     TutorialPathTracer pathtracer = TutorialPathTracer();
     pathtracer.setScene(scene);

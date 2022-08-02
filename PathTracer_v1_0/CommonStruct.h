@@ -47,12 +47,12 @@ struct PerFrameData
     vec4 v;
     vec4 w;
     vec4 cameraPosition;
+    mat4x4 envMapTransform;
+    mat4x4 previousProjView;
     uint frameNumber;
     uint totalFrameNumber;
     uint lightNumber;
     uint renderMode;
-    float4x4 envMapTransform;
-    float4x4 previousProjView;
 };
 
 struct LightParameter
@@ -62,4 +62,23 @@ struct LightParameter
     vec4 v;
     vec4 emission;
     vec4 normalAndPdf;
+};
+
+struct LightSample
+{
+    vec3 position;
+    float pdf;
+    vec3 normal;
+    uint lightIndex;
+    vec3 Li;
+    float unused;
+};
+
+struct Reservoir
+{
+    float wSum;
+    float W;
+    float M;
+    float unused;
+    LightSample lightSample;
 };
