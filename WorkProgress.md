@@ -123,3 +123,12 @@ About x1.5 speed up!
 ## 20220729
 - Code refactoring.
 - GUI using ImGui.
+
+## 20220801
+- Reading ReSTIR paper.
+- Try to implement basic ReSTIR.
+
+## 20220802
+- Implemented ReSTIR only using temporal reuse.
+
+![20220802_restir_temporal_reuse](assets/20220802_restir_temporal.jpg)

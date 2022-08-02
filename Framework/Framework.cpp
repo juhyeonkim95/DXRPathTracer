@@ -101,7 +101,7 @@ namespace
         return hWnd;
     }
 
-    void msgLoop(Tutorial& tutorial)
+    void msgLoop(Application& tutorial)
     {
         MSG msg;
         while (1)
@@ -148,7 +148,7 @@ void d3dTraceHR(const std::string& msg, HRESULT hr)
     msgBox(error_msg);
 }
 
-void Framework::run(Tutorial& tutorial, const std::string& winTitle, uint32_t width, uint32_t height)
+void Framework::run(Application& application, const std::string& winTitle, uint32_t width, uint32_t height)
 {
     gWinHandle = createWindow(winTitle, width, height);
 
@@ -159,15 +159,15 @@ void Framework::run(Tutorial& tutorial, const std::string& winTitle, uint32_t wi
     height = r.bottom - r.top;
 
     // Call onLoad()
-    tutorial.onLoad(gWinHandle, width, height);
+    application.onLoad(gWinHandle, width, height);
     
     // Show the window
     ShowWindow(gWinHandle, SW_SHOWNORMAL);
 
     // Start the msgLoop()
-    msgLoop(tutorial);
+    msgLoop(application);
 
     // Cleanup
-    tutorial.onShutdown();
+    application.onShutdown();
     DestroyWindow(gWinHandle);
 }

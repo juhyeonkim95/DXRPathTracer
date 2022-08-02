@@ -72,83 +72,74 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PathTracer.cpp">
+    <ClCompile Include="AppCore\PathTracer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Perspective.cpp">
+    <ClCompile Include="RenderCore\Sensor\Perspective.cpp">
       <Filter>Core\Sensor</Filter>
     </ClCompile>
-    <ClCompile Include="Diffuse.cpp">
+    <ClCompile Include="RenderCore\BSDF\Diffuse.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="loader_utils.cpp">
+    <ClCompile Include="Utils\loader_utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Plastic.cpp">
+    <ClCompile Include="RenderCore\BSDF\Plastic.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RoughPlastic.cpp">
+    <ClCompile Include="RenderCore\BSDF\RoughPlastic.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="Conductor.cpp">
+    <ClCompile Include="RenderCore\BSDF\Conductor.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RoughConductor.cpp">
+    <ClCompile Include="RenderCore\BSDF\RoughConductor.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="Dielectric.cpp">
+    <ClCompile Include="RenderCore\BSDF\Dielectric.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RoughDielectric.cpp">
+    <ClCompile Include="RenderCore\BSDF\RoughDielectric.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="ThinDielectric.cpp">
+    <ClCompile Include="RenderCore\BSDF\ThinDielectric.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh.cpp">
+    <ClCompile Include="RenderCore\Shape\Mesh.cpp">
       <Filter>Core\Shape</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
+    <ClCompile Include="RenderCore\Texture\Texture.cpp">
       <Filter>Core\Texture</Filter>
     </ClCompile>
-    <ClCompile Include="Rectangle.cpp">
-      <Filter>Core\Shape</Filter>
-    </ClCompile>
-    <ClCompile Include="Shape.cpp">
-      <Filter>Core\Shape</Filter>
-    </ClCompile>
-    <ClCompile Include="light_utils.cpp">
+    <ClCompile Include="Utils\light_utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="tinyxml2.cpp">
+    <ClCompile Include="External\tinyxml2.cpp">
       <Filter>External</Filter>
     </ClCompile>
-    <ClCompile Include="DX12Helper.cpp">
+    <ClCompile Include="DX12\DX12Helper.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcessPass.cpp">
+    <ClCompile Include="AppCore\PostProcessPass.cpp">
       <Filter>RenderPass\Postprocessing</Filter>
     </ClCompile>
-    <ClCompile Include="RenderTexture.cpp">
+    <ClCompile Include="AppCore\RenderTexture.cpp">
       <Filter>RenderPass\Postprocessing</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
+    <ClCompile Include="RenderPass\Shader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="SVGFPass.cpp">
+    <ClCompile Include="RenderPass\SVGF\SVGFPass.cpp">
       <Filter>RenderPass\SVGF</Filter>
     </ClCompile>
-    <ClCompile Include="DX12Initializer.cpp">
+    <ClCompile Include="DX12\DX12Initializer.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
-    <ClCompile Include="ToneMapper.cpp">
+    <ClCompile Include="RenderPass\Tonemap\ToneMapper.cpp">
       <Filter>RenderPass\Tonemapper</Filter>
     </ClCompile>
-    <ClCompile Include="HeapData.cpp">
+    <ClCompile Include="DX12\HeapData.cpp">
       <Filter>dx12</Filter>
-    </ClCompile>
-    <ClCompile Include="KeyboardInputManager.cpp">
-      <Filter>Input</Filter>
     </ClCompile>
     <ClCompile Include="..\Framework\Externals\imgui\imgui.cpp">
       <Filter>External\imgui</Filter>
@@ -171,130 +162,112 @@
     <ClCompile Include="..\Framework\Externals\imgui\backends\imgui_impl_win32.cpp">
       <Filter>External\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Scene.cpp">
+    <ClCompile Include="RenderCore\Scene.cpp">
       <Filter>Core\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="SceneResourceManager.cpp">
+    <ClCompile Include="AppCore\SceneResourceManager.cpp">
       <Filter>Core\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="ReSTIR.cpp">
-      <Filter>RenderPass\ReSTIR</Filter>
+    <ClCompile Include="main.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PathTracer.h">
+    <ClInclude Include="AppCore\PathTracer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="AccelerationStructureHelper.h">
+    <ClInclude Include="DX12\AccelerationStructureHelper.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Perspective.h">
+    <ClInclude Include="RenderCore\Sensor\Perspective.h">
       <Filter>Core\Sensor</Filter>
     </ClInclude>
-    <ClInclude Include="loader_utils.h">
+    <ClInclude Include="Utils\loader_utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Sensor.h">
+    <ClInclude Include="RenderCore\Sensor\Sensor.h">
       <Filter>Core\Sensor</Filter>
     </ClInclude>
-    <ClInclude Include="BSDF.h">
+    <ClInclude Include="RenderCore\BSDF\BSDF.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="Diffuse.h">
+    <ClInclude Include="RenderCore\BSDF\Diffuse.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="loader_bsdf.h">
+    <ClInclude Include="Utils\loader_bsdf.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="SharedTypes.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="HlslCompat.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Plastic.h">
+    <ClInclude Include="RenderCore\BSDF\Plastic.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RoughPlastic.h">
+    <ClInclude Include="RenderCore\BSDF\RoughPlastic.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="Conductor.h">
+    <ClInclude Include="RenderCore\BSDF\Conductor.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RoughConductor.h">
+    <ClInclude Include="RenderCore\BSDF\RoughConductor.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="Dielectric.h">
+    <ClInclude Include="RenderCore\BSDF\Dielectric.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RoughDielectric.h">
+    <ClInclude Include="RenderCore\BSDF\RoughDielectric.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="ThinDielectric.h">
+    <ClInclude Include="RenderCore\BSDF\ThinDielectric.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
+    <ClInclude Include="RenderCore\Texture\Texture.h">
       <Filter>Core\Texture</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh.h">
+    <ClInclude Include="RenderCore\Shape\Mesh.h">
       <Filter>Core\Shape</Filter>
     </ClInclude>
-    <ClInclude Include="CommonStruct.h">
+    <ClInclude Include="RenderCore\CommonStruct.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Shape.h">
-      <Filter>Core\Shape</Filter>
-    </ClInclude>
-    <ClInclude Include="Rectangle.h">
-      <Filter>Core\Shape</Filter>
-    </ClInclude>
-    <ClInclude Include="Emitter.h">
+    <ClInclude Include="RenderCore\Emitter\Emitter.h">
       <Filter>Core\Emitter</Filter>
     </ClInclude>
-    <ClInclude Include="light_utils.h">
+    <ClInclude Include="Utils\light_utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="loader_shape.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="tinyxml2.h">
+    <ClInclude Include="External\tinyxml2.h">
       <Filter>External</Filter>
     </ClInclude>
-    <ClInclude Include="tiny_obj_loader.h">
+    <ClInclude Include="External\tiny_obj_loader.h">
       <Filter>External</Filter>
     </ClInclude>
-    <ClInclude Include="stb_image.h">
+    <ClInclude Include="External\stb_image.h">
       <Filter>External</Filter>
     </ClInclude>
-    <ClInclude Include="DX12Helper.h">
+    <ClInclude Include="DX12\DX12Helper.h">
       <Filter>dx12</Filter>
     </ClInclude>
-    <ClInclude Include="DX12Initializer.h">
+    <ClInclude Include="DX12\DX12Initializer.h">
       <Filter>dx12</Filter>
     </ClInclude>
-    <ClInclude Include="DxilLibrary.h">
+    <ClInclude Include="DX12\DxilLibrary.h">
       <Filter>dx12</Filter>
     </ClInclude>
-    <ClInclude Include="PostProcessPass.h">
+    <ClInclude Include="AppCore\PostProcessPass.h">
       <Filter>RenderPass\Postprocessing</Filter>
     </ClInclude>
-    <ClInclude Include="RenderTexture.h">
+    <ClInclude Include="AppCore\RenderTexture.h">
       <Filter>RenderPass\Postprocessing</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
+    <ClInclude Include="RenderPass\Shader.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
-    <ClInclude Include="SVGFPass.h">
+    <ClInclude Include="RenderPass\SVGF\SVGFPass.h">
       <Filter>RenderPass\SVGF</Filter>
     </ClInclude>
-    <ClInclude Include="HeapData.h">
+    <ClInclude Include="DX12\HeapData.h">
       <Filter>dx12</Filter>
     </ClInclude>
-    <ClInclude Include="ToneMapper.h">
+    <ClInclude Include="RenderPass\Tonemap\ToneMapper.h">
       <Filter>RenderPass\Tonemapper</Filter>
-    </ClInclude>
-    <ClInclude Include="KeyboardInputManager.h">
-      <Filter>Input</Filter>
     </ClInclude>
     <ClInclude Include="ImGuiManager.h">
       <Filter>소스 파일</Filter>
@@ -323,36 +296,36 @@
     <ClInclude Include="..\Framework\Externals\imgui\backends\imgui_impl_win32.h">
       <Filter>External\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="Scene.h">
+    <ClInclude Include="RenderCore\Scene.h">
       <Filter>Core\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="SceneResourceManager.h">
+    <ClInclude Include="AppCore\SceneResourceManager.h">
       <Filter>Core\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="ReSTIR.h">
-      <Filter>RenderPass\ReSTIR</Filter>
+    <ClInclude Include="RenderPass\Pathtracer\ReSTIRPathTraceOriginal.hlsl">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Data\ShaderUtils.hlsli">
+    <None Include="RenderPass\Pathtracer\ShaderUtils.hlsli">
       <Filter>RenderPass\PathTracer</Filter>
     </None>
-    <None Include="Data\ShaderStructs.hlsli">
+    <None Include="RenderPass\Pathtracer\ShaderStructs.hlsli">
       <Filter>RenderPass\PathTracer</Filter>
     </None>
-    <None Include="Data\BSDF.hlsli">
+    <None Include="RenderPass\Pathtracer\BSDF.hlsli">
       <Filter>RenderPass\PathTracer</Filter>
     </None>
-    <None Include="Data\SampleLight.hlsli">
+    <None Include="RenderPass\Pathtracer\SampleLight.hlsli">
       <Filter>RenderPass\PathTracer</Filter>
     </None>
-    <None Include="Data\Fresnel.hlsli">
+    <None Include="RenderPass\Pathtracer\Fresnel.hlsli">
       <Filter>RenderPass\PathTracer</Filter>
     </None>
-    <None Include="Data\Microfacet.hlsli">
+    <None Include="RenderPass\Pathtracer\Microfacet.hlsli">
       <Filter>RenderPass\PathTracer</Filter>
     </None>
-    <None Include="Data\Constants.hlsli">
+    <None Include="RenderPass\Pathtracer\Constants.hlsli">
       <Filter>RenderPass\PathTracer</Filter>
     </None>
     <None Include="..\README.md">
@@ -361,45 +334,36 @@
     <None Include="..\WorkProgress.md">
       <Filter>markdown</Filter>
     </None>
-    <None Include="SVGFCommon.hlsli">
+    <None Include="RenderPass\SVGF\SVGFCommon.hlsli">
       <Filter>RenderPass\SVGF</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Data\PathTracer.hlsl">
+    <FxCompile Include="RenderPass\Pathtracer\PathTracer.hlsl">
       <Filter>RenderPass\PathTracer</Filter>
     </FxCompile>
     <FxCompile Include="QuadVertexShader.hlsl">
       <Filter>RenderPass\Postprocessing</Filter>
     </FxCompile>
-    <FxCompile Include="CopyShader.hlsl">
-      <Filter>RenderPass\Postprocessing</Filter>
-    </FxCompile>
-    <FxCompile Include="DepthDerivative.hlsl">
-      <Filter>RenderPass\Postprocessing</Filter>
-    </FxCompile>
-    <FxCompile Include="SVGFMotionVector.hlsl">
+    <FxCompile Include="RenderPass\SVGF\SVGFMotionVector.hlsl">
       <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
-    <FxCompile Include="SVGFReconstruction.hlsl">
+    <FxCompile Include="RenderPass\SVGF\SVGFReconstruction.hlsl">
       <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
-    <FxCompile Include="SVGFTemporalAccumulation.hlsl">
+    <FxCompile Include="RenderPass\SVGF\SVGFTemporalAccumulation.hlsl">
       <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
-    <FxCompile Include="SVGFATrousWavelet.hlsl">
+    <FxCompile Include="RenderPass\SVGF\SVGFATrousWavelet.hlsl">
       <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
-    <FxCompile Include="SVGFFilterVariance.hlsl">
+    <FxCompile Include="RenderPass\SVGF\SVGFFilterVariance.hlsl">
       <Filter>RenderPass\SVGF</Filter>
     </FxCompile>
-    <FxCompile Include="Tonemap.hlsl">
+    <FxCompile Include="RenderPass\Tonemap\Tonemap.hlsl">
       <Filter>RenderPass\Tonemapper</Filter>
     </FxCompile>
-    <FxCompile Include="ReSTIRInitalTemporal.hlsl">
-      <Filter>RenderPass\ReSTIR</Filter>
-    </FxCompile>
-    <FxCompile Include="Data\ReSTIRPathTracer.hlsl">
+    <FxCompile Include="RenderPass\Pathtracer\ReSTIRPathTracer.hlsl">
       <Filter>RenderPass\ReSTIR</Filter>
     </FxCompile>
   </ItemGroup>

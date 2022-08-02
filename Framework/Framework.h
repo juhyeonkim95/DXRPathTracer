@@ -67,10 +67,10 @@ MAKE_SMART_COM_PTR(ID3DBlob);
 MAKE_SMART_COM_PTR(IDxcBlobEncoding);
 
 // Interface for the tutorials
-class Tutorial
+class Application
 {
 public:
-    virtual ~Tutorial() {}
+    virtual ~Application() {}
     virtual void onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHeight) = 0;  // Called when the tutorial loads
     virtual void onFrameRender() = 0;         // Called each frame
     virtual void onShutdown() = 0;            // Called when the application shutsdown, before the window is closing
@@ -79,7 +79,7 @@ public:
 class Framework
 {
 public:
-    static void run(Tutorial& tutorial, const std::string& winTitle, uint32_t width = 1920, uint32_t height = 1200);
+    static void run(Application& tutorial, const std::string& winTitle, uint32_t width = 1920, uint32_t height = 1200);
 };
 
 static const uint32_t kDefaultSwapChainBuffers = 2;  // TODO : change!!
