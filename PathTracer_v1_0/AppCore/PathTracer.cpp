@@ -541,6 +541,7 @@ void PathTracer::onFrameRender()
     ImGui::Begin("Path Tracer Settings");                          // Create a window called "Hello, world!" and append into it.
 
     svgfPass->processGUI();
+    restirPass->processGUI();
 
     //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
     //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
@@ -589,6 +590,7 @@ void PathTracer::initPostProcess()
     svgfPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
 
     tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
+    restirPass = new ReSTIR();
     // tonemapPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
 }
 

@@ -171,6 +171,9 @@
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\PathTracer.h">
@@ -303,6 +306,9 @@
       <Filter>Core\Scene</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\Pathtracer\ReSTIRPathTraceOriginal.hlsl">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\ReSTIR\ReSTIR.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

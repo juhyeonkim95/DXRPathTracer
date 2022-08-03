@@ -169,6 +169,7 @@
     <ClCompile Include="DX12\DX12Helper.cpp" />
     <ClCompile Include="DX12\DX12Initializer.cpp" />
     <ClCompile Include="DX12\HeapData.cpp" />
+    <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp" />
     <ClCompile Include="Utils\light_utils.cpp" />
     <ClCompile Include="Utils\loader_utils.cpp" />
     <ClCompile Include="RenderCore\Shape\Mesh.cpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="RenderPass\Pathtracer\ReSTIRPathTraceOriginal.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="RenderPass\ReSTIR\ReSTIR.h" />
     <ClInclude Include="Utils\light_utils.h" />
     <ClInclude Include="Utils\loader_bsdf.h" />
     <ClInclude Include="Utils\loader_utils.h" />

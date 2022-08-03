@@ -339,14 +339,6 @@ void rayGen()
     radiance = radiance / (radiance + 1);
     radiance = pow(radiance, 1.f / 2.2f);
     gOutput[launchIndex.xy] = float4(radiance, 1.0f);
-
-    //uint geomIDSeed = pathResult.instanceIndex;
-    //float r = nextRand(geomIDSeed);
-    //float g = nextRand(geomIDSeed);
-    //float b = nextRand(geomIDSeed);
-    //gOutput[launchIndex.xy] = float4(r,g,b, 1.0f);
-    //float zvalue = 1 / (depth + 1);
-    //gOutput[launchIndex.xy] = float4(zvalue, zvalue, zvalue, 1.0f);
 }
 
 [shader("miss")]

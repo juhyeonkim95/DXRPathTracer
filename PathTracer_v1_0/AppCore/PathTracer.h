@@ -6,6 +6,7 @@
 #include <dinput.h>
 #include <fstream>
 #include "SVGF/SVGFPass.h"
+#include "ReSTIR/ReSTIR.h"
 #include "Tonemap/ToneMapper.h"
 #include "HeapData.h"
 #include "SceneResourceManager.h"
@@ -108,7 +109,7 @@ private:
     PostProcessQuad* postProcessQuad;
     SVGFPass* svgfPass;
     ToneMapper* tonemapPass;
-
+    ReSTIR* restirPass;
     Shader* defaultCopyShader;
 
 
