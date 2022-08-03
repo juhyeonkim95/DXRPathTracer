@@ -18,6 +18,12 @@ static const uint PATHTRACE_MAX_DEPTH_TRANSMITTANCE = 10;
 static const float M_PIf = 3.14159265358979323846f;
 static const float M_1_PIf = 0.318309886183790671538f;
 
+static const int ReSTIR_MODE_NO_REUSE = 0;
+static const int ReSTIR_MODE_TEMPORAL_REUSE = 1;
+static const int ReSTIR_MODE_SPATIAL_REUSE = 2;
+static const int ReSTIR_MODE_SPATIOTEMPORAL_REUSE = 3;
+
+
 enum BSDF_TYPE : uint
 {
     BSDF_TYPE_DIFFUSE = 1 << 0,
@@ -215,29 +221,6 @@ RWTexture2D<float4> gOutputNormal : register(u6);
 RWTexture2D<float4> gOutputPositionGeomIDPrev : register(u7);
 RWTexture2D<float4> gOutputNormalPrev : register(u8);
 
-//RWTexture2D<float4> gOutputHDR[4] : register(u1);
-//RWTexture2D<float2> gOutputMoment[4] : register(u5);
-//RWTexture2D<float4> gOutputNormal[2] : register(u9);
-//RWTexture2D<float4> gOutputPositionGeomID[2] : register(u11);
-//RWTexture2D<float> gOutputDepth[2] : register(u13);
-
-//RWTexture2D<float4> gOutputHDR : register(u1);
-//RWTexture2D<float4> gOutputHDR2 : register(u2);
-//RWTexture2D<float4> gOutputNormal : register(u3);
-//RWTexture2D<float4> gOutputNormal2 : register(u4);
-//RWTexture2D<float> gOutputDepth : register(u5);
-//RWTexture2D<uint> gOutputGeomID : register(u6);
-//RWTexture2D<uint> gOutputGeomID2 : register(u7);
-//RWTexture2D<float2> gOutputMoment : register(u8);
-//RWTexture2D<float2> gOutputMoment2 : register(u9);
-//RWTexture2D<uint> gAccumCountBuffer : register(u10);
-//
-//RWTexture2D<float4> gOutputHDRIndirect : register(u11);
-//RWTexture2D<float4> gOutputHDR2Indirect : register(u12);
-//RWTexture2D<float2> gOutputMomentIndirect : register(u13);
-//RWTexture2D<float2> gOutputMoment2Indirect : register(u14);
-//
-//RWTexture2D<float4> gTest[2] : register(u15);
 
 StructuredBuffer<Material> g_materialinfo : register(t1);
 StructuredBuffer<GeometryInfo> g_geometryinfo : register(t2);
@@ -262,4 +245,16 @@ cbuffer Lights : register(b1)
 {
     LightParameter lights[20];
 }
+
+cbuffer ReSTIRParams : register(b2)
+{
+    int enableReSTIR;
+    int resamplingMode;
+
+    int lightCandidateCount;
+    int maxHistoryLength;
+    float normalThreshold;
+    float depthThreshold;
+}
+
 #endif

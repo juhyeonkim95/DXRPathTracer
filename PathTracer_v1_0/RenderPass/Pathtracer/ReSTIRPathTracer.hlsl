@@ -1,32 +1,3 @@
-/***************************************************************************
-# Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#  * Neither the name of NVIDIA CORPORATION nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-***************************************************************************/
-// Utility function to get a vector perpendicular to an input vector 
-//    (from "Efficient Construction of Perpendicular Vectors Without Branching")
 #include "ShaderUtils.hlsli"
 #include "BSDF.hlsli"
 #include "SampleLight.hlsli"
@@ -62,8 +33,7 @@ float getPHat(in LightSample lightSample, in RayPayload payload)
     }
     float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
     const float3 f = bsdf::Eval(material, payload, wo);
-    float p_hat = length(f * lightSample.Li / (Ldist * Ldist));
-    p_hat = min(p_hat, 1.0f);
+    float p_hat = length(f * lightSample.Li) * LnDl / (Ldist * Ldist);
     return p_hat;
 }
 
@@ -124,7 +94,6 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         {
             pathResult.radiance = payload.emission;
         }*/
-
         pathResult.radiance = payload.emission;
         return;
     }
@@ -136,131 +105,167 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     RayDesc shadowRay;
     shadowRay.TMin = SCENE_T_MIN;
 
-    Reservoir reservoir;
-    reservoir.M = 0;
-    reservoir.wSum = 0;
-    reservoir.W = 0;
+
 
     // float4 reservoir = float4(0.0f);
     bool doNEE = material.materialType & BSDF_TYPE_DIFFUSE || material.materialType & BSDF_TYPE_ROUGH_CONDUCTOR;
     
-    uint M = min(g_frameData.lightNumber, 8);
-
-    // (1) Initial candidates generation
-    for (int i = 0; i < M; i++)
-    {
-        uint lightIndex = (uint) (nextRand(payload.seed) * g_frameData.lightNumber);
-        lightIndex = min(lightIndex, g_frameData.lightNumber - 1);
-
-        LightParameter light = lights[lightIndex];
-        SampleLight(payload.origin, light, payload.seed, lightSample);
-        lightSample.lightIndex = lightIndex;
-
-        float p = lightSample.pdf / ((float) g_frameData.lightNumber);
-        float pHat = getPHat(lightSample, payload);
-
-        UpdateReservoir(reservoir, lightSample, pHat / p, payload.seed);
-    }
     
-    float pHat = getPHat(reservoir.lightSample, payload);
-    reservoir.W = (pHat == 0) ? 0 : (1.0f / pHat) * (reservoir.wSum / reservoir.M);
-
-    float Ldist = length(reservoir.lightSample.position - payload.origin);
-    float3 L = normalize(reservoir.lightSample.position - payload.origin);
-
-    shadowRay.Origin = payload.origin;
-    shadowRay.Direction = L;
-    shadowRay.TMax = Ldist - SCENE_T_MIN;
-    ShadowPayload shadowPayload;
-    shadowPayload.hit = false;
-
-    TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
-    if (shadowPayload.hit) {
-        reservoir.W = 0.0f;
-    }
-
-    uint3 launchDim = DispatchRaysDimensions();
-    uint3 launchIndex = DispatchRaysIndex();
-    float2 dims = float2(launchDim.xy);
-
-    float4 projCoord = mul(float4(pathResult.position, 1.0f), g_frameData.previousProjView);
-    projCoord /= projCoord.w;
-    float2 prevPixel = float2(projCoord.x, -projCoord.y);
-    prevPixel = (prevPixel + 1) * 0.5;
-
-    
-
-    uint prevPixelCoordX = uint((prevPixel.x * dims.x));// clamp(0, uint((prevPixel.x * dims.x)), dims.x - 1);
-    uint prevPixelCoordY = uint((prevPixel.y * dims.y));// clamp(0, uint((prevPixel.y * dims.y)), dims.y - 1);
-    uint2 prevPixelCoord = uint2(prevPixelCoordX, prevPixelCoordY);
-
-    float3 prevPosition = gOutputPositionGeomIDPrev[prevPixelCoord].rgb;
-    float3 prevNormal = gOutputNormalPrev[prevPixelCoord].rgb;
-
-    bool consistency = (gOutputPositionGeomIDPrev[prevPixelCoord].a == pathResult.instanceIndex) && dot(prevNormal, pathResult.normal) > 0.75;
-
-
-    uint linearIndex = launchIndex.x + launchIndex.y * launchDim.x;
-
-    Reservoir newReservoir;
-    newReservoir.M = 0;
-    newReservoir.wSum = 0;
-    newReservoir.W = 0;
-
-    bool inside = prevPixelCoordX >= 0 && prevPixelCoordX < dims.x&& prevPixelCoordY >= 0 && prevPixelCoordY < dims.y;
-
-    if (g_frameData.totalFrameNumber > 1 && inside && consistency)
+    if (enableReSTIR) 
     {
-        uint linearIndexPrev = prevPixelCoordX + prevPixelCoordY * launchDim.x;
-        Reservoir previousReservoir = gPrevReserviors[linearIndexPrev];
+        Reservoir reservoir;
+        reservoir.M = 0;
+        reservoir.wSum = 0;
+        reservoir.W = 0;
+        uint M = min(g_frameData.lightNumber, lightCandidateCount);
 
-        switch (g_frameData.renderMode)
+        // (1) Initial candidates generation
+        for (int i = 0; i < M; i++)
         {
-        case 0: CombineReservoirs(payload, reservoir, previousReservoir, newReservoir); break;
-        case 1: newReservoir = reservoir; break;
+            uint lightIndex = (uint) (nextRand(payload.seed) * g_frameData.lightNumber);
+            lightIndex = min(lightIndex, g_frameData.lightNumber - 1);
+
+            LightParameter light = lights[lightIndex];
+            SampleLight(payload.origin, light, payload.seed, lightSample);
+            lightSample.lightIndex = lightIndex;
+
+            float p = lightSample.pdf / ((float)g_frameData.lightNumber);
+            float pHat = getPHat(lightSample, payload);
+
+            UpdateReservoir(reservoir, lightSample, pHat / p, payload.seed);
         }
-    }
-    else {
-        newReservoir = reservoir;
-    }
 
-    newReservoir.M = min(newReservoir.M, 50);
+        float pHat = getPHat(reservoir.lightSample, payload);
+        reservoir.W = (pHat == 0) ? 0 : (1.0f / pHat) * (reservoir.wSum / reservoir.M);
 
-    if (newReservoir.W > 0)
-    {
-        Ldist = length(newReservoir.lightSample.position - payload.origin);
-        L = normalize(newReservoir.lightSample.position - payload.origin);
+        float Ldist = length(reservoir.lightSample.position - payload.origin);
+        float3 L = normalize(reservoir.lightSample.position - payload.origin);
 
         shadowRay.Origin = payload.origin;
         shadowRay.Direction = L;
         shadowRay.TMax = Ldist - SCENE_T_MIN;
+        ShadowPayload shadowPayload;
         shadowPayload.hit = false;
-        TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
-        if (!shadowPayload.hit) {
-            float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
-            const float3 f = bsdf::Eval(material, payload, wo);
 
-            const float3 L = newReservoir.lightSample.Li * f * newReservoir.W;
-            result += L;
+        TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
+        if (shadowPayload.hit) {
+            reservoir.W = 0.0f;
+        }
+
+        uint3 launchDim = DispatchRaysDimensions();
+        uint3 launchIndex = DispatchRaysIndex();
+        float2 dims = float2(launchDim.xy);
+
+        float4 projCoord = mul(float4(pathResult.position, 1.0f), g_frameData.previousProjView);
+        projCoord /= projCoord.w;
+        float2 prevPixel = float2(projCoord.x, -projCoord.y);
+        prevPixel = (prevPixel + 1) * 0.5;
+
+
+
+        uint prevPixelCoordX = uint((prevPixel.x * dims.x));// clamp(0, uint((prevPixel.x * dims.x)), dims.x - 1);
+        uint prevPixelCoordY = uint((prevPixel.y * dims.y));// clamp(0, uint((prevPixel.y * dims.y)), dims.y - 1);
+        uint2 prevPixelCoord = uint2(prevPixelCoordX, prevPixelCoordY);
+
+        float3 prevPosition = gOutputPositionGeomIDPrev[prevPixelCoord].rgb;
+        float3 prevNormal = gOutputNormalPrev[prevPixelCoord].rgb;
+
+        bool consistency = (gOutputPositionGeomIDPrev[prevPixelCoord].a == pathResult.instanceIndex) && dot(prevNormal, pathResult.normal) > normalThreshold;
+
+        uint linearIndex = launchIndex.x + launchIndex.y * launchDim.x;
+
+        Reservoir newReservoir;
+        newReservoir.M = 0;
+        newReservoir.wSum = 0;
+        newReservoir.W = 0;
+
+        bool inside = prevPixelCoordX >= 0 && prevPixelCoordX < dims.x&& prevPixelCoordY >= 0 && prevPixelCoordY < dims.y;
+
+        bool doTemporalReuse = (resamplingMode == ReSTIR_MODE_TEMPORAL_REUSE || resamplingMode == ReSTIR_MODE_SPATIOTEMPORAL_REUSE) && inside && consistency && (g_frameData.totalFrameNumber > 1);
+
+        if (doTemporalReuse)
+        {
+            uint linearIndexPrev = prevPixelCoordX + prevPixelCoordY * launchDim.x;
+            Reservoir previousReservoir = gPrevReserviors[linearIndexPrev];
+            CombineReservoirs(payload, reservoir, previousReservoir, newReservoir);
+        }
+        else {
+            newReservoir = reservoir;
+        }
+        newReservoir.M = min(newReservoir.M, maxHistoryLength);
+
+        if (newReservoir.W > 0)
+        {
+            Ldist = length(newReservoir.lightSample.position - payload.origin);
+            L = normalize(newReservoir.lightSample.position - payload.origin);
+
+            shadowRay.Origin = payload.origin;
+            shadowRay.Direction = L;
+            shadowRay.TMax = Ldist - SCENE_T_MIN;
+            shadowPayload.hit = false;
+            TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
+            if (!shadowPayload.hit) {
+                float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
+                const float3 f = bsdf::Eval(material, payload, wo);
+                const float nDl = dot(payload.normal, L);
+                const float LnDl = -dot(lightSample.normal, L);
+
+                const float3 L = newReservoir.lightSample.Li * f * max(LnDl, 0) / (Ldist * Ldist) * newReservoir.W;
+                result += L;
+            }
+        }
+
+        //pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex);
+        
+        /*switch (g_frameData.renderMode)
+        {
+        case 0: pathResult.radiance = result;  break;
+        case 1: pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex); break;
+        default: break;
+        }*/
+
+        // gPrevReserviors[linearIndex] = reservoir;
+        // CopyReservoirs(gPrevReserviors[linearIndex], reservoir);
+
+        // gPrevReserviors[linearIndex] = newReservoir;
+
+        gCurrReserviors[linearIndex] = newReservoir;
+    }
+    else {
+        uint lightIndex = (uint) (nextRand(payload.seed) * g_frameData.lightNumber);
+
+        LightParameter light = lights[lightIndex];
+        SampleLight(payload.origin, light, payload.seed, lightSample);
+
+        const float Ldist = length(lightSample.position - payload.origin);
+        const float3 L = normalize(lightSample.position - payload.origin);
+        const float nDl = dot(payload.normal, L);
+        const float LnDl = -dot(lightSample.normal, L);
+
+        float lightPdf = Ldist * Ldist / LnDl * lightSample.pdf / g_frameData.lightNumber;
+
+        if (LnDl > 0 && nDl > 0 && (material.materialType & BSDF_TYPE_GLOSSY))
+        {
+            shadowRay.Origin = payload.origin;
+            shadowRay.Direction = L;
+            shadowRay.TMax = Ldist - SCENE_T_MIN;
+            ShadowPayload shadowPayload;
+            shadowPayload.hit = false;
+            TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
+            if (!shadowPayload.hit) {
+                float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
+                //const float scatterPdf = bsdf::Pdf(material, payload, wo);
+                const float3 f = bsdf::Eval(material, payload, wo);
+
+                //const float weight = powerHeuristic(lightPdf, scatterPdf);
+
+                const float3 L = lightSample.Li * f / lightPdf * throughput;
+                result += L;
+            }
         }
     }
-
-    //pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex);
     pathResult.radiance = result;
-    
-    /*switch (g_frameData.renderMode)
-    {
-    case 0: pathResult.radiance = result;  break;
-    case 1: pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex); break;
-    default: break;
-    }*/
-    
-    // gPrevReserviors[linearIndex] = reservoir;
-    // CopyReservoirs(gPrevReserviors[linearIndex], reservoir);
 
-    // gPrevReserviors[linearIndex] = newReservoir;
-    
-    gCurrReserviors[linearIndex] = newReservoir;
     return;
 }
 

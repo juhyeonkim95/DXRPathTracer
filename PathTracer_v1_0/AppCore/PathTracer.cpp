@@ -476,13 +476,14 @@ void PathTracer::onFrameRender()
     mpCmdList->SetComputeRootSignature(mpEmptyRootSig);
     mpCmdList->SetComputeRootConstantBufferView(0, mpCameraConstantBuffer->GetGPUVirtualAddress());
     mpCmdList->SetComputeRootConstantBufferView(1, mpLightParametersBuffer->GetGPUVirtualAddress());
+    mpCmdList->SetComputeRootConstantBufferView(2, restirPass->mParamBuffer->GetGPUVirtualAddress());
 
 
     // mpSrvUavHeap 2,3,4,5
-    mpCmdList->SetComputeRootDescriptorTable(2, sceneResourceManager->getSRVStartHandle());//2 at createGlobalRootDesc
+    mpCmdList->SetComputeRootDescriptorTable(3, sceneResourceManager->getSRVStartHandle());//2 at createGlobalRootDesc
 
     // UAVs
-    mpCmdList->SetComputeRootDescriptorTable(3, mSrvUavHeap->getGPUHandleByName("gOutputHDR"));//3 at createGlobalRootDesc
+    mpCmdList->SetComputeRootDescriptorTable(4, mSrvUavHeap->getGPUHandleByName("gOutputHDR"));//3 at createGlobalRootDesc
 
     // Dispatch
     mpCmdList->SetPipelineState1(mpPipelineState.GetInterfacePtr());
@@ -590,7 +591,7 @@ void PathTracer::initPostProcess()
     svgfPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
 
     tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
-    restirPass = new ReSTIR();
+    restirPass = new ReSTIR(mpDevice);
     // tonemapPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
 }
 

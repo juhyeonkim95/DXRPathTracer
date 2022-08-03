@@ -108,7 +108,7 @@ ID3DBlobPtr compileLibrary(const WCHAR* filename, const WCHAR* targetEntry, cons
 DxilLibrary createDxilLibrary()
 {
     // Compile the shader
-    // ID3DBlobPtr pDxilLib = compileLibrary(L"Data/PathTracer.hlsl", L"", L"lib_6_3");
+    // ID3DBlobPtr pDxilLib = compileLibrary(L"RenderPass/Pathtracer/PathTracer.hlsl", L"", L"lib_6_3");
     ID3DBlobPtr pDxilLib = compileLibrary(L"RenderPass/Pathtracer/ReSTIRPathTracer.hlsl", L"", L"lib_6_3");
     const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kMissEnvShader, kClosestHitShader, kShadowMiss, kShadowChs };
     return DxilLibrary(pDxilLib, entryPoints, arraysize(entryPoints));
@@ -305,7 +305,7 @@ RootSignatureDesc createGlobalRootDesc()
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
-    desc.rootParams.resize(4);
+    desc.rootParams.resize(5);
 
     // camera 
     desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -313,22 +313,27 @@ RootSignatureDesc createGlobalRootDesc()
     desc.rootParams[0].Descriptor.RegisterSpace = 0;
     desc.rootParams[0].Descriptor.ShaderRegister = 0;
     
-    
     // material
     desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     desc.rootParams[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc.rootParams[1].Descriptor.RegisterSpace = 0;
     desc.rootParams[1].Descriptor.ShaderRegister = 1;
 
-    // srv
-    desc.rootParams[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    desc.rootParams[2].DescriptorTable.NumDescriptorRanges = 1;
-    desc.rootParams[2].DescriptorTable.pDescriptorRanges = &desc.range[0];
+    // params
+    desc.rootParams[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    desc.rootParams[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    desc.rootParams[2].Descriptor.RegisterSpace = 0;
+    desc.rootParams[2].Descriptor.ShaderRegister = 2;
 
-    // uav
+    // srv
     desc.rootParams[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     desc.rootParams[3].DescriptorTable.NumDescriptorRanges = 1;
-    desc.rootParams[3].DescriptorTable.pDescriptorRanges = &desc.range[1];
+    desc.rootParams[3].DescriptorTable.pDescriptorRanges = &desc.range[0];
+
+    // uav
+    desc.rootParams[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    desc.rootParams[4].DescriptorTable.NumDescriptorRanges = 1;
+    desc.rootParams[4].DescriptorTable.pDescriptorRanges = &desc.range[1];
 
     CD3DX12_STATIC_SAMPLER_DESC bilinearClamp(
         0,
