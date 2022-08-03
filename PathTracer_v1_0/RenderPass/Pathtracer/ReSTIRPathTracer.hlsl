@@ -83,16 +83,11 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.position = payload.origin;
     pathResult.direct = float3(0, 0, 0);
     pathResult.reflectance = payload.attenuation;
+
+
+
     if (payload.done)
     {
-        /*if (dot(payload.emission, payload.emission) > 0)
-        {
-            pathResult.radiance = getRandomColor(payload.lightIndex);
-        }
-        else
-        {
-            pathResult.radiance = payload.emission;
-        }*/
         pathResult.radiance = payload.emission;
         return;
     }
