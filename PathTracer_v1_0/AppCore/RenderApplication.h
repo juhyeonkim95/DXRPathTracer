@@ -7,6 +7,8 @@
 #include <fstream>
 #include "SVGF/SVGFPass.h"
 #include "ReSTIR/ReSTIR.h"
+#include "Pathtracer/PathTracer.h"
+
 #include "Tonemap/ToneMapper.h"
 #include "HeapData.h"
 #include "SceneResourceManager.h"
@@ -16,7 +18,7 @@
 
 static const int FRAME_ACCUMULATE_NUMBER = 10;
 
-class PathTracer : public Application
+class RenderApplication : public Application
 {
 public:
     Scene* getScene() { return this->scene; }
@@ -110,8 +112,11 @@ private:
     SVGFPass* svgfPass;
     ToneMapper* tonemapPass;
     ReSTIR* restirPass;
-    Shader* defaultCopyShader;
+    PathTracer* pathTracer;
+    bool mDirty = false;
 
+    Shader* defaultCopyShader;
+    ID3D12ResourcePtr mParamBuffer = nullptr;
 
     ID3D12DescriptorHeapPtr g_pd3dSrvDescHeap;
 

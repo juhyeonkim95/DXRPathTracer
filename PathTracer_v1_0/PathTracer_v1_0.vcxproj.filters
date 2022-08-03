@@ -72,7 +72,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AppCore\PathTracer.cpp">
+    <ClCompile Include="AppCore\RenderApplication.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="RenderCore\Sensor\Perspective.cpp">
@@ -174,9 +174,12 @@
     <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\Pathtracer\PathTracer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AppCore\PathTracer.h">
+    <ClInclude Include="AppCore\RenderApplication.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="DX12\AccelerationStructureHelper.h">
@@ -309,6 +312,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\ReSTIR\ReSTIR.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\Pathtracer\PathTracer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

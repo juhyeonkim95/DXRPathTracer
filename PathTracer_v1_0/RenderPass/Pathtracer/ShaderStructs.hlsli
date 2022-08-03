@@ -10,11 +10,6 @@
 
 #define DO_FILTERING 1
 
-static const uint PATHTRACE_MAX_DEPTH = 10;
-static const uint PATHTRACE_MAX_DEPTH_DIFFUSE = 4;
-static const uint PATHTRACE_MAX_DEPTH_SPECULAR = 4;
-static const uint PATHTRACE_MAX_DEPTH_TRANSMITTANCE = 10;
-
 static const float M_PIf = 3.14159265358979323846f;
 static const float M_1_PIf = 0.318309886183790671538f;
 
@@ -246,9 +241,22 @@ cbuffer Lights : register(b1)
     LightParameter lights[20];
 }
 
+struct PathTracerParams
+{
+    int maxDepth;
+    int maxDepthDiffuse;
+    int maxDepthSpecular;
+    int maxDepthTransmittance;
+
+    bool accumulateFrames;
+    int unused1;
+    int unused2;
+    int unused3;
+};
+
 struct ReSTIRParams
 {
-    bool enableReSTIR;
+    int enableReSTIR;
     int resamplingMode;
     int lightCandidateCount;
     int maxHistoryLength;
@@ -256,15 +264,11 @@ struct ReSTIRParams
     float depthThreshold;
 };
 
-struct PathTracerParams
-{
-
-};
-
 
 cbuffer ApplicationParams : register(b2)
 {
-    ReSTIR gReSTIR;
+    PathTracerParams gPathTracer;
+    ReSTIRParams gReSTIR;
 }
 
 #endif

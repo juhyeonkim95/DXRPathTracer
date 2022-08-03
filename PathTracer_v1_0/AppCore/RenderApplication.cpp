@@ -2,7 +2,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include <iostream>
-#include "PathTracer.h"
+#include "RenderApplication.h"
 #include "DX12Initializer.h"
 #include "DX12Helper.h"
 // #include "AccelerationStructureHelper.h"
@@ -22,7 +22,7 @@
 #include "imgui_impl_dx12.h"
 
 
-void PathTracer::initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
+void RenderApplication::initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 {
     mHwnd = winHandle;
     mSwapChainSize = uvec2(winWidth, winHeight);
@@ -70,7 +70,7 @@ void PathTracer::initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 }
 
-uint32_t PathTracer::beginFrame()
+uint32_t RenderApplication::beginFrame()
 {
     // Bind the descriptor heaps
     ID3D12DescriptorHeap* heaps[] = { mSrvUavHeap->getDescriptorHeap() };
@@ -78,7 +78,7 @@ uint32_t PathTracer::beginFrame()
     return mpSwapChain->GetCurrentBackBufferIndex();
 }
 
-void PathTracer::endFrame(uint32_t rtvIndex)
+void RenderApplication::endFrame(uint32_t rtvIndex)
 {
     resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     mFenceValue = submitCommandList(mpCmdList, mpCmdQueue, mpFence, mFenceValue);
@@ -99,7 +99,7 @@ void PathTracer::endFrame(uint32_t rtvIndex)
 }
 
 
-void PathTracer::createRtPipelineState()
+void RenderApplication::createRtPipelineState()
 {
     // Need 10 subobjects:
     //  1 for the DXIL library
@@ -177,7 +177,7 @@ void PathTracer::createRtPipelineState()
     d3d_call(mpDevice->CreateStateObject(&desc, IID_PPV_ARGS(&mpPipelineState)));
 }
 
-void PathTracer::createShaderTable()
+void RenderApplication::createShaderTable()
 {
     /** The shader-table layout is as follows:
         Entry 0 - Ray-gen program
@@ -256,7 +256,7 @@ void PathTracer::createShaderTable()
 }
 
 
-void PathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth, uint structSize)
+void RenderApplication::createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth, uint structSize)
 {
     ID3D12ResourcePtr outputResources;
 
@@ -317,7 +317,7 @@ void PathTracer::createUAVBuffer(DXGI_FORMAT format, std::string name, uint dept
 }
 
 
-void PathTracer::createShaderResources()
+void RenderApplication::createShaderResources()
 {
     // Create an SRV/UAV descriptor heap
     mSrvUavHeap = new HeapData(mpDevice, 100, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
@@ -374,7 +374,7 @@ void PathTracer::createShaderResources()
 //////////////////////////////////////////////////////////////////////////
 // Callbacks
 //////////////////////////////////////////////////////////////////////////
-void PathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
+void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 {
 
     initDX12(winHandle, winWidth, winHeight);
@@ -436,7 +436,7 @@ void PathTracer::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
         g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
-void PathTracer::onFrameRender()
+void RenderApplication::onFrameRender()
 {
     uint32_t rtvIndex = beginFrame();
     ID3D12ResourcePtr mpOutputResource = outputUAVBuffers["gOutput"];
@@ -476,7 +476,23 @@ void PathTracer::onFrameRender()
     mpCmdList->SetComputeRootSignature(mpEmptyRootSig);
     mpCmdList->SetComputeRootConstantBufferView(0, mpCameraConstantBuffer->GetGPUVirtualAddress());
     mpCmdList->SetComputeRootConstantBufferView(1, mpLightParametersBuffer->GetGPUVirtualAddress());
-    mpCmdList->SetComputeRootConstantBufferView(2, restirPass->mParamBuffer->GetGPUVirtualAddress());
+
+    if (!mParamBuffer)
+    {
+        mParamBuffer = createBuffer(mpDevice, sizeof(ReSTIRParameters) + sizeof(PathTracerParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+    }
+    uint8_t* pData;
+    int offset = 0;
+    d3d_call(mParamBuffer->Map(0, nullptr, (void**)&pData));
+
+    memcpy(pData, &pathTracer->param, sizeof(PathTracerParameters));
+    offset += sizeof(PathTracerParameters);
+
+    memcpy(pData + offset, &restirPass->param, sizeof(ReSTIRParameters));
+    offset += sizeof(ReSTIRParameters);
+
+    mParamBuffer->Unmap(0, nullptr);
+    mpCmdList->SetComputeRootConstantBufferView(2, mParamBuffer->GetGPUVirtualAddress());
 
 
     // mpSrvUavHeap 2,3,4,5
@@ -540,9 +556,12 @@ void PathTracer::onFrameRender()
     resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     ImGui::Begin("Path Tracer Settings");                          // Create a window called "Hello, world!" and append into it.
-
-    svgfPass->processGUI();
+    
+    pathTracer->processGUI();
     restirPass->processGUI();
+    svgfPass->processGUI();
+
+    mDirty = pathTracer->mDirty;
 
     //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
     //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
@@ -580,7 +599,7 @@ void PathTracer::onFrameRender()
     endFrame(rtvIndex);
 }
 
-void PathTracer::initPostProcess()
+void RenderApplication::initPostProcess()
 {
 
     // this->defaultCopyShader = new Shader(L"QuadVertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
@@ -592,10 +611,11 @@ void PathTracer::initPostProcess()
 
     tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
     restirPass = new ReSTIR(mpDevice);
+    pathTracer = new PathTracer(mpDevice);
     // tonemapPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
 }
 
-void PathTracer::postProcess(int rtvIndex)
+void RenderApplication::postProcess(int rtvIndex)
 {
     map<string, D3D12_GPU_DESCRIPTOR_HANDLE> & gpuHandlesMap = mSrvUavHeap->getGPUHandleMap();
 
@@ -610,7 +630,7 @@ void PathTracer::postProcess(int rtvIndex)
 }
 
 
-void PathTracer::onShutdown()
+void RenderApplication::onShutdown()
 {
     // Wait for the command queue to finish execution
     mFenceValue++;
@@ -621,7 +641,7 @@ void PathTracer::onShutdown()
     logFile.close();
 }
 
-void PathTracer::update()
+void RenderApplication::update()
 {
     HRESULT result = mpKeyboard->GetDeviceState(256, mpKeyboardState);
 
@@ -723,7 +743,7 @@ void PathTracer::update()
         cameraMoved = true;
     }
 
-    if (cameraMoved || renderMode != nextRenderMode) {
+    if (cameraMoved || renderMode != nextRenderMode || mDirty) {
         this->mFrameNumber = 1;
     }
     else {

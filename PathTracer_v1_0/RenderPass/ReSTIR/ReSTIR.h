@@ -35,7 +35,4 @@ public:
 	ID3D12Device5Ptr mpDevice;
 	ReSTIRParameters param;
 	ReSTIRParameters defaultParam;
-
-	ID3D12ResourcePtr mParamBuffer = nullptr;
-	ID3D12ShaderReflection* reflection;
 };

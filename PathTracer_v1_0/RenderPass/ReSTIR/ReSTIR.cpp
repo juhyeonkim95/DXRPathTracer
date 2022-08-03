@@ -6,8 +6,7 @@
 ReSTIR::ReSTIR(ID3D12Device5Ptr mpDevice)
 {
     this->mpDevice = mpDevice;
-    mParamBuffer = createBuffer(mpDevice, sizeof(ReSTIRParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-
+    
     param.lightCandidateCount = 4;
     param.maxHistoryLength = 20;
     param.normalThreshold = 0.5;
@@ -31,15 +30,4 @@ void ReSTIR::processGUI()
     }
     param.enabled = mEnabled;
 
-    this->uploadParams();
-}
-
-
-void ReSTIR::uploadParams()
-{
-    //reflection->GetConstantBufferByName("aaa")->GetVariableByName("aa")->GetBuffer()
-    uint8_t* pData;
-    d3d_call(mParamBuffer->Map(0, nullptr, (void**)&pData));
-    memcpy(pData, &param, sizeof(ReSTIRParameters));
-    mParamBuffer->Unmap(0, nullptr);
 }

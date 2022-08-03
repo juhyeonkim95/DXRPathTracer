@@ -169,11 +169,12 @@
     <ClCompile Include="DX12\DX12Helper.cpp" />
     <ClCompile Include="DX12\DX12Initializer.cpp" />
     <ClCompile Include="DX12\HeapData.cpp" />
+    <ClCompile Include="RenderPass\Pathtracer\PathTracer.cpp" />
     <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp" />
     <ClCompile Include="Utils\light_utils.cpp" />
     <ClCompile Include="Utils\loader_utils.cpp" />
     <ClCompile Include="RenderCore\Shape\Mesh.cpp" />
-    <ClCompile Include="AppCore\PathTracer.cpp" />
+    <ClCompile Include="AppCore\RenderApplication.cpp" />
     <ClCompile Include="RenderCore\Sensor\Perspective.cpp" />
     <ClCompile Include="RenderCore\BSDF\Plastic.cpp" />
     <ClCompile Include="AppCore\PostProcessPass.cpp">
@@ -212,6 +213,7 @@
     <ClInclude Include="RenderCore\Emitter\Emitter.h" />
     <ClInclude Include="DX12\HeapData.h" />
     <ClInclude Include="ImGuiManager.h" />
+    <ClInclude Include="RenderPass\Pathtracer\PathTracer.h" />
     <ClInclude Include="RenderPass\Pathtracer\ReSTIRPathTraceOriginal.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -221,7 +223,7 @@
     <ClInclude Include="Utils\loader_utils.h" />
     <ClInclude Include="RenderCore\CommonStruct.h" />
     <ClInclude Include="RenderCore\Shape\Mesh.h" />
-    <ClInclude Include="AppCore\PathTracer.h" />
+    <ClInclude Include="AppCore\RenderApplication.h" />
     <ClInclude Include="RenderCore\Sensor\Perspective.h" />
     <ClInclude Include="RenderCore\BSDF\Plastic.h" />
     <ClInclude Include="AppCore\PostProcessPass.h" />

@@ -22,4 +22,9 @@ void rayGen()
         UpdateReservoir(newReservoir, r.lightSample, getPHat(r.lightSample, payload) * r.W * r.M, payload.seed);
         lightSamplesCount += r.M;
     }
+
+    newReservoir.M = lightSamplesCount;
+    pHat = getPHat(newReservoir.lightSample, payload);
+    newReservoir.W = (pHat == 0) ? 0 : (1 / pHat) * (newReservoir.wSum / newReservoir.M);
+
 }
