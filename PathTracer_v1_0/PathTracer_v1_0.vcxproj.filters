@@ -343,6 +343,7 @@
     <None Include="RenderPass\SVGF\SVGFCommon.hlsli">
       <Filter>RenderPass\SVGF</Filter>
     </None>
+    <None Include="RenderPass\ReSTIR\ReSTIRCommon.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\Pathtracer\PathTracer.hlsl">
@@ -372,5 +373,6 @@
     <FxCompile Include="RenderPass\Pathtracer\ReSTIRPathTracer.hlsl">
       <Filter>RenderPass\ReSTIR</Filter>
     </FxCompile>
+    <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl" />
   </ItemGroup>
 </Project>

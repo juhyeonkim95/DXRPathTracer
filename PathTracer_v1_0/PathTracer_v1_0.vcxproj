@@ -244,6 +244,9 @@
   <ItemGroup>
     <None Include="..\README.md" />
     <None Include="..\WorkProgress.md" />
+    <None Include="RenderPass\ReSTIR\ReSTIRCommon.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="RenderPass\SVGF\SVGFCommon.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
@@ -274,6 +277,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="RenderPass\Pathtracer\ReSTIRPathTracer.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="RenderPass\SVGF\SVGFFilterVariance.hlsl">

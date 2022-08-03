@@ -61,7 +61,6 @@ void CombineReservoirs(in RayPayload payload, in Reservoir r1, in Reservoir r2, 
     return;
 }
 
-
 void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult)
 {
     float emissionWeight = 1.0f;
@@ -161,8 +160,6 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         float2 prevPixel = float2(projCoord.x, -projCoord.y);
         prevPixel = (prevPixel + 1) * 0.5;
 
-
-
         uint prevPixelCoordX = uint((prevPixel.x * dims.x));// clamp(0, uint((prevPixel.x * dims.x)), dims.x - 1);
         uint prevPixelCoordY = uint((prevPixel.y * dims.y));// clamp(0, uint((prevPixel.y * dims.y)), dims.y - 1);
         uint2 prevPixelCoord = uint2(prevPixelCoordX, prevPixelCoordY);
@@ -192,6 +189,13 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         else {
             newReservoir = reservoir;
         }
+
+        newReservoir.M = lightSamplesCount;
+        pHat = getPHat(newReservoir.lightSample, payload);
+        newReservoir.W = (pHat == 0) ? 0 : (1 / pHat) * (newReservoir.wSum / newReservoir.M);
+
+
+
         newReservoir.M = min(newReservoir.M, gReSTIR.maxHistoryLength);
 
         if (newReservoir.W > 0)
@@ -214,21 +218,6 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
                 result += L;
             }
         }
-
-        //pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex);
-        
-        /*switch (g_frameData.renderMode)
-        {
-        case 0: pathResult.radiance = result;  break;
-        case 1: pathResult.radiance = getRandomColor(newReservoir.lightSample.lightIndex); break;
-        default: break;
-        }*/
-
-        // gPrevReserviors[linearIndex] = reservoir;
-        // CopyReservoirs(gPrevReserviors[linearIndex], reservoir);
-
-        // gPrevReserviors[linearIndex] = newReservoir;
-
         gCurrReserviors[linearIndex] = newReservoir;
     }
     else {
