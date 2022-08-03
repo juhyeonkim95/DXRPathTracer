@@ -246,15 +246,25 @@ cbuffer Lights : register(b1)
     LightParameter lights[20];
 }
 
-cbuffer ReSTIRParams : register(b2)
+struct ReSTIRParams
 {
-    int enableReSTIR;
+    bool enableReSTIR;
     int resamplingMode;
-
     int lightCandidateCount;
     int maxHistoryLength;
     float normalThreshold;
     float depthThreshold;
+};
+
+struct PathTracerParams
+{
+
+};
+
+
+cbuffer ApplicationParams : register(b2)
+{
+    ReSTIR gReSTIR;
 }
 
 #endif

@@ -37,6 +37,7 @@ void ReSTIR::processGUI()
 
 void ReSTIR::uploadParams()
 {
+    //reflection->GetConstantBufferByName("aaa")->GetVariableByName("aa")->GetBuffer()
     uint8_t* pData;
     d3d_call(mParamBuffer->Map(0, nullptr, (void**)&pData));
     memcpy(pData, &param, sizeof(ReSTIRParameters));

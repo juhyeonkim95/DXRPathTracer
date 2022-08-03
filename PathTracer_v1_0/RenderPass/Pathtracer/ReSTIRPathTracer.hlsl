@@ -111,13 +111,13 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     bool doNEE = material.materialType & BSDF_TYPE_DIFFUSE || material.materialType & BSDF_TYPE_ROUGH_CONDUCTOR;
     
     
-    if (enableReSTIR) 
+    if (gReSTIR.enableReSTIR)
     {
         Reservoir reservoir;
         reservoir.M = 0;
         reservoir.wSum = 0;
         reservoir.W = 0;
-        uint M = min(g_frameData.lightNumber, lightCandidateCount);
+        uint M = min(g_frameData.lightNumber, gReSTIR.lightCandidateCount);
 
         // (1) Initial candidates generation
         for (int i = 0; i < M; i++)
@@ -170,7 +170,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         float3 prevPosition = gOutputPositionGeomIDPrev[prevPixelCoord].rgb;
         float3 prevNormal = gOutputNormalPrev[prevPixelCoord].rgb;
 
-        bool consistency = (gOutputPositionGeomIDPrev[prevPixelCoord].a == pathResult.instanceIndex) && dot(prevNormal, pathResult.normal) > normalThreshold;
+        bool consistency = (gOutputPositionGeomIDPrev[prevPixelCoord].a == pathResult.instanceIndex) && dot(prevNormal, pathResult.normal) > gReSTIR.normalThreshold;
 
         uint linearIndex = launchIndex.x + launchIndex.y * launchDim.x;
 
@@ -181,7 +181,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
 
         bool inside = prevPixelCoordX >= 0 && prevPixelCoordX < dims.x&& prevPixelCoordY >= 0 && prevPixelCoordY < dims.y;
 
-        bool doTemporalReuse = (resamplingMode == ReSTIR_MODE_TEMPORAL_REUSE || resamplingMode == ReSTIR_MODE_SPATIOTEMPORAL_REUSE) && inside && consistency && (g_frameData.totalFrameNumber > 1);
+        bool doTemporalReuse = (gReSTIR.resamplingMode == ReSTIR_MODE_TEMPORAL_REUSE || gReSTIR.resamplingMode == ReSTIR_MODE_SPATIOTEMPORAL_REUSE) && inside && consistency && (g_frameData.totalFrameNumber > 1);
 
         if (doTemporalReuse)
         {
@@ -192,7 +192,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         else {
             newReservoir = reservoir;
         }
-        newReservoir.M = min(newReservoir.M, maxHistoryLength);
+        newReservoir.M = min(newReservoir.M, gReSTIR.maxHistoryLength);
 
         if (newReservoir.W > 0)
         {

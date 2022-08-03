@@ -1,5 +1,6 @@
 #include "imgui.h"
 #include "Framework.h"
+#include "d3d12shader.h"
 
 enum ReSTIR_MODE : int
 {
@@ -36,4 +37,5 @@ public:
 	ReSTIRParameters defaultParam;
 
 	ID3D12ResourcePtr mParamBuffer = nullptr;
+	ID3D12ShaderReflection* reflection;
 };
