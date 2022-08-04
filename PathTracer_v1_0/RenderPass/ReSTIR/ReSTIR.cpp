@@ -1,7 +1,7 @@
 #include "ReSTIR.h"
 #include <string>
-#include "DX12Initializer.h"
-#include "DX12Helper.h"
+#include "DX12Utils.h"
+#include "DX12BufferUtils.h"
 
 ReSTIR::ReSTIR(ID3D12Device5Ptr mpDevice)
 {

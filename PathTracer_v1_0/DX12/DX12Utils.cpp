@@ -1,4 +1,4 @@
-#include "DX12Initializer.h"
+#include "DX12Utils.h"
 
 IDXGISwapChain3Ptr createDxgiSwapChain(IDXGIFactory4Ptr pFactory, HWND hwnd, uint32_t width, uint32_t height, DXGI_FORMAT format, ID3D12CommandQueuePtr pCommandQueue)
 {
@@ -97,8 +97,6 @@ D3D12_CPU_DESCRIPTOR_HANDLE createRTV(ID3D12Device5Ptr pDevice, ID3D12ResourcePt
     pDevice->CreateRenderTargetView(pResource, &desc, rtvHandle);
     return rtvHandle;
 }
-
-
 
 
 void resourceBarrier(ID3D12GraphicsCommandList4Ptr pCmdList, ID3D12ResourcePtr pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)

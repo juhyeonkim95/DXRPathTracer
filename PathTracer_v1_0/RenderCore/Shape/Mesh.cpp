@@ -1,5 +1,5 @@
 #include "Mesh.h"
-#include "DX12Helper.h"
+#include "DX12BufferUtils.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>

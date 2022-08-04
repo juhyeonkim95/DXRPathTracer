@@ -117,7 +117,7 @@
     <ClCompile Include="External\tinyxml2.cpp">
       <Filter>External</Filter>
     </ClCompile>
-    <ClCompile Include="DX12\DX12Helper.cpp">
+    <ClCompile Include="DX12\DX12BufferUtils.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
     <ClCompile Include="AppCore\PostProcessPass.cpp">
@@ -126,19 +126,19 @@
     <ClCompile Include="AppCore\RenderTexture.cpp">
       <Filter>RenderPass\Postprocessing</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass\Shader.cpp">
+    <ClCompile Include="AppCore\Shader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\SVGF\SVGFPass.cpp">
       <Filter>RenderPass\SVGF</Filter>
     </ClCompile>
-    <ClCompile Include="DX12\DX12Initializer.cpp">
+    <ClCompile Include="DX12\DX12Utils.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\Tonemap\ToneMapper.cpp">
       <Filter>RenderPass\Tonemapper</Filter>
     </ClCompile>
-    <ClCompile Include="DX12\HeapData.cpp">
+    <ClCompile Include="AppCore\HeapData.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
     <ClCompile Include="..\Framework\Externals\imgui\imgui.cpp">
@@ -177,13 +177,16 @@
     <ClCompile Include="RenderPass\Pathtracer\PathTracer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="DX12\RenderContext.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="DX12\DxilLibrary.cpp">
+    <ClCompile Include="DX12\DX12DxilLibrary.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="DX12\DX12StateSubobjects.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AppCore\SceneAccelerationStructure.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12\DX12AccelerationStructureUtils.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -191,7 +194,7 @@
     <ClInclude Include="AppCore\RenderApplication.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="DX12\AccelerationStructureHelper.h">
+    <ClInclude Include="DX12\DX12AccelerationStructureUtils.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderCore\Sensor\Perspective.h">
@@ -257,13 +260,13 @@
     <ClInclude Include="External\stb_image.h">
       <Filter>External</Filter>
     </ClInclude>
-    <ClInclude Include="DX12\DX12Helper.h">
+    <ClInclude Include="DX12\DX12BufferUtils.h">
       <Filter>dx12</Filter>
     </ClInclude>
-    <ClInclude Include="DX12\DX12Initializer.h">
+    <ClInclude Include="DX12\DX12Utils.h">
       <Filter>dx12</Filter>
     </ClInclude>
-    <ClInclude Include="DX12\DxilLibrary.h">
+    <ClInclude Include="DX12\DX12DxilLibrary.h">
       <Filter>dx12</Filter>
     </ClInclude>
     <ClInclude Include="AppCore\PostProcessPass.h">
@@ -272,13 +275,13 @@
     <ClInclude Include="AppCore\RenderTexture.h">
       <Filter>RenderPass\Postprocessing</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass\Shader.h">
+    <ClInclude Include="AppCore\Shader.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\SVGF\SVGFPass.h">
       <Filter>RenderPass\SVGF</Filter>
     </ClInclude>
-    <ClInclude Include="DX12\HeapData.h">
+    <ClInclude Include="AppCore\HeapData.h">
       <Filter>dx12</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\Tonemap\ToneMapper.h">
@@ -326,10 +329,10 @@
     <ClInclude Include="RenderPass\Pathtracer\PathTracer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="DX12\RenderContext.h">
+    <ClInclude Include="DX12\DX12StateSubobjects.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="DX12\DX12StateSubobjects.h">
+    <ClInclude Include="AppCore\SceneAccelerationStructure.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -395,6 +398,5 @@
       <Filter>RenderPass\ReSTIR</Filter>
     </FxCompile>
     <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl" />
-    <FxCompile Include="RenderPass\VBuffer\Vbuffer.hlsl" />
   </ItemGroup>
 </Project>

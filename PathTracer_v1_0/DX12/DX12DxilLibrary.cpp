@@ -1,4 +1,4 @@
-#include "DxilLibrary.h"
+#include "DX12DxilLibrary.h"
 ID3DBlobPtr compileLibrary(const WCHAR* filename, const WCHAR* targetEntry, const WCHAR* targetProfile)
 {
     // Initialize the helper

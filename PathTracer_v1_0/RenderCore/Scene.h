@@ -14,12 +14,7 @@ namespace fs = std::filesystem;
 using namespace std;
 using namespace tinyxml2;
 
-struct AccelerationStructureBuffers
-{
-	ID3D12ResourcePtr pScratch;
-	ID3D12ResourcePtr pResult;
-	ID3D12ResourcePtr pInstanceDesc;    // Used only for top-level AS
-};
+
 
 class Scene 
 {

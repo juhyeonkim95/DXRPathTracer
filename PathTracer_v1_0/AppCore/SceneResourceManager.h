@@ -1,8 +1,9 @@
 #pragma once
 #include "Scene.h"
-#include "DX12Helper.h"
+#include "DX12BufferUtils.h"
 #include "Framework.h"
 #include "HeapData.h"
+#include "SceneAccelerationStructure.h"
 
 class SceneResourceManager
 {
@@ -28,23 +29,21 @@ public:
         HANDLE mFenceEvent,
         uint64_t& mFenceValue
     );
-    ID3D12ResourcePtr getToplevelAS() {return mpTopLevelAS;};
+    SceneAccelerationStructure* getSceneAS() {return mpSceneAccelerationStructure; };
     ID3D12ResourcePtr getCameraConstantBuffer() { return mpCameraConstantBuffer; };
     ID3D12ResourcePtr getLightConstantBuffer() { return mpLightParametersBuffer; };
 
     D3D12_GPU_DESCRIPTOR_HANDLE getSRVStartHandle() { return mSrvUavHeap->getGPUHandleByName("MaterialData"); };
 
 private:
-    AccelerationStructureBuffers createTopLevelAccelerationStructure(ID3D12GraphicsCommandList4Ptr mpCmdList);
+    // AccelerationStructureBuffers createTopLevelAccelerationStructure(ID3D12GraphicsCommandList4Ptr mpCmdList);
 
     Scene* scene;
     ID3D12Device5Ptr mpDevice;
     HeapData* mSrvUavHeap;
 
     // SRVs - Acceleration Structure
-    ID3D12ResourcePtr mpTopLevelAS;
-    std::vector<ID3D12ResourcePtr> mpBottomLevelAS;
-    uint64_t mTlasSize = 0;
+    SceneAccelerationStructure* mpSceneAccelerationStructure;
 
     // SRVs - Texture
     std::vector<ID3D12ResourcePtr> mpTextureBuffers;

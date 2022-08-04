@@ -162,16 +162,17 @@
     <ClCompile Include="..\Framework\Externals\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="AppCore\SceneAccelerationStructure.cpp" />
+    <ClCompile Include="DX12\DX12AccelerationStructureUtils.cpp" />
     <ClCompile Include="DX12\DX12StateSubobjects.cpp" />
-    <ClCompile Include="DX12\DxilLibrary.cpp" />
-    <ClCompile Include="DX12\RenderContext.cpp" />
+    <ClCompile Include="DX12\DX12DxilLibrary.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderCore\BSDF\Conductor.cpp" />
     <ClCompile Include="RenderCore\BSDF\Dielectric.cpp" />
     <ClCompile Include="RenderCore\BSDF\Diffuse.cpp" />
-    <ClCompile Include="DX12\DX12Helper.cpp" />
-    <ClCompile Include="DX12\DX12Initializer.cpp" />
-    <ClCompile Include="DX12\HeapData.cpp" />
+    <ClCompile Include="DX12\DX12BufferUtils.cpp" />
+    <ClCompile Include="DX12\DX12Utils.cpp" />
+    <ClCompile Include="AppCore\HeapData.cpp" />
     <ClCompile Include="RenderPass\Pathtracer\PathTracer.cpp" />
     <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp" />
     <ClCompile Include="Utils\light_utils.cpp" />
@@ -188,7 +189,7 @@
     <ClCompile Include="RenderCore\BSDF\RoughDielectric.cpp" />
     <ClCompile Include="RenderCore\BSDF\RoughPlastic.cpp" />
     <ClCompile Include="RenderCore\Scene.cpp" />
-    <ClCompile Include="RenderPass\Shader.cpp" />
+    <ClCompile Include="AppCore\Shader.cpp" />
     <ClCompile Include="AppCore\SceneResourceManager.cpp" />
     <ClCompile Include="RenderPass\SVGF\SVGFPass.cpp" />
     <ClCompile Include="RenderCore\Texture\Texture.cpp" />
@@ -205,18 +206,18 @@
     <ClInclude Include="..\Framework\Externals\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\Framework\Externals\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Framework\Externals\imgui\imstb_truetype.h" />
-    <ClInclude Include="DX12\AccelerationStructureHelper.h" />
+    <ClInclude Include="AppCore\SceneAccelerationStructure.h" />
+    <ClInclude Include="DX12\DX12AccelerationStructureUtils.h" />
     <ClInclude Include="DX12\DX12StateSubobjects.h" />
-    <ClInclude Include="DX12\RenderContext.h" />
     <ClInclude Include="RenderCore\BSDF\BSDF.h" />
     <ClInclude Include="RenderCore\BSDF\Conductor.h" />
     <ClInclude Include="RenderCore\BSDF\Dielectric.h" />
     <ClInclude Include="RenderCore\BSDF\Diffuse.h" />
-    <ClInclude Include="DX12\DX12Helper.h" />
-    <ClInclude Include="DX12\DX12Initializer.h" />
-    <ClInclude Include="DX12\DxilLibrary.h" />
+    <ClInclude Include="DX12\DX12BufferUtils.h" />
+    <ClInclude Include="DX12\DX12Utils.h" />
+    <ClInclude Include="DX12\DX12DxilLibrary.h" />
     <ClInclude Include="RenderCore\Emitter\Emitter.h" />
-    <ClInclude Include="DX12\HeapData.h" />
+    <ClInclude Include="AppCore\HeapData.h" />
     <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="RenderPass\Pathtracer\PathTracer.h" />
     <ClInclude Include="RenderPass\Pathtracer\ReSTIRPathTraceOriginal.hlsl">
@@ -238,7 +239,7 @@
     <ClInclude Include="RenderCore\BSDF\RoughPlastic.h" />
     <ClInclude Include="RenderCore\Scene.h" />
     <ClInclude Include="RenderCore\Sensor\Sensor.h" />
-    <ClInclude Include="RenderPass\Shader.h" />
+    <ClInclude Include="AppCore\Shader.h" />
     <ClInclude Include="AppCore\SceneResourceManager.h" />
     <ClInclude Include="External\stb_image.h" />
     <ClInclude Include="RenderPass\SVGF\SVGFPass.h" />
@@ -308,9 +309,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="QuadVertexShader.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </FxCompile>
-    <FxCompile Include="RenderPass\VBuffer\Vbuffer.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>

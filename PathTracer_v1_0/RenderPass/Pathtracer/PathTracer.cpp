@@ -1,7 +1,7 @@
 #include "PathTracer.h"
 #include <string>
-#include "DX12Initializer.h"
-#include "DX12Helper.h"
+#include "DX12Utils.h"
+#include "DX12BufferUtils.h"
 
 
 PathTracer::PathTracer(ID3D12Device5Ptr mpDevice, Scene* scene, uvec2 size)
@@ -324,7 +324,7 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap, SceneResourceManag
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.RaytracingAccelerationStructure.Location = pSceneResourceManager->getToplevelAS()->GetGPUVirtualAddress();
+    srvDesc.RaytracingAccelerationStructure.Location = pSceneResourceManager->getSceneAS()->getTopLevelAS()->GetGPUVirtualAddress();
     mpDevice->CreateShaderResourceView(nullptr, &srvDesc, pSrvUavHeap->addDescriptorHandle("AccelerationStructure"));
 
     pSceneResourceManager->createSceneSRVs();

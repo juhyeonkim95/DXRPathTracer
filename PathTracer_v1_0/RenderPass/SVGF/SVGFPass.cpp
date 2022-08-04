@@ -1,7 +1,7 @@
 #include "SVGFPass.h"
 #include <map>
-#include "DX12Initializer.h"
-#include "DX12Helper.h"
+#include "DX12Utils.h"
+#include "DX12BufferUtils.h"
 
 SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     : PostProcessPass(mpDevice, size)

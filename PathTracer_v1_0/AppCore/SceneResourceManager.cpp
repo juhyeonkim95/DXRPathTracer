@@ -2,104 +2,14 @@
 #include "DirectXTex.h"
 #include "DirectXTex.inl"
 #include "d3dx12.h"
-#include "DX12Initializer.h"
-#include "AccelerationStructureHelper.h"
+#include "DX12Utils.h"
 
 SceneResourceManager::SceneResourceManager(Scene* scene, ID3D12Device5Ptr pDevice, HeapData* srvHeap)
 {
     this->scene = scene;
     this->mpDevice = pDevice;
     this->mSrvUavHeap = srvHeap;
-}
-
-AccelerationStructureBuffers SceneResourceManager::createTopLevelAccelerationStructure(ID3D12GraphicsCommandList4Ptr mpCmdList)
-{
-    size_t numBottomLevelAS = mpBottomLevelAS.size();
-    // First, get the size of the TLAS buffers and create them
-    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
-    inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-    inputs.NumDescs = numBottomLevelAS;
-    inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
-
-    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
-    mpDevice->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
-
-    // Create the buffers
-    AccelerationStructureBuffers buffers;
-    buffers.pScratch = createBuffer(mpDevice, info.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, kDefaultHeapProps);
-    buffers.pResult = createBuffer(mpDevice, info.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, kDefaultHeapProps);
-    mTlasSize = info.ResultDataMaxSizeInBytes;
-
-    // The instance desc should be inside a buffer, create and map the buffer
-    buffers.pInstanceDesc = createBuffer(mpDevice, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * numBottomLevelAS, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-    D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
-    buffers.pInstanceDesc->Map(0, nullptr, (void**)&instanceDescs);
-    ZeroMemory(instanceDescs, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * numBottomLevelAS);
-
-    for (uint32_t i = 0; i < numBottomLevelAS; i++) {
-        // Initialize the instance desc. We only have a single instance
-        instanceDescs[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
-        instanceDescs[i].InstanceContributionToHitGroupIndex = 2 * i;   // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
-        instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-        mat4 m = scene->meshes[i].transform;
-        m = transpose(m);
-        memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
-        instanceDescs[i].AccelerationStructure = mpBottomLevelAS[i]->GetGPUVirtualAddress();
-        instanceDescs[i].InstanceMask = 0xFF;
-    }
-
-    // Unmap
-    buffers.pInstanceDesc->Unmap(0, nullptr);
-
-    // Create the TLAS
-    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
-    asDesc.Inputs = inputs;
-    asDesc.Inputs.InstanceDescs = buffers.pInstanceDesc->GetGPUVirtualAddress();
-    asDesc.DestAccelerationStructureData = buffers.pResult->GetGPUVirtualAddress();
-    asDesc.ScratchAccelerationStructureData = buffers.pScratch->GetGPUVirtualAddress();
-
-    mpCmdList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
-
-    // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
-    D3D12_RESOURCE_BARRIER uavBarrier = {};
-    uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    uavBarrier.UAV.pResource = buffers.pResult;
-    mpCmdList->ResourceBarrier(1, &uavBarrier);
-
-    return buffers;
-}
-
-void SceneResourceManager::createSceneAccelerationStructure(
-    ID3D12CommandQueuePtr mpCmdQueue,
-    ID3D12CommandAllocatorPtr pCmdAllocator,
-    ID3D12GraphicsCommandList4Ptr mpCmdList,
-    ID3D12FencePtr mpFence,
-    HANDLE mFenceEvent,
-    uint64_t& mFenceValue
-)
-{
-    mpBottomLevelAS.resize(scene->getMeshes().size());
-    std::vector<AccelerationStructureBuffers> bottomLevelBuffers;
-    for (int i = 0; i < scene->getMeshes().size(); i++) {
-        AccelerationStructureBuffers bottomLevelBuffer = createBottomLevelAS(mpDevice, mpCmdList, (scene->getMeshes())[i]);
-        bottomLevelBuffers.push_back(bottomLevelBuffer);
-        mpBottomLevelAS[i] = bottomLevelBuffer.pResult;
-    }
-
-    AccelerationStructureBuffers topLevelBuffers = this->createTopLevelAccelerationStructure(mpCmdList);
-    //createTopLevelAS(mpDevice, mpCmdList, mpBottomLevelAS, mTlasSize);
-
-    // TODO : Flush(?)
-    // The tutorial doesn't have any resource lifetime management, so we flush and sync here. This is not required by the DXR spec - you can submit the list whenever you like as long as you take care of the resources lifetime.
-    mFenceValue = submitCommandList(mpCmdList, mpCmdQueue, mpFence, mFenceValue);
-    mpFence->SetEventOnCompletion(mFenceValue, mFenceEvent);
-    WaitForSingleObject(mFenceEvent, INFINITE);
-    mpCmdList->Reset(pCmdAllocator, nullptr);
-
-    // Store the AS buffers. The rest of the buffers will be released once we exit the function
-    mpTopLevelAS = topLevelBuffers.pResult;
-    //mpBottomLevelAS = bottomLevelBuffers.pResult;
+    this->mpSceneAccelerationStructure = new SceneAccelerationStructure(scene);
 }
 
 void SceneResourceManager::createSceneCBVs()
@@ -283,6 +193,11 @@ void SceneResourceManager::createSceneSRVs()
         //descriptorHandle.ptr += 5 * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         mpDevice->CreateShaderResourceView(mpVerticesBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("VerticesData"));
     }
+}
+
+void SceneResourceManager::createSceneAccelerationStructure(ID3D12CommandQueuePtr mpCmdQueue, ID3D12CommandAllocatorPtr pCmdAllocator, ID3D12GraphicsCommandList4Ptr mpCmdList, ID3D12FencePtr mpFence, HANDLE mFenceEvent, uint64_t& mFenceValue)
+{
+    this->mpSceneAccelerationStructure->createSceneAccelerationStructure(mpDevice, mpCmdQueue, pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
 }
 
 void SceneResourceManager::createSceneTextureResources(
