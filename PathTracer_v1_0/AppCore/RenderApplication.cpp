@@ -5,8 +5,6 @@
 #include "RenderApplication.h"
 #include "DX12Initializer.h"
 #include "DX12Helper.h"
-// #include "AccelerationStructureHelper.h"
-#include "DxilLibrary.h"
 #include "CommonStruct.h"
 #include "d3dx12.h"
 
@@ -73,7 +71,7 @@ void RenderApplication::initDX12(HWND winHandle, uint32_t winWidth, uint32_t win
 uint32_t RenderApplication::beginFrame()
 {
     // Bind the descriptor heaps
-    ID3D12DescriptorHeap* heaps[] = { mSrvUavHeap->getDescriptorHeap() };
+    ID3D12DescriptorHeap* heaps[] = { mpSrvUavHeap->getDescriptorHeap() };
     mpCmdList->SetDescriptorHeaps(arraysize(heaps), heaps);
     return mpSwapChain->GetCurrentBackBufferIndex();
 }
@@ -101,273 +99,17 @@ void RenderApplication::endFrame(uint32_t rtvIndex)
 
 void RenderApplication::createRtPipelineState()
 {
-    // Need 10 subobjects:
-    //  1 for the DXIL library
-    //  1 for hit-group
-    //  2 for RayGen root-signature (root-signature and the subobject association)
-    //  2 for the root-signature shared between miss and hit shaders (signature and association)
-    //  2 for shader config (shared between all programs. 1 for the config, 1 for association)
-    //  1 for pipeline config
-    //  1 for the global root signature
-    std::array<D3D12_STATE_SUBOBJECT, 13> subobjects;
-    uint32_t index = 0;
-
-    // Create the DXIL library
-    DxilLibrary dxilLib = createDxilLibrary();
-    subobjects[index++] = dxilLib.stateSubobject; // 0 Library
-
-    HitProgram hitProgram(nullptr, kClosestHitShader, kHitGroup);
-    subobjects[index++] = hitProgram.subObject; // 1 Hit Group
-        
-    // Create the shadow-ray hit group
-    HitProgram shadowHitProgram(nullptr, kShadowChs, kShadowHitGroup);
-    subobjects[index++] = shadowHitProgram.subObject; // 2 Shadow Hit Group
-
-    // Create the ray-gen root-signature and association
-    LocalRootSignature rgsRootSignature(mpDevice, createRayGenRootDesc().desc);
-    subobjects[index] = rgsRootSignature.subobject; // 3 RayGen Root Sig
-
-    uint32_t rgsRootIndex = index++; // 3
-    ExportAssociation rgsRootAssociation(&kRayGenShader, 1, &(subobjects[rgsRootIndex]));
-    subobjects[index++] = rgsRootAssociation.subobject; // 4 Associate Root Sig to RGS
-
-    // Create the hit root-signature and association
-    LocalRootSignature hitRootSignature(mpDevice, createHitRootDesc().desc);
-    subobjects[index] = hitRootSignature.subobject; //  5 Hit Root Sig
-
-    uint32_t hitRootIndex = index++; // 5
-    ExportAssociation hitRootAssociation(&kClosestHitShader, 1, &(subobjects[hitRootIndex]));
-    subobjects[index++] = hitRootAssociation.subobject; // 6 Associate Hit Root Sig to Hit Group
-
-    // Create the miss root-signature and association
-    D3D12_ROOT_SIGNATURE_DESC emptyDesc = {};
-    emptyDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-    LocalRootSignature missRootSignature(mpDevice, emptyDesc);
-    subobjects[index] = missRootSignature.subobject; // 7 Miss Root Sig
-
-    uint32_t emptyRootIndex = index++; // 7
-    const WCHAR* emptyRootExport[] = { kMissShader, kMissEnvShader , kShadowChs, kShadowMiss };
-    ExportAssociation missRootAssociation(emptyRootExport, arraysize(emptyRootExport), &(subobjects[emptyRootIndex]));
-    subobjects[index++] = missRootAssociation.subobject; // 8 Associate Miss Root Sig to Miss Shader
-
-    // Bind the payload size to the programs
-    ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 38);
-    subobjects[index] = shaderConfig.subobject; // 9 Shader Config
-
-    uint32_t shaderConfigIndex = index++; // 9
-    const WCHAR* shaderExports[] = { kMissShader, kMissEnvShader, kClosestHitShader, kRayGenShader,kShadowMiss, kShadowChs };
-    ExportAssociation configAssociation(shaderExports, arraysize(shaderExports), &(subobjects[shaderConfigIndex]));
-    subobjects[index++] = configAssociation.subobject; // 10 Associate Shader Config to Miss, CHS, RGS
-
-    // Create the pipeline config
-    PipelineConfig config(1);
-    subobjects[index++] = config.subobject; // 11
-
-    // Create the global root signature and store the empty signature
-    GlobalRootSignature root(mpDevice, createGlobalRootDesc().desc);
-    mpEmptyRootSig = root.pRootSig;
-    subobjects[index++] = root.subobject; // 12
-
-    // Create the state
-    D3D12_STATE_OBJECT_DESC desc;
-    desc.NumSubobjects = index; // 13
-    desc.pSubobjects = subobjects.data();
-    desc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
-
-    d3d_call(mpDevice->CreateStateObject(&desc, IID_PPV_ARGS(&mpPipelineState)));
+    
 }
 
 void RenderApplication::createShaderTable()
 {
-    /** The shader-table layout is as follows:
-        Entry 0 - Ray-gen program
-        Entry 1 - Miss program
-        Entry 2 - Hit program
-        All entries in the shader-table must have the same size, so we will choose it base on the largest required entry.
-        The ray-gen program requires the largest entry - sizeof(program identifier) + 8 bytes for a descriptor-table.
-        The entry size must be aligned up to D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
-    */
-
-    // Calculate the size and create the buffer
-    mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-    mShaderTableEntrySize += 8; // The ray-gen's descriptor table
-    mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, mShaderTableEntrySize);
-    uint32_t nMeshes = this->scene->getMeshes().size();
-    uint32_t shaderTableSize = mShaderTableEntrySize * (3 + 2 * nMeshes);
-
-    // For simplicity, we create the shader-table on the upload heap. You can also create it on the default heap
-    mpShaderTable = createBuffer(mpDevice, shaderTableSize, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-
-    // Map the buffer
-    uint8_t* pData;
-    d3d_call(mpShaderTable->Map(0, nullptr, (void**)&pData));
-
-    MAKE_SMART_COM_PTR(ID3D12StateObjectProperties);
-    ID3D12StateObjectPropertiesPtr pRtsoProps;
-    mpPipelineState->QueryInterface(IID_PPV_ARGS(&pRtsoProps));
-
-    // Entry 0 - ray-gen program ID and descriptor data
-    memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-    uint64_t heapStart = mSrvUavHeap->getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart().ptr;
-    *(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
-
-    // Entry 1 - miss program
-    if (scene->envMapTexture) {
-        memcpy(pData + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kMissEnvShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-    }
-    else {
-        memcpy(pData + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kMissShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-    }
     
-    // Entry 2 - shadow-ray miss
-    memcpy(pData + mShaderTableEntrySize * 2, pRtsoProps->GetShaderIdentifier(kShadowMiss), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-    
-    // Entries 3- - The mesh hit program. ProgramID and constant-buffer data
-    for (uint32_t i = 0; i < nMeshes; i++)
-    {
-        // Closest hit for primary ray
-        uint8_t* pHitEntry = pData + mShaderTableEntrySize * (2 * i + 3); // +2 skips the ray-gen and miss entries
-        memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-
-        uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;            // The location of the root-descriptor
-        assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
-        
-        Mesh& mesh = scene->meshes[i];
-        std::string meshRefID = scene->meshRefID[i];
-        int bsdfID = scene->materialIDDictionary[meshRefID];
-        BSDF* meshBSDF = scene->bsdfs[bsdfID];
-
-        if (meshBSDF->diffuseReflectanceTexturePath.length() > 0) {
-            int textureID = scene->textureIDDictionary[meshBSDF->diffuseReflectanceTexturePath];
-            Texture* texture = scene->textures[textureID];
-            *(uint64_t*)(pCbDesc) = mSrvUavHeap->getGPUHandle(texture->descriptorHandleOffset).ptr;
-        }
-        else {
-            *(uint64_t*)(pCbDesc) = mpTextureStartHandle.ptr;
-        }
-
-        // Closest hit for shadow ray
-        uint8_t* pEntryShadow = pData + mShaderTableEntrySize * (2 * i + 4);
-        memcpy(pEntryShadow, pRtsoProps->GetShaderIdentifier(kShadowHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-    }
-
-    // Unmap
-    mpShaderTable->Unmap(0, nullptr);
 }
-
-
-void RenderApplication::createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth, uint structSize)
-{
-    ID3D12ResourcePtr outputResources;
-
-    D3D12_RESOURCE_DESC resDesc = {};
-    resDesc.DepthOrArraySize = depth;
-    resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    resDesc.Format = format;
-    resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-    if (structSize == 0) {
-        resDesc.Width = mSwapChainSize.x;
-        resDesc.Height = mSwapChainSize.y;
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    }
-    else {
-        resDesc.Alignment = 0;
-        resDesc.DepthOrArraySize = 1;
-        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Height = 1;
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        resDesc.SampleDesc.Quality = 0;
-        resDesc.Width = structSize * mSwapChainSize.x * mSwapChainSize.y;
-    }
-    resDesc.MipLevels = 1;
-    resDesc.SampleDesc.Count = 1;
-    d3d_call(mpDevice->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&outputResources))); // Starting as copy-source to simplify onFrameRender()
-
-    if (depth == 1) {
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-
-        if (structSize == 0) {
-            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        }
-        else {
-            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-            uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-            uavDesc.Buffer.StructureByteStride = structSize;
-            uavDesc.Buffer.NumElements = mSwapChainSize.x * mSwapChainSize.y;
-            uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-        }
-        
-        mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, mSrvUavHeap->addDescriptorHandle(name.c_str()));
-    }
-    else {
-        for (int i = 0; i < depth; i++) {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            uavDesc.Format = format;
-            uavDesc.Texture2DArray.ArraySize = 1;
-            uavDesc.Texture2DArray.FirstArraySlice = UINT(i);
-            uavDesc.Texture2DArray.PlaneSlice = 0;
-            mpDevice->CreateUnorderedAccessView(outputResources, nullptr, &uavDesc, mSrvUavHeap->addDescriptorHandle(name.c_str()));
-        }
-    }
-    outputUAVBuffers[name] = outputResources;
-    //int HeapOffset = (srvHandle.ptr - mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart().ptr) / mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-}
-
 
 void RenderApplication::createShaderResources()
 {
-    // Create an SRV/UAV descriptor heap
-    mSrvUavHeap = new HeapData(mpDevice, 100, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
-    sceneResourceManager = new SceneResourceManager(scene, mpDevice, mSrvUavHeap);
-    sceneResourceManager->createSceneAccelerationStructure(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
 
-    // 1. Create the output resource. The dimensions and format should match the swap-chain
-    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_UNORM, "gOutput", 1);
-
-    // 2. Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.RaytracingAccelerationStructure.Location = sceneResourceManager->getToplevelAS()->GetGPUVirtualAddress();
-    mpDevice->CreateShaderResourceView(nullptr, &srvDesc, mSrvUavHeap->addDescriptorHandle("AccelerationStructure"));
-
-    // 3~6 scene material, geometry
-    sceneResourceManager->createSceneSRVs();
-
-    // 7. HDR
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputHDR", 1);
-
-    // 8. Direct Illumination
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIllumination", 1);
-
-    // 9. Indirect Illumination
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIllumination", 1);
-
-    // 10. Reflectance
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gReflectance", 1);
-
-    // 11. Position / ID
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
-
-    // 12. Normal
-    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormal", 1);
-
-    // 13, 14 Prev buffer
-    createUAVBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev", 1);
-    createUAVBuffer(DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev", 1);
-
-    // 15 prev reserviors
-    createUAVBuffer(DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
-    createUAVBuffer(DXGI_FORMAT_UNKNOWN, "gCurrReserviors", 1, sizeof(Reservoir));
-
-
-    
-
-    mpTextureStartHandle = mSrvUavHeap->getLastGPUHandle();
-    sceneResourceManager->createSceneTextureResources(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
 }
 
 
@@ -385,25 +127,25 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     mpKeyboard->SetDataFormat(&c_dfDIKeyboard);
     mpKeyboard->Acquire();
 
+    // Create an SRV/UAV descriptor heap
+    mpSrvUavHeap = new HeapData(mpDevice, 100, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
 
-    createRtPipelineState();
-    createShaderResources();
-    createShaderTable();
+    // load scene resources
+    sceneResourceManager = new SceneResourceManager(scene, mpDevice, mpSrvUavHeap);
+    sceneResourceManager->createSceneAccelerationStructure(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
+    sceneResourceManager->createSceneTextureResources(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
+    // sceneResourceManager->createSceneSRVs();
+    
+    // add path tracer shader// init render passes
+    pathTracer = new PathTracer(mpDevice, scene, mSwapChainSize);
+    pathTracer->createShaderResources(mpSrvUavHeap, sceneResourceManager);
+    pathTracer->createShaderTable(mpSrvUavHeap);
 
-    initPostProcess();
+    restirPass = new ReSTIR(mpDevice);
 
-    mpLightParametersBuffer = createBuffer(mpDevice, sizeof(LightParameter) * 20, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-    uint8_t* pData;
-    d3d_call(mpLightParametersBuffer->Map(0, nullptr, (void**)&pData));
-    memcpy(pData, scene->lights.data(), sizeof(LightParameter) * scene->lights.size());
-    mpLightParametersBuffer->Unmap(0, nullptr);
+    // initPostProcess();
 
-    //mpPrevReservoirBuffer = createBuffer(mpDevice, sizeof(Reservoir) * mSwapChainSize.x * mSwapChainSize.y, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-    //uint8_t* pData;
-    //d3d_call(mpPrevResevoirBuffer->Map(0, nullptr, (void**)&pData));
-    //memcpy(pData, scene->lights.data(), sizeof(LightParameter) * scene->lights.size());
-    //mpPrevResevoirBuffer->Unmap(0, nullptr);
-
+    sceneResourceManager->createSceneCBVs();
 
     // Create a Log File
     char filename[40];
@@ -439,127 +181,28 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
 void RenderApplication::onFrameRender()
 {
     uint32_t rtvIndex = beginFrame();
-    ID3D12ResourcePtr mpOutputResource = outputUAVBuffers["gOutput"];
-
+   
     update();
+    this->pathTracer->forward(mpCmdList, sceneResourceManager, mpSrvUavHeap, restirPass->param);
 
-    // Let's raytrace
-    resourceBarrier(mpCmdList, mpOutputResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+    mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, pathTracer->getOutput("gOutput"));
 
-    D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-    raytraceDesc.Width = mSwapChainSize.x;
-    raytraceDesc.Height = mSwapChainSize.y;
-    raytraceDesc.Depth = 1;
-
-    // RayGen is the first entry in the shader-table
-    raytraceDesc.RayGenerationShaderRecord.StartAddress = mpShaderTable->GetGPUVirtualAddress() + 0 * mShaderTableEntrySize;
-    raytraceDesc.RayGenerationShaderRecord.SizeInBytes = mShaderTableEntrySize;
-
-    // Miss is the second entry in the shader-table
-    size_t missOffset = 1 * mShaderTableEntrySize;
-    raytraceDesc.MissShaderTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + missOffset;
-    raytraceDesc.MissShaderTable.StrideInBytes = mShaderTableEntrySize;
-    raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize * 2;   // Only a s single miss-entry
-
-    // Hit is the third entry in the shader-table
-    size_t hitOffset = 3 * mShaderTableEntrySize;
-    raytraceDesc.HitGroupTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + hitOffset;
-    raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-    raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * ( 2 * scene->getMeshes().size());
-
-    // Bind the empty root signature
-    mpCmdList->SetComputeRootSignature(mpEmptyRootSig);
-    mpCmdList->SetComputeRootConstantBufferView(0, mpCameraConstantBuffer->GetGPUVirtualAddress());
-    mpCmdList->SetComputeRootConstantBufferView(1, mpLightParametersBuffer->GetGPUVirtualAddress());
-
-    if (!mParamBuffer)
-    {
-        mParamBuffer = createBuffer(mpDevice, sizeof(ReSTIRParameters) + sizeof(PathTracerParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-    }
-    uint8_t* pData;
-    int offset = 0;
-    d3d_call(mParamBuffer->Map(0, nullptr, (void**)&pData));
-
-    memcpy(pData, &pathTracer->param, sizeof(PathTracerParameters));
-    offset += sizeof(PathTracerParameters);
-
-    memcpy(pData + offset, &restirPass->param, sizeof(ReSTIRParameters));
-    offset += sizeof(ReSTIRParameters);
-
-    mParamBuffer->Unmap(0, nullptr);
-    mpCmdList->SetComputeRootConstantBufferView(2, mParamBuffer->GetGPUVirtualAddress());
-
-
-    // mpSrvUavHeap 2,3,4,5
-    mpCmdList->SetComputeRootDescriptorTable(3, sceneResourceManager->getSRVStartHandle());//2 at createGlobalRootDesc
-
-    // UAVs
-    mpCmdList->SetComputeRootDescriptorTable(4, mSrvUavHeap->getGPUHandleByName("gOutputHDR"));//3 at createGlobalRootDesc
-
-    // Dispatch
-    mpCmdList->SetPipelineState1(mpPipelineState.GetInterfacePtr());
-    mpCmdList->DispatchRays(&raytraceDesc);
-
-    //Copy the results to the back-buffer
-    resourceBarrier(mpCmdList, mpOutputResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gIndirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-    if (doPostProcess) {
-        postProcess(rtvIndex);
-    }
-    else {
-        resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-        mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, mpOutputResource);
-    }
-
-    resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshIDPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gPositionMeshIDPrev"], outputUAVBuffers["gPositionMeshID"]);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-    resourceBarrier(mpCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gNormalPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gNormalPrev"], outputUAVBuffers["gNormal"]);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-    resourceBarrier(mpCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gPrevReserviors"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(outputUAVBuffers["gPrevReserviors"], outputUAVBuffers["gCurrReserviors"]);
-    resourceBarrier(mpCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    //this->pathTracer->copyback(mpCmdList);
 
     // Start the Dear ImGui frame
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    //D3D12_RESOURCE_BARRIER barrier = {};
-    //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    //barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    //barrier.Transition.pResource = mFrameObjects[rtvIndex].pSwapChainBuffer;
-    //barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    //barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-    //barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    
-    //mFrameObjects[bufferIndex].pCmdAllocator->Reset();
-    // mpCmdList->Reset(mFrameObjects[bufferIndex].pCmdAllocator, nullptr);
-    //mpCmdList->SetPipelineState(nullptr);
-    // mpCmdList->ResourceBarrier(1, &barrier);
     resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     ImGui::Begin("Path Tracer Settings");                          // Create a window called "Hello, world!" and append into it.
     
     pathTracer->processGUI();
     restirPass->processGUI();
-    svgfPass->processGUI();
+
+    //svgfPass->processGUI();
 
     mDirty = pathTracer->mDirty;
 
@@ -607,21 +250,21 @@ void RenderApplication::initPostProcess()
     postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
 
     svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
-    svgfPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
+    svgfPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
     tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
-    restirPass = new ReSTIR(mpDevice);
-    pathTracer = new PathTracer(mpDevice);
-    // tonemapPass->createRenderTextures(mRtvHeap, mSrvUavHeap);
+    
+    // pathTracer = new PathTracer(mpDevice);
+    // tonemapPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 }
 
 void RenderApplication::postProcess(int rtvIndex)
 {
-    map<string, D3D12_GPU_DESCRIPTOR_HANDLE> & gpuHandlesMap = mSrvUavHeap->getGPUHandleMap();
+    map<string, D3D12_GPU_DESCRIPTOR_HANDLE> & gpuHandlesMap = mpSrvUavHeap->getGPUHandleMap();
 
     postProcessQuad->bind(mpCmdList);
     svgfPass->setViewPort(mpCmdList);
-    svgfPass->forward(mpCmdList, gpuHandlesMap, outputUAVBuffers, mpCameraConstantBuffer);
+    svgfPass->forward(mpCmdList, gpuHandlesMap, pathTracer->getOutputs(), sceneResourceManager->getCameraConstantBuffer());
 
     D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
     // D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->waveletDirect[4]->getGPUSrvHandler();
@@ -753,6 +396,7 @@ void RenderApplication::update()
     renderMode = nextRenderMode;
 
     camera->update();
+
     frameData.u = vec4(camera->u, 1.0f);
     frameData.v = vec4(camera->v, 1.0f);
     frameData.w = vec4(camera->w, 1.0f);
@@ -762,12 +406,7 @@ void RenderApplication::update()
 
     frameData.lightNumber = scene->lights.size();
     frameData.envMapTransform = transpose((scene->envMapTransform));
-    if (!this->mpCameraConstantBuffer)
-        mpCameraConstantBuffer = createBuffer(mpDevice, sizeof(PerFrameData), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-    uint8_t* pData;
-    d3d_call(mpCameraConstantBuffer->Map(0, nullptr, (void**)&pData));
-    memcpy(pData, &frameData, sizeof(PerFrameData));
-    mpCameraConstantBuffer->Unmap(0, nullptr);
+    this->sceneResourceManager->update(frameData);
 
 
     elapsedTime[mTotalFrameNumber % FRAME_ACCUMULATE_NUMBER] = elapsedTimeSec;

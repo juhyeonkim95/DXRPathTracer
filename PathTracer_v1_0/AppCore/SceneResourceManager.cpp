@@ -102,6 +102,26 @@ void SceneResourceManager::createSceneAccelerationStructure(
     //mpBottomLevelAS = bottomLevelBuffers.pResult;
 }
 
+void SceneResourceManager::createSceneCBVs()
+{
+    mpLightParametersBuffer = createBuffer(mpDevice, sizeof(LightParameter) * 20, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+    uint8_t* pData;
+    d3d_call(mpLightParametersBuffer->Map(0, nullptr, (void**)&pData));
+    memcpy(pData, scene->lights.data(), sizeof(LightParameter) * scene->lights.size());
+    mpLightParametersBuffer->Unmap(0, nullptr);
+
+    mpCameraConstantBuffer = createBuffer(mpDevice, sizeof(PerFrameData), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+}
+
+void SceneResourceManager::update(PerFrameData&frameData)
+{
+    int8_t* pData;
+    d3d_call(mpCameraConstantBuffer->Map(0, nullptr, (void**)&pData));
+    memcpy(pData, &frameData, sizeof(PerFrameData));
+    mpCameraConstantBuffer->Unmap(0, nullptr);
+}
+
+
 void SceneResourceManager::createSceneSRVs()
 {
     // 3. Material Data

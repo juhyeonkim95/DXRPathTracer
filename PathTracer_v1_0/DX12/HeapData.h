@@ -3,7 +3,6 @@
 #include <map>
 using namespace std;
 
-static const char* aaaa = "rayGen";
 
 class HeapData
 {

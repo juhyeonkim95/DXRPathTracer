@@ -1,5 +1,3 @@
-#include "Framework.h"
-#include "Scene.h"
 #include "RenderApplication.h"
 
 

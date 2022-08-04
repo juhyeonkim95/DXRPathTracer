@@ -177,6 +177,15 @@
     <ClCompile Include="RenderPass\Pathtracer\PathTracer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="DX12\RenderContext.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12\DxilLibrary.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12\DX12StateSubobjects.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\RenderApplication.h">
@@ -315,6 +324,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\Pathtracer\PathTracer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12\RenderContext.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12\DX12StateSubobjects.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

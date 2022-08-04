@@ -55,35 +55,33 @@ private:
 
     // Heap data
     HeapData *mRtvHeap;
-    static const uint32_t kRtvHeapSize = 50;
-    HeapData *mSrvUavHeap;
-
+    HeapData* mpSrvUavHeap;
     SceneResourceManager* sceneResourceManager;
+    //RenderContext* mpRenderContext;
 
-    ID3D12ResourcePtr mpVertexBuffer;
+    static const uint32_t kRtvHeapSize = 50;
 
     // uint64_t mTlasSize = 0;
 
     Scene *scene;
 
     void createRtPipelineState();
-    ID3D12StateObjectPtr mpPipelineState;
-    ID3D12RootSignaturePtr mpEmptyRootSig;
+    //ID3D12StateObjectPtr mpPipelineState;
+    //ID3D12RootSignaturePtr mpEmptyRootSig;
 
     void createShaderTable();
-    ID3D12ResourcePtr mpShaderTable;
+    //ID3D12ResourcePtr mpShaderTable;
     uint32_t mShaderTableEntrySize = 0;
 
     void createShaderResources();
-    std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
+   // std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
 
-    ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
-    ID3D12ResourcePtr mpLightParametersBuffer = nullptr;
-    ID3D12ResourcePtr mpPrevReservoirBuffer = nullptr;
+    //ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
+    //ID3D12ResourcePtr mpLightParametersBuffer = nullptr;
+    //ID3D12ResourcePtr mpPrevReservoirBuffer = nullptr;
 
-
-    std::vector<ID3D12ResourcePtr> mpTextureBuffers;
-    D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;
+    //std::vector<ID3D12ResourcePtr> mpTextureBuffers;
+    //D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;
 
     // int textureStartHeapOffset;
 
@@ -103,10 +101,8 @@ private:
     
     uint renderMode = 0;
     bool doPostProcess = false;
-
-    void createUAVBuffer(DXGI_FORMAT format, std::string name, uint depth, uint struct_size=0);
-    void createSRVTexture(DXGI_FORMAT format, std::string name);
     
+
     // Post processing
     PostProcessQuad* postProcessQuad;
     SVGFPass* svgfPass;

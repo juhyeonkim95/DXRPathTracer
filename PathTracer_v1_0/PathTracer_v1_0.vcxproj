@@ -162,6 +162,9 @@
     <ClCompile Include="..\Framework\Externals\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="DX12\DX12StateSubobjects.cpp" />
+    <ClCompile Include="DX12\DxilLibrary.cpp" />
+    <ClCompile Include="DX12\RenderContext.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderCore\BSDF\Conductor.cpp" />
     <ClCompile Include="RenderCore\BSDF\Dielectric.cpp" />
@@ -203,6 +206,8 @@
     <ClInclude Include="..\Framework\Externals\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Framework\Externals\imgui\imstb_truetype.h" />
     <ClInclude Include="DX12\AccelerationStructureHelper.h" />
+    <ClInclude Include="DX12\DX12StateSubobjects.h" />
+    <ClInclude Include="DX12\RenderContext.h" />
     <ClInclude Include="RenderCore\BSDF\BSDF.h" />
     <ClInclude Include="RenderCore\BSDF\Conductor.h" />
     <ClInclude Include="RenderCore\BSDF\Dielectric.h" />

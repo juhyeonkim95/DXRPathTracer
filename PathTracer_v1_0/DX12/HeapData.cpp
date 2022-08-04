@@ -59,17 +59,3 @@ D3D12_CPU_DESCRIPTOR_HANDLE HeapData::addDescriptorHandle() {
 	string name = "anonymous_" + std::to_string(usedEntries);
 	return this->addDescriptorHandle(name.c_str());
 }
-
-//D3D12_CPU_DESCRIPTOR_HANDLE HeapData::createRTV(ID3D12ResourcePtr pResource, DXGI_FORMAT format) {
-//
-//	D3D12_RENDER_TARGET_VIEW_DESC desc = {};
-//	desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-//	desc.Format = format;
-//	desc.Texture2D.MipSlice = 0;
-//	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pHeap->GetCPUDescriptorHandleForHeapStart();
-//	rtvHandle.ptr += usedEntries * mpDevice->GetDescriptorHandleIncrementSize(type);
-//	lastHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(type);
-//	usedEntries++;
-//	mpDevice->CreateRenderTargetView(pResource, &desc, rtvHandle);
-//	return rtvHandle;
-//}

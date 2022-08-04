@@ -1,5 +1,7 @@
 #pragma once
 #include "Framework.h"
+#include "HeapData.h"
+
 static const D3D12_HEAP_PROPERTIES kUploadHeapProps =
 {
     D3D12_HEAP_TYPE_UPLOAD,
@@ -19,3 +21,4 @@ static const D3D12_HEAP_PROPERTIES kDefaultHeapProps =
 };
 
 ID3D12ResourcePtr createBuffer(ID3D12Device5Ptr pDevice, uint64_t size, D3D12_RESOURCE_FLAGS flags, D3D12_RESOURCE_STATES initState, const D3D12_HEAP_PROPERTIES& heapProps);
+ID3D12ResourcePtr createUAVBuffer(ID3D12Device5Ptr pDevice, HeapData* pSrvUavHeap, uvec2 size, DXGI_FORMAT format, std::string name, uint depth, uint structSize = 0);

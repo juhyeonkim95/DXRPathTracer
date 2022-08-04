@@ -1,3 +1,4 @@
+#pragma once
 #include "imgui.h"
 #include "Framework.h"
 #include "d3d12shader.h"
