@@ -32,8 +32,15 @@
 #include "SampleLight.hlsli"
 
 
+static const int PATHTRACE_MAX_DEPTH = 10;
+static const int PATHTRACE_MAX_DEPTH_DIFFUSE = 3;
+static const int PATHTRACE_MAX_DEPTH_SPECULAR = 3;
+static const int PATHTRACE_MAX_DEPTH_TRANSMITTANCE = 10;
+
+
 void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult)
 {
+
     float emissionWeight = 1.0f;
     float3 throughput = float3(1, 1, 1);
     float3 result = float3(0, 0, 0);
@@ -54,118 +61,121 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.position = payload.origin;
     pathResult.direct = float3(0, 0, 0);
     pathResult.reflectance = payload.attenuation;
-
-
-    uint materialType = g_materialinfo[payload.materialIndex].materialType;
-    uint maxDepth = PATHTRACE_MAX_DEPTH;
-    switch (materialType) {
-    case BSDF_TYPE_DIFFUSE:             maxDepth = PATHTRACE_MAX_DEPTH_DIFFUSE; break;
-    case BSDF_TYPE_CONDUCTOR:           maxDepth = PATHTRACE_MAX_DEPTH_SPECULAR; break;
-    case BSDF_TYPE_ROUGH_CONDUCTOR:     maxDepth = PATHTRACE_MAX_DEPTH_SPECULAR; break;
-    case BSDF_TYPE_DIELECTRIC:          maxDepth = PATHTRACE_MAX_DEPTH_TRANSMITTANCE; break;
-    case BSDF_TYPE_ROUGH_DIELECTRIC:    maxDepth = PATHTRACE_MAX_DEPTH_TRANSMITTANCE; break;
-    case BSDF_TYPE_PLASTIC:             maxDepth = PATHTRACE_MAX_DEPTH_DIFFUSE; break;
-    }
-
-    if (materialType != BSDF_TYPE_DIFFUSE) {
-        pathResult.reflectance = float3(1, 1, 1);
-    }
-
-#if USE_NEXT_EVENT_ESTIMATION
-    LightSample lightSample;
-    RayDesc shadowRay;
-    shadowRay.TMin = SCENE_T_MIN;
-#endif
-    uint depth = 1;
-    while (true) {
-        // ---------------- Intersection with emitters ----------------
-        result += emissionWeight * throughput * payload.emission;
-
-        // ---------------- Terminate ray tracing ----------------
-        // (1) over max depth
-        // (2) ray missed
-        // (3) hit emission
-        if (payload.done || depth >= maxDepth) {
-            if (depth <= 2) {
-                pathResult.direct += emissionWeight * throughput * payload.emission;
-            }
-            break;
-        }
-
-        // (4) Russian roulette termination
-#if USE_RUSSIAN_ROULETTE
-        if (depth >= PATHTRACE_RR_BEGIN_DEPTH) {
-            float pcont = max(max(throughput.x, throughput.y), throughput.z);
-            pcont = max(pcont, 0.05f);  // Russian roulette minimum.
-            if (nextRand(payload.seed) >= pcont)
-                break;
-            throughput /= pcont;
-        }
-#endif
-        Material material = g_materialinfo[payload.materialIndex];
-
-#if USE_NEXT_EVENT_ESTIMATION
-        // --------------------- Emitter sampling ---------------------
-
-        // (1) Select light index (currently uniform sampling) & sample light point within selected light.
-        uint lightIndex = (uint) (nextRand(payload.seed) * g_frameData.lightNumber);
-
-        LightParameter light = lights[lightIndex];
-        SampleLight(payload.origin, light, payload.seed, lightSample);
-
-        const float Ldist = length(lightSample.position - payload.origin);
-        const float3 L = normalize(lightSample.position - payload.origin);
-        const float nDl = dot(payload.normal, L);
-        const float LnDl = -dot(lightSample.normal, L);
-
-        float lightPdf = Ldist * Ldist / LnDl * lightSample.pdf / g_frameData.lightNumber;
-
-        if (LnDl > 0 && nDl > 0 && (material.materialType & BSDF_TYPE_GLOSSY))
-        {
-            shadowRay.Origin = payload.origin;
-            shadowRay.Direction = L;
-            shadowRay.TMax = Ldist - SCENE_T_MIN;
-            ShadowPayload shadowPayload;
-            shadowPayload.hit = false;
-            TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
-            if (!shadowPayload.hit) {
-                float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
-                const float scatterPdf = bsdf::Pdf(material, payload, wo);
-                const float3 f = bsdf::Eval(material, payload, wo);
-
-                const float weight = powerHeuristic(lightPdf, scatterPdf);
-
-                const float3 L = weight * lightSample.Li * f / lightPdf * throughput;
-                result += L;
-                if (depth == 1) {
-                    pathResult.direct += L;
-                }
-            }
-        }
-#endif
-        throughput *= payload.attenuation;
-
-        if (dot(throughput, throughput) == 0.0) {
-            break;
-        }
-
-        ray.Direction = payload.direction;
-        ray.Origin = payload.origin;
-        float scatterPdf = payload.scatterPdf;
-        depth += 1;// material.materialType& BSDF_TRANSMISSION ? 0.5f : 1.0f;
-
-        TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2, 0, ray, payload);
-#if USE_NEXT_EVENT_ESTIMATION
-        if (payload.lightIndex >= 0 && scatterPdf > 0.0f) {
-            float lightPdfArea = lights[payload.lightIndex].normalAndPdf.w / g_frameData.lightNumber;
-            float lightPdf = (payload.t * payload.t) / dot(payload.normal, -ray.Direction) * lightPdfArea;
-            emissionWeight = powerHeuristic(scatterPdf, lightPdf);
-        }
-#endif
-    }
-    pathResult.radiance = result;
-
+    pathResult.radiance = payload.attenuation;
     return;
+
+//
+//
+//    uint materialType = g_materialinfo[payload.materialIndex].materialType;
+//    uint maxDepth = PATHTRACE_MAX_DEPTH;
+//    switch (materialType) {
+//    case BSDF_TYPE_DIFFUSE:             maxDepth = PATHTRACE_MAX_DEPTH_DIFFUSE; break;
+//    case BSDF_TYPE_CONDUCTOR:           maxDepth = PATHTRACE_MAX_DEPTH_SPECULAR; break;
+//    case BSDF_TYPE_ROUGH_CONDUCTOR:     maxDepth = PATHTRACE_MAX_DEPTH_SPECULAR; break;
+//    case BSDF_TYPE_DIELECTRIC:          maxDepth = PATHTRACE_MAX_DEPTH_TRANSMITTANCE; break;
+//    case BSDF_TYPE_ROUGH_DIELECTRIC:    maxDepth = PATHTRACE_MAX_DEPTH_TRANSMITTANCE; break;
+//    case BSDF_TYPE_PLASTIC:             maxDepth = PATHTRACE_MAX_DEPTH_DIFFUSE; break;
+//    }
+//
+//    if (materialType != BSDF_TYPE_DIFFUSE) {
+//        pathResult.reflectance = float3(1, 1, 1);
+//    }
+//
+//#if USE_NEXT_EVENT_ESTIMATION
+//    LightSample lightSample;
+//    RayDesc shadowRay;
+//    shadowRay.TMin = SCENE_T_MIN;
+//#endif
+//    uint depth = 1;
+//    while (true) {
+//        // ---------------- Intersection with emitters ----------------
+//        result += emissionWeight * throughput * payload.emission;
+//
+//        // ---------------- Terminate ray tracing ----------------
+//        // (1) over max depth
+//        // (2) ray missed
+//        // (3) hit emission
+//        if (payload.done || depth >= maxDepth) {
+//            if (depth <= 2) {
+//                pathResult.direct += emissionWeight * throughput * payload.emission;
+//            }
+//            break;
+//        }
+//
+//        // (4) Russian roulette termination
+//#if USE_RUSSIAN_ROULETTE
+//        if (depth >= PATHTRACE_RR_BEGIN_DEPTH) {
+//            float pcont = max(max(throughput.x, throughput.y), throughput.z);
+//            pcont = max(pcont, 0.05f);  // Russian roulette minimum.
+//            if (nextRand(payload.seed) >= pcont)
+//                break;
+//            throughput /= pcont;
+//        }
+//#endif
+//        Material material = g_materialinfo[payload.materialIndex];
+//
+//#if USE_NEXT_EVENT_ESTIMATION
+//        // --------------------- Emitter sampling ---------------------
+//
+//        // (1) Select light index (currently uniform sampling) & sample light point within selected light.
+//        uint lightIndex = (uint) (nextRand(payload.seed) * g_frameData.lightNumber);
+//
+//        LightParameter light = lights[lightIndex];
+//        SampleLight(payload.origin, light, payload.seed, lightSample);
+//
+//        const float Ldist = length(lightSample.position - payload.origin);
+//        const float3 L = normalize(lightSample.position - payload.origin);
+//        const float nDl = dot(payload.normal, L);
+//        const float LnDl = -dot(lightSample.normal, L);
+//
+//        float lightPdf = Ldist * Ldist / LnDl * lightSample.pdf / g_frameData.lightNumber;
+//
+//        if (LnDl > 0 && nDl > 0 && (material.materialType & BSDF_TYPE_GLOSSY))
+//        {
+//            shadowRay.Origin = payload.origin;
+//            shadowRay.Direction = L;
+//            shadowRay.TMax = Ldist - SCENE_T_MIN;
+//            ShadowPayload shadowPayload;
+//            shadowPayload.hit = false;
+//            TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
+//            if (!shadowPayload.hit) {
+//                float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
+//                const float scatterPdf = bsdf::Pdf(material, payload, wo);
+//                const float3 f = bsdf::Eval(material, payload, wo);
+//
+//                const float weight = powerHeuristic(lightPdf, scatterPdf);
+//
+//                const float3 L = weight * lightSample.Li * f / lightPdf * throughput;
+//                result += L;
+//                if (depth == 1) {
+//                    pathResult.direct += L;
+//                }
+//            }
+//        }
+//#endif
+//        throughput *= payload.attenuation;
+//
+//        if (dot(throughput, throughput) == 0.0) {
+//            break;
+//        }
+//
+//        ray.Direction = payload.direction;
+//        ray.Origin = payload.origin;
+//        float scatterPdf = payload.scatterPdf;
+//        depth += 1;// material.materialType& BSDF_TRANSMISSION ? 0.5f : 1.0f;
+//
+//        TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2, 0, ray, payload);
+//#if USE_NEXT_EVENT_ESTIMATION
+//        if (payload.lightIndex >= 0 && scatterPdf > 0.0f) {
+//            float lightPdfArea = lights[payload.lightIndex].normalAndPdf.w / g_frameData.lightNumber;
+//            float lightPdf = (payload.t * payload.t) / dot(payload.normal, -ray.Direction) * lightPdfArea;
+//            emissionWeight = powerHeuristic(scatterPdf, lightPdf);
+//        }
+//#endif
+//    }
+//    pathResult.radiance = result;
+//
+//    return;
 }
 
 [shader("raygeneration")]

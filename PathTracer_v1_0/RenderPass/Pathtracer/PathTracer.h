@@ -7,7 +7,7 @@
 #include "SceneResourceManager.h"
 #include "ReSTIR/ReSTIR.h"
 #include "DX12StateSubobjects.h"
-
+#include "RenderPass.h"
 
 struct PathTracerParameters
 {
@@ -23,26 +23,24 @@ struct PathTracerParameters
 };
 
 
-class PathTracer
+class PathTracer : public RenderPass
 {
 public:
 	PathTracer(ID3D12Device5Ptr mpDevice, Scene* scene, uvec2 size);
-	void processGUI();
-	void forward(ID3D12GraphicsCommandList4Ptr pCmdList, SceneResourceManager* pSceneResourceManager, HeapData* pSrvUavHeap, ReSTIRParameters& restirParam);
+	void processGUI() override;
+	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
+
+	// void forward(ID3D12GraphicsCommandList4Ptr pCmdList, SceneResourceManager* pSceneResourceManager, HeapData* pSrvUavHeap, ReSTIRParameters& restirParam);
+	
 	void copyback(ID3D12GraphicsCommandList4Ptr pCmdList);
 	void createShaderResources(HeapData* pSrvUavHeap, SceneResourceManager* pSceneResourceManager);
 	void createShaderTable(HeapData* pSrvUavHeap);
-	ID3D12ResourcePtr getOutput(std::string name) { return this->outputUAVBuffers.at(name); };
-	map<string, ID3D12ResourcePtr>& getOutputs() { return outputUAVBuffers; };
 	bool mDirty = false;
 private:
 	void createRtPipelineState();
 	RootSignatureDesc createRayGenRootDesc();
 	RootSignatureDesc createHitRootDesc();
 	RootSignatureDesc createGlobalRootDesc();
-
-	ID3D12Device5Ptr mpDevice;
-	uvec2 size;
 
 	Scene* scene;
 	D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;;
@@ -57,10 +55,12 @@ private:
 	ID3D12ResourcePtr mpShaderTable;
 	uint32_t mShaderTableEntrySize = 0;
 
-	map<string, ID3D12ResourcePtr> outputUAVBuffers;
 	ID3D12ResourcePtr mpParamBuffer = nullptr;
+	map<string, ID3D12ResourcePtr> outputUAVBuffers;
 
 	const WCHAR* kShaderFile = L"RenderPass/Pathtracer/ReSTIRPathTracer.hlsl";
+	//const WCHAR* kShaderFile = L"RenderPass/Pathtracer/PathTracer.hlsl";
+
 	const WCHAR* kShaderModel = L"lib_6_3";
 
 	const WCHAR* kRayGenShader = L"rayGen";

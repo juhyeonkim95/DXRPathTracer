@@ -65,26 +65,6 @@ private:
 
     Scene *scene;
 
-    void createRtPipelineState();
-    //ID3D12StateObjectPtr mpPipelineState;
-    //ID3D12RootSignaturePtr mpEmptyRootSig;
-
-    void createShaderTable();
-    //ID3D12ResourcePtr mpShaderTable;
-    uint32_t mShaderTableEntrySize = 0;
-
-    void createShaderResources();
-   // std::map<string, ID3D12ResourcePtr> outputUAVBuffers;
-
-    //ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
-    //ID3D12ResourcePtr mpLightParametersBuffer = nullptr;
-    //ID3D12ResourcePtr mpPrevReservoirBuffer = nullptr;
-
-    //std::vector<ID3D12ResourcePtr> mpTextureBuffers;
-    //D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;
-
-    // int textureStartHeapOffset;
-
     IDirectInput8A* mpInput = 0;
     IDirectInputDevice8A* mpKeyboard = 0;
     unsigned char mpKeyboardState[256];
@@ -115,7 +95,4 @@ private:
     ID3D12ResourcePtr mParamBuffer = nullptr;
 
     ID3D12DescriptorHeapPtr g_pd3dSrvDescHeap;
-
-    bool show_demo_window = false;
-    bool show_another_window = false;
 };

@@ -132,3 +132,11 @@ About x1.5 speed up!
 - Implemented ReSTIR only using temporal reuse.
 
 ![20220802_restir_temporal_reuse](assets/20220802_restir_temporal.jpg)
+
+## 20220803
+- Integrated ReSTIR into path tracing pipeline.
+- Restructuring program to implement ReSTIR with spatial reuse.
+
+## 20220804
+- Still restructuring project.
+- 

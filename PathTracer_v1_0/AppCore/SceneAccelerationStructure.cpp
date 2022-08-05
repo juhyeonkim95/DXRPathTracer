@@ -19,7 +19,7 @@ void SceneAccelerationStructure::createSceneAccelerationStructure(
     for (int i = 0; i < scene->getMeshes().size(); i++) {
         Mesh& mesh = scene->getMeshes().at(i);
         mesh.createMeshBuffer(mpDevice);
-        AccelerationStructureBuffers bottomLevelBuffer = createBottomLevelASTriangleMesh(mpDevice, mpCmdList, mesh.getVerticesBuffer(), mesh.getVerticesNumber(), mesh.iBuffer, mesh.getIndicesNumber());
+        AccelerationStructureBuffers bottomLevelBuffer = createBottomLevelASTriangleMesh(mpDevice, mpCmdList, mesh.getVerticesBuffer(), mesh.getVerticesNumber(), mesh.getIndicesBuffer(), mesh.getIndicesNumber());
         bottomLevelBuffers.push_back(bottomLevelBuffer);
         
         mBottomLevelASwithTransform[i] = (make_pair(bottomLevelBuffer.pResult, mesh.transform));

@@ -118,7 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\DirectXTK12\Inc;$(SolutionDir)\..\DirectXTex\DirectXTex;$(SolutionDir)\Framework\;$(SolutionDir)Framework\Externals\imgui;$(SolutionDir)Framework\Externals\imgui\backends;$(ProjectDir)\;$(ProjectDir)\RenderCore;$(ProjectDir)\External;$(ProjectDir)\Utils;$(ProjectDir)\DX12;$(ProjectDir)\RenderPass;$(ProjectDir)\AppCore</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\DirectXTK12\Inc;$(SolutionDir)\..\DirectXTex\DirectXTex;$(SolutionDir)\Framework\;$(SolutionDir)Framework\Externals\imgui;$(SolutionDir)Framework\Externals\imgui\backends;$(ProjectDir)\;$(ProjectDir)\Scene;$(ProjectDir)\External;$(ProjectDir)\Utils;$(ProjectDir)\DX12;$(ProjectDir)\RenderPass;$(ProjectDir)\AppCore</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -167,9 +167,10 @@
     <ClCompile Include="DX12\DX12StateSubobjects.cpp" />
     <ClCompile Include="DX12\DX12DxilLibrary.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="RenderCore\BSDF\Conductor.cpp" />
-    <ClCompile Include="RenderCore\BSDF\Dielectric.cpp" />
-    <ClCompile Include="RenderCore\BSDF\Diffuse.cpp" />
+    <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
+    <ClCompile Include="Scene\BSDF\Conductor.cpp" />
+    <ClCompile Include="Scene\BSDF\Dielectric.cpp" />
+    <ClCompile Include="Scene\BSDF\Diffuse.cpp" />
     <ClCompile Include="DX12\DX12BufferUtils.cpp" />
     <ClCompile Include="DX12\DX12Utils.cpp" />
     <ClCompile Include="AppCore\HeapData.cpp" />
@@ -177,23 +178,23 @@
     <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp" />
     <ClCompile Include="Utils\light_utils.cpp" />
     <ClCompile Include="Utils\loader_utils.cpp" />
-    <ClCompile Include="RenderCore\Shape\Mesh.cpp" />
+    <ClCompile Include="Scene\Shape\Mesh.cpp" />
     <ClCompile Include="AppCore\RenderApplication.cpp" />
-    <ClCompile Include="RenderCore\Sensor\Perspective.cpp" />
-    <ClCompile Include="RenderCore\BSDF\Plastic.cpp" />
-    <ClCompile Include="AppCore\PostProcessPass.cpp">
+    <ClCompile Include="Scene\Sensor\Perspective.cpp" />
+    <ClCompile Include="Scene\BSDF\Plastic.cpp" />
+    <ClCompile Include="RenderPass\PostProcessPass.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="AppCore\RenderTexture.cpp" />
-    <ClCompile Include="RenderCore\BSDF\RoughConductor.cpp" />
-    <ClCompile Include="RenderCore\BSDF\RoughDielectric.cpp" />
-    <ClCompile Include="RenderCore\BSDF\RoughPlastic.cpp" />
-    <ClCompile Include="RenderCore\Scene.cpp" />
+    <ClCompile Include="Scene\BSDF\RoughConductor.cpp" />
+    <ClCompile Include="Scene\BSDF\RoughDielectric.cpp" />
+    <ClCompile Include="Scene\BSDF\RoughPlastic.cpp" />
+    <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="AppCore\Shader.cpp" />
     <ClCompile Include="AppCore\SceneResourceManager.cpp" />
     <ClCompile Include="RenderPass\SVGF\SVGFPass.cpp" />
-    <ClCompile Include="RenderCore\Texture\Texture.cpp" />
-    <ClCompile Include="RenderCore\BSDF\ThinDielectric.cpp" />
+    <ClCompile Include="Scene\Texture\Texture.cpp" />
+    <ClCompile Include="Scene\BSDF\ThinDielectric.cpp" />
     <ClCompile Include="External\tinyxml2.cpp" />
     <ClCompile Include="RenderPass\Tonemap\ToneMapper.cpp" />
   </ItemGroup>
@@ -209,42 +210,44 @@
     <ClInclude Include="AppCore\SceneAccelerationStructure.h" />
     <ClInclude Include="DX12\DX12AccelerationStructureUtils.h" />
     <ClInclude Include="DX12\DX12StateSubobjects.h" />
-    <ClInclude Include="RenderCore\BSDF\BSDF.h" />
-    <ClInclude Include="RenderCore\BSDF\Conductor.h" />
-    <ClInclude Include="RenderCore\BSDF\Dielectric.h" />
-    <ClInclude Include="RenderCore\BSDF\Diffuse.h" />
+    <ClInclude Include="RenderPass\FXAA\FXAA.h" />
+    <ClInclude Include="Scene\BSDF\BSDF.h" />
+    <ClInclude Include="Scene\BSDF\Conductor.h" />
+    <ClInclude Include="Scene\BSDF\Dielectric.h" />
+    <ClInclude Include="Scene\BSDF\Diffuse.h" />
     <ClInclude Include="DX12\DX12BufferUtils.h" />
     <ClInclude Include="DX12\DX12Utils.h" />
     <ClInclude Include="DX12\DX12DxilLibrary.h" />
-    <ClInclude Include="RenderCore\Emitter\Emitter.h" />
+    <ClInclude Include="Scene\Emitter\Emitter.h" />
     <ClInclude Include="AppCore\HeapData.h" />
     <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="RenderPass\Pathtracer\PathTracer.h" />
     <ClInclude Include="RenderPass\Pathtracer\ReSTIRPathTraceOriginal.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="RenderPass\RenderPass.h" />
     <ClInclude Include="RenderPass\ReSTIR\ReSTIR.h" />
     <ClInclude Include="Utils\light_utils.h" />
     <ClInclude Include="Utils\loader_bsdf.h" />
     <ClInclude Include="Utils\loader_utils.h" />
-    <ClInclude Include="RenderCore\CommonStruct.h" />
-    <ClInclude Include="RenderCore\Shape\Mesh.h" />
+    <ClInclude Include="Scene\CommonStruct.h" />
+    <ClInclude Include="Scene\Shape\Mesh.h" />
     <ClInclude Include="AppCore\RenderApplication.h" />
-    <ClInclude Include="RenderCore\Sensor\Perspective.h" />
-    <ClInclude Include="RenderCore\BSDF\Plastic.h" />
-    <ClInclude Include="AppCore\PostProcessPass.h" />
+    <ClInclude Include="Scene\Sensor\Perspective.h" />
+    <ClInclude Include="Scene\BSDF\Plastic.h" />
+    <ClInclude Include="RenderPass\PostProcessPass.h" />
     <ClInclude Include="AppCore\RenderTexture.h" />
-    <ClInclude Include="RenderCore\BSDF\RoughConductor.h" />
-    <ClInclude Include="RenderCore\BSDF\RoughDielectric.h" />
-    <ClInclude Include="RenderCore\BSDF\RoughPlastic.h" />
-    <ClInclude Include="RenderCore\Scene.h" />
-    <ClInclude Include="RenderCore\Sensor\Sensor.h" />
+    <ClInclude Include="Scene\BSDF\RoughConductor.h" />
+    <ClInclude Include="Scene\BSDF\RoughDielectric.h" />
+    <ClInclude Include="Scene\BSDF\RoughPlastic.h" />
+    <ClInclude Include="Scene\Scene.h" />
+    <ClInclude Include="Scene\Sensor\Sensor.h" />
     <ClInclude Include="AppCore\Shader.h" />
     <ClInclude Include="AppCore\SceneResourceManager.h" />
     <ClInclude Include="External\stb_image.h" />
     <ClInclude Include="RenderPass\SVGF\SVGFPass.h" />
-    <ClInclude Include="RenderCore\Texture\Texture.h" />
-    <ClInclude Include="RenderCore\BSDF\ThinDielectric.h" />
+    <ClInclude Include="Scene\Texture\Texture.h" />
+    <ClInclude Include="Scene\BSDF\ThinDielectric.h" />
     <ClInclude Include="External\tinyxml2.h" />
     <ClInclude Include="External\tiny_obj_loader.h" />
     <ClInclude Include="RenderPass\Tonemap\ToneMapper.h" />
@@ -252,7 +255,10 @@
   <ItemGroup>
     <None Include="..\README.md" />
     <None Include="..\WorkProgress.md" />
-    <None Include="RenderPass\ReSTIR\ReSTIRCommon.hlsli">
+    <None Include="RenderPass\Common\ColorHelpers.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\ReSTIR\ReSTIRInitTemporal.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="RenderPass\SVGF\SVGFCommon.hlsli">
@@ -277,6 +283,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="RenderPass\Pathtracer\ShaderUtils.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Tonemap\TonemapParams.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
   </ItemGroup>
@@ -308,7 +317,7 @@
     <FxCompile Include="RenderPass\SVGF\SVGFTemporalAccumulation.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="QuadVertexShader.hlsl">
+    <FxCompile Include="RenderPass\QuadVertexShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>

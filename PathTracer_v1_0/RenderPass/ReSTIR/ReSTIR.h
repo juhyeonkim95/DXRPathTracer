@@ -31,7 +31,7 @@ public:
 	void processGUI();
 	void uploadParams();
 
-	bool mEnabled = 1;
+	bool mEnabled;
 
 	ID3D12Device5Ptr mpDevice;
 	ReSTIRParameters param;

@@ -4,8 +4,11 @@
 #include "RenderTexture.h"
 #include <map>
 #include "imgui.h"
+#include "RenderPass.h"
 
 using namespace std;
+static const WCHAR* kQuadVertexShader = L"RenderPass/QuadVertexShader.hlsl";
+
 
 class PostProcessQuad {
 public:
@@ -21,13 +24,11 @@ public:
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 };
 
-class PostProcessPass {
+class PostProcessPass : public RenderPass {
 public:
-	PostProcessPass(ID3D12Device5Ptr mpDevice, uvec2 size) 
+	PostProcessPass(ID3D12Device5Ptr mpDevice, uvec2 size)
+		: RenderPass(mpDevice, size)
 	{ 
-		this->mpDevice = mpDevice; 
-		this->size = size; 
-
 		// Fill out the Viewport
 		viewport.TopLeftX = 0;
 		viewport.TopLeftY = 0;
@@ -42,16 +43,11 @@ public:
 		scissorRect.right = size.x;
 		scissorRect.bottom = size.y;
 	};
-	virtual void processGUI() = 0;
 
 	void setViewPort(ID3D12GraphicsCommandList4Ptr mpCmdList) {
 		mpCmdList->RSSetViewports(1, &viewport); // set the viewports
 		mpCmdList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
 	}
-
 	D3D12_VIEWPORT viewport;
 	D3D12_RECT scissorRect;
-
-	ID3D12Device5Ptr mpDevice;
-	uvec2 size;
 };

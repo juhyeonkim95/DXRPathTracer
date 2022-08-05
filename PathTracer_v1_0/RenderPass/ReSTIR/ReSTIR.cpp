@@ -7,6 +7,7 @@ ReSTIR::ReSTIR(ID3D12Device5Ptr mpDevice)
 {
     this->mpDevice = mpDevice;
     
+    mEnabled = false;
     param.lightCandidateCount = 4;
     param.maxHistoryLength = 20;
     param.normalThreshold = 0.5;

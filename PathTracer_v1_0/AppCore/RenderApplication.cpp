@@ -97,22 +97,6 @@ void RenderApplication::endFrame(uint32_t rtvIndex)
 }
 
 
-void RenderApplication::createRtPipelineState()
-{
-    
-}
-
-void RenderApplication::createShaderTable()
-{
-    
-}
-
-void RenderApplication::createShaderResources()
-{
-
-}
-
-
 //////////////////////////////////////////////////////////////////////////
 // Callbacks
 //////////////////////////////////////////////////////////////////////////
@@ -133,17 +117,18 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     // load scene resources
     sceneResourceManager = new SceneResourceManager(scene, mpDevice, mpSrvUavHeap);
     sceneResourceManager->createSceneAccelerationStructure(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
-    sceneResourceManager->createSceneTextureResources(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
-    // sceneResourceManager->createSceneSRVs();
-    
     // add path tracer shader// init render passes
     pathTracer = new PathTracer(mpDevice, scene, mSwapChainSize);
     pathTracer->createShaderResources(mpSrvUavHeap, sceneResourceManager);
+
+    sceneResourceManager->createSceneTextureResources(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
     pathTracer->createShaderTable(mpSrvUavHeap);
 
     restirPass = new ReSTIR(mpDevice);
-
-    // initPostProcess();
+    svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
+    svgfPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+    tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
+    postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
 
     sceneResourceManager->createSceneCBVs();
 
@@ -183,12 +168,38 @@ void RenderApplication::onFrameRender()
     uint32_t rtvIndex = beginFrame();
    
     update();
-    this->pathTracer->forward(mpCmdList, sceneResourceManager, mpSrvUavHeap, restirPass->param);
+    RenderContext renderContext;
+    renderContext.pCmdList = mpCmdList;
+    renderContext.pSceneResourceManager = sceneResourceManager;
+    renderContext.pSrvUavHeap = mpSrvUavHeap;
+    renderContext.restirParam = &restirPass->param;
 
-    resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, pathTracer->getOutput("gOutput"));
+    RenderData renderDataPathTracer;
+    this->pathTracer->forward(&renderContext, renderDataPathTracer);
+        
+    postProcessQuad->bind(mpCmdList);
+
+    D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+
+    /*if (svgfPass->mEnabled) 
+    {
+        svgfPass->forward(&renderContext, renderDataPathTracer);
+        output = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
+    }*/
+
+    RenderData renderDataTonemap;
+    renderDataTonemap.gpuHandleDictionary["src"] = output; // mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+    renderDataTonemap.cpuHandleDictionary["dst"] = mFrameObjects[rtvIndex].rtvHandle;
+    renderDataTonemap.resourceDictionary["dst"] = mFrameObjects[rtvIndex].pSwapChainBuffer;
+
+    this->tonemapPass->forward(&renderContext, renderDataTonemap);
+
+    // resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+    // mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, renderDataPathTracer.resourceDictionary.at("gOutput"));
 
     //this->pathTracer->copyback(mpCmdList);
+    pathTracer->copyback(mpCmdList);
+
 
     // Start the Dear ImGui frame
     ImGui_ImplDX12_NewFrame();
@@ -201,8 +212,8 @@ void RenderApplication::onFrameRender()
     
     pathTracer->processGUI();
     restirPass->processGUI();
-
-    //svgfPass->processGUI();
+    svgfPass->processGUI();
+    tonemapPass->processGUI();
 
     mDirty = pathTracer->mDirty;
 
@@ -239,6 +250,7 @@ void RenderApplication::onFrameRender()
     //g_pd3dCommandList->ResourceBarrier(1, &barrier);
     //g_pd3dCommandList->Close();
 
+    
     endFrame(rtvIndex);
 }
 
@@ -246,30 +258,22 @@ void RenderApplication::initPostProcess()
 {
 
     // this->defaultCopyShader = new Shader(L"QuadVertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
-
-    postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
-
-    svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
-    svgfPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
-
-    tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
-    
     // pathTracer = new PathTracer(mpDevice);
     // tonemapPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 }
 
 void RenderApplication::postProcess(int rtvIndex)
 {
-    map<string, D3D12_GPU_DESCRIPTOR_HANDLE> & gpuHandlesMap = mpSrvUavHeap->getGPUHandleMap();
+    //map<string, D3D12_GPU_DESCRIPTOR_HANDLE> & gpuHandlesMap = mpSrvUavHeap->getGPUHandleMap();
 
-    postProcessQuad->bind(mpCmdList);
-    svgfPass->setViewPort(mpCmdList);
-    svgfPass->forward(mpCmdList, gpuHandlesMap, pathTracer->getOutputs(), sceneResourceManager->getCameraConstantBuffer());
+    //postProcessQuad->bind(mpCmdList);
+    //svgfPass->setViewPort(mpCmdList);
+    //svgfPass->forward(mpCmdList, gpuHandlesMap, pathTracer->getOutputs(), sceneResourceManager->getCameraConstantBuffer());
 
-    D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
-    // D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->waveletDirect[4]->getGPUSrvHandler();
+    //D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
+    //// D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->waveletDirect[4]->getGPUSrvHandler();
 
-    tonemapPass->forward(mpCmdList, inputHandle, mFrameObjects[rtvIndex].rtvHandle, mFrameObjects[rtvIndex].pSwapChainBuffer);
+    //tonemapPass->forward(mpCmdList, inputHandle, mFrameObjects[rtvIndex].rtvHandle, mFrameObjects[rtvIndex].pSwapChainBuffer);
 }
 
 

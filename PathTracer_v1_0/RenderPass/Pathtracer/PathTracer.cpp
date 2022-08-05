@@ -5,15 +5,14 @@
 
 
 PathTracer::PathTracer(ID3D12Device5Ptr mpDevice, Scene* scene, uvec2 size)
+    :RenderPass(mpDevice, size)
 {
-    this->mpDevice = mpDevice;
     this->scene = scene;
-    this->size = size;
-    
+
     param.maxDepthDiffuse = 3;
     param.maxDepthSpecular = 3;
     param.maxDepthTransmittance = 10;
-    param.accumulate = false;
+    param.accumulate = true;
     defaultParam = param;
 
     ID3DBlobPtr pDxilLib = compileLibrary(kShaderFile, L"", kShaderModel);
@@ -370,9 +369,13 @@ void PathTracer::processGUI()
     }
 }
 
-void PathTracer::forward(ID3D12GraphicsCommandList4Ptr pCmdList, SceneResourceManager* pSceneResourceManager, HeapData* pSrvUavHeap, 
-    ReSTIRParameters& restirParam)
+void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
 {
+    ID3D12GraphicsCommandList4Ptr pCmdList = pRenderContext->pCmdList;
+    SceneResourceManager* pSceneResourceManager = pRenderContext->pSceneResourceManager;
+    HeapData* pSrvUavHeap = pRenderContext->pSrvUavHeap;
+    ReSTIRParameters *restirParam = pRenderContext->restirParam;
+
     // Prepare resource barrier
     resourceBarrier(pCmdList, outputUAVBuffers["gOutput"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     resourceBarrier(pCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -419,7 +422,7 @@ void PathTracer::forward(ID3D12GraphicsCommandList4Ptr pCmdList, SceneResourceMa
     memcpy(pData, &this->param, sizeof(PathTracerParameters));
     offset += sizeof(PathTracerParameters);
 
-    memcpy(pData + offset, &restirParam, sizeof(ReSTIRParameters));
+    memcpy(pData + offset, restirParam, sizeof(ReSTIRParameters));
     offset += sizeof(ReSTIRParameters);
 
     mpParamBuffer->Unmap(0, nullptr);
@@ -442,7 +445,9 @@ void PathTracer::forward(ID3D12GraphicsCommandList4Ptr pCmdList, SceneResourceMa
     resourceBarrier(pCmdList, outputUAVBuffers["gIndirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(pCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(pCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);    
+    resourceBarrier(pCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+    renderData.addOutputs(this->outputUAVBuffers);
 }
 
 

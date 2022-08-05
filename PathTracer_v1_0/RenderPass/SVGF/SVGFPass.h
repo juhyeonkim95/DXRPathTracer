@@ -18,17 +18,18 @@ class SVGFPass : public PostProcessPass
 {
 public:
 	SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size);
-	void forward(
+	/*void forward(
 		ID3D12GraphicsCommandList4Ptr mpCmdList,
 		map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandles,
 		map<string, ID3D12ResourcePtr> resourceBuffers,
 		ID3D12ResourcePtr mpCameraConstantBuffer
-	);
+	);*/
 	void createRenderTextures(
 		HeapData *rtvHeap,
 		HeapData *srvHeap);
 
 	void processGUI() override;
+	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
 
 	Shader* motionVectorShader;
 	Shader* temporalAccumulationShader;

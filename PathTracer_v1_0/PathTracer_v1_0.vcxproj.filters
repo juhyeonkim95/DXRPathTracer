@@ -75,40 +75,40 @@
     <ClCompile Include="AppCore\RenderApplication.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\Sensor\Perspective.cpp">
+    <ClCompile Include="Scene\Sensor\Perspective.cpp">
       <Filter>Core\Sensor</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\BSDF\Diffuse.cpp">
+    <ClCompile Include="Scene\BSDF\Diffuse.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
     <ClCompile Include="Utils\loader_utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\BSDF\Plastic.cpp">
+    <ClCompile Include="Scene\BSDF\Plastic.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\BSDF\RoughPlastic.cpp">
+    <ClCompile Include="Scene\BSDF\RoughPlastic.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\BSDF\Conductor.cpp">
+    <ClCompile Include="Scene\BSDF\Conductor.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\BSDF\RoughConductor.cpp">
+    <ClCompile Include="Scene\BSDF\RoughConductor.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\BSDF\Dielectric.cpp">
+    <ClCompile Include="Scene\BSDF\Dielectric.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\BSDF\RoughDielectric.cpp">
+    <ClCompile Include="Scene\BSDF\RoughDielectric.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\BSDF\ThinDielectric.cpp">
+    <ClCompile Include="Scene\BSDF\ThinDielectric.cpp">
       <Filter>Core\BSDF</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\Shape\Mesh.cpp">
+    <ClCompile Include="Scene\Shape\Mesh.cpp">
       <Filter>Core\Shape</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\Texture\Texture.cpp">
+    <ClCompile Include="Scene\Texture\Texture.cpp">
       <Filter>Core\Texture</Filter>
     </ClCompile>
     <ClCompile Include="Utils\light_utils.cpp">
@@ -120,7 +120,7 @@
     <ClCompile Include="DX12\DX12BufferUtils.cpp">
       <Filter>dx12</Filter>
     </ClCompile>
-    <ClCompile Include="AppCore\PostProcessPass.cpp">
+    <ClCompile Include="RenderPass\PostProcessPass.cpp">
       <Filter>RenderPass\Postprocessing</Filter>
     </ClCompile>
     <ClCompile Include="AppCore\RenderTexture.cpp">
@@ -162,7 +162,7 @@
     <ClCompile Include="..\Framework\Externals\imgui\backends\imgui_impl_win32.cpp">
       <Filter>External\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCore\Scene.cpp">
+    <ClCompile Include="Scene\Scene.cpp">
       <Filter>Core\Scene</Filter>
     </ClCompile>
     <ClCompile Include="AppCore\SceneResourceManager.cpp">
@@ -189,6 +189,9 @@
     <ClCompile Include="DX12\DX12AccelerationStructureUtils.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\FXAA\FXAA.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\RenderApplication.h">
@@ -197,55 +200,55 @@
     <ClInclude Include="DX12\DX12AccelerationStructureUtils.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\Sensor\Perspective.h">
+    <ClInclude Include="Scene\Sensor\Perspective.h">
       <Filter>Core\Sensor</Filter>
     </ClInclude>
     <ClInclude Include="Utils\loader_utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\Sensor\Sensor.h">
+    <ClInclude Include="Scene\Sensor\Sensor.h">
       <Filter>Core\Sensor</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\BSDF.h">
+    <ClInclude Include="Scene\BSDF\BSDF.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\Diffuse.h">
+    <ClInclude Include="Scene\BSDF\Diffuse.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
     <ClInclude Include="Utils\loader_bsdf.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\Plastic.h">
+    <ClInclude Include="Scene\BSDF\Plastic.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\RoughPlastic.h">
+    <ClInclude Include="Scene\BSDF\RoughPlastic.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\Conductor.h">
+    <ClInclude Include="Scene\BSDF\Conductor.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\RoughConductor.h">
+    <ClInclude Include="Scene\BSDF\RoughConductor.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\Dielectric.h">
+    <ClInclude Include="Scene\BSDF\Dielectric.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\RoughDielectric.h">
+    <ClInclude Include="Scene\BSDF\RoughDielectric.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\BSDF\ThinDielectric.h">
+    <ClInclude Include="Scene\BSDF\ThinDielectric.h">
       <Filter>Core\BSDF</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\Texture\Texture.h">
+    <ClInclude Include="Scene\Texture\Texture.h">
       <Filter>Core\Texture</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\Shape\Mesh.h">
+    <ClInclude Include="Scene\Shape\Mesh.h">
       <Filter>Core\Shape</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\CommonStruct.h">
+    <ClInclude Include="Scene\CommonStruct.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\Emitter\Emitter.h">
+    <ClInclude Include="Scene\Emitter\Emitter.h">
       <Filter>Core\Emitter</Filter>
     </ClInclude>
     <ClInclude Include="Utils\light_utils.h">
@@ -269,7 +272,7 @@
     <ClInclude Include="DX12\DX12DxilLibrary.h">
       <Filter>dx12</Filter>
     </ClInclude>
-    <ClInclude Include="AppCore\PostProcessPass.h">
+    <ClInclude Include="RenderPass\PostProcessPass.h">
       <Filter>RenderPass\Postprocessing</Filter>
     </ClInclude>
     <ClInclude Include="AppCore\RenderTexture.h">
@@ -314,7 +317,7 @@
     <ClInclude Include="..\Framework\Externals\imgui\backends\imgui_impl_win32.h">
       <Filter>External\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCore\Scene.h">
+    <ClInclude Include="Scene\Scene.h">
       <Filter>Core\Scene</Filter>
     </ClInclude>
     <ClInclude Include="AppCore\SceneResourceManager.h">
@@ -333,6 +336,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="AppCore\SceneAccelerationStructure.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RenderPass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\FXAA\FXAA.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -367,13 +376,15 @@
     <None Include="RenderPass\SVGF\SVGFCommon.hlsli">
       <Filter>RenderPass\SVGF</Filter>
     </None>
-    <None Include="RenderPass\ReSTIR\ReSTIRCommon.hlsli" />
+    <None Include="RenderPass\ReSTIR\ReSTIRInitTemporal.hlsli" />
+    <None Include="RenderPass\Common\ColorHelpers.hlsli" />
+    <None Include="RenderPass\Tonemap\TonemapParams.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\Pathtracer\PathTracer.hlsl">
       <Filter>RenderPass\PathTracer</Filter>
     </FxCompile>
-    <FxCompile Include="QuadVertexShader.hlsl">
+    <FxCompile Include="RenderPass\QuadVertexShader.hlsl">
       <Filter>RenderPass\Postprocessing</Filter>
     </FxCompile>
     <FxCompile Include="RenderPass\SVGF\SVGFMotionVector.hlsl">
