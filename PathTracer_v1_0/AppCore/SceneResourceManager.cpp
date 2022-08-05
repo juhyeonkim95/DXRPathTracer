@@ -34,7 +34,14 @@ void SceneResourceManager::update(PerFrameData&frameData)
 
 void SceneResourceManager::createSceneSRVs()
 {
-    // 3. Material Data
+    // 0. Acceleration Structure
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.RaytracingAccelerationStructure.Location = getSceneAS()->getTopLevelAS()->GetGPUVirtualAddress();
+    mpDevice->CreateShaderResourceView(nullptr, &srvDesc, mSrvUavHeap->addDescriptorHandle("AccelerationStructure"));
+
+    // 1. Material Data
     {
         std::vector<Material> materialData;
         for (BSDF* bsdf : scene->bsdfs)
@@ -90,7 +97,7 @@ void SceneResourceManager::createSceneSRVs()
 
     }
 
-    // 4. Geometry Data
+    // 2. Geometry Data
     {
         uint32 indicesSize = 0;
         uint32 verticesSize = 0;
@@ -135,7 +142,7 @@ void SceneResourceManager::createSceneSRVs()
         mpDevice->CreateShaderResourceView(mpGeometryInfoBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("GeometryData"));
     }
 
-    // 5. Indices Data
+    // 3. Indices Data
     {
         std::vector<uint32> indicesData(scene->indicesNumber);
         uint32 counter = 0;
@@ -162,7 +169,7 @@ void SceneResourceManager::createSceneSRVs()
         mpDevice->CreateShaderResourceView(mpIndicesBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("IndicesData"));
     }
 
-    // 6. Vertices Data
+    // 4. Vertices Data
     {
         std::vector<MeshVertex> verticesData(scene->verticesNumber);
         uint32 counter = 0;
@@ -189,8 +196,6 @@ void SceneResourceManager::createSceneSRVs()
         srvDesc.Buffer.StructureByteStride = sizeof(verticesData[0]);
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        //D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-        //descriptorHandle.ptr += 5 * mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         mpDevice->CreateShaderResourceView(mpVerticesBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("VerticesData"));
     }
 }

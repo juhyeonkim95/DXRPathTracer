@@ -1,4 +1,7 @@
-#include "ShaderStructs.hlsli"
+#ifndef LIGHT_SAMPLING
+#define LIGHT_SAMPLING
+
+#include "../Common/CommonStructs.hlsli"
 
 void SampleLight(in float3 p, in LightParameter light, inout uint seed, inout LightSample lightSample) {
     // Currently only rectangular light is supported!
@@ -11,3 +14,4 @@ void SampleLight(in float3 p, in LightParameter light, inout uint seed, inout Li
     lightSample.pdf = light.normalAndPdf.w;
     lightSample.Li = light.emission.xyz;
 }
+#endif

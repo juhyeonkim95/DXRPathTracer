@@ -1,4 +1,4 @@
-#include "../Common/ColorHelpers.hlsli"
+#include "../Core/Common/ColorHelpers.hlsli"
 #include "TonemapParams.hlsli"
 
 Texture2D t1 : register(t0);

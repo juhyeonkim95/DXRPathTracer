@@ -1,6 +1,9 @@
 #ifndef SHADER_UTILS_HLSHI
 #define SHADER_UTILS_HLSHI
 
+#include "Constants.hlsli"
+
+
 // Utility function to get a vector perpendicular to an input vector 
 //    (from "Efficient Construction of Perpendicular Vectors Without Branching")
 float3 getPerpendicularVector(float3 u)
@@ -44,7 +47,7 @@ float3 getCosHemisphereSampleWorld(inout uint randSeed, float3 hitNorm)
 	float3 bitangent = getPerpendicularVector(hitNorm);
 	float3 tangent = cross(bitangent, hitNorm);
 	float r = sqrt(randVal.x);
-	float phi = 2.0f * 3.14159265f * randVal.y;
+	float phi = 2.0f * M_PIf * randVal.y;
 
 	// Get our cosine-weighted hemisphere lobe sample direction
 	return tangent * (r * cos(phi).x) + bitangent * (r * sin(phi)) + hitNorm.xyz * sqrt(1 - randVal.x);
@@ -58,7 +61,7 @@ float3 getCosHemisphereSampleLocal(inout uint randSeed)
 
 	// Cosine weighted hemisphere sample from RNG
 	float r = sqrt(randVal.x);
-	float phi = 2.0f * 3.14159265f * randVal.y;
+	float phi = 2.0f * M_PIf * randVal.y;
 
 	// Get our cosine-weighted hemisphere lobe sample direction
 	return float3(r * cos(phi), r * sin(phi), sqrt(1 - randVal.x));

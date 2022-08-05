@@ -33,7 +33,7 @@ public:
     ID3D12ResourcePtr getCameraConstantBuffer() { return mpCameraConstantBuffer; };
     ID3D12ResourcePtr getLightConstantBuffer() { return mpLightParametersBuffer; };
 
-    D3D12_GPU_DESCRIPTOR_HANDLE getSRVStartHandle() { return mSrvUavHeap->getGPUHandleByName("MaterialData"); };
+    D3D12_GPU_DESCRIPTOR_HANDLE getSRVStartHandle() { return mSrvUavHeap->getGPUHandleByName("AccelerationStructure"); };
 
 private:
     // AccelerationStructureBuffers createTopLevelAccelerationStructure(ID3D12GraphicsCommandList4Ptr mpCmdList);

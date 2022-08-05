@@ -32,6 +32,7 @@ public:
 	void uploadParams();
 
 	bool mEnabled;
+	bool mDirty;
 
 	ID3D12Device5Ptr mpDevice;
 	ReSTIRParameters param;

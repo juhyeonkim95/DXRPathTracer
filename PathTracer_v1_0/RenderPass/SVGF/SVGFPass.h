@@ -9,7 +9,6 @@ struct SVGFParameters
 	float sigmaP;
 	float sigmaN;
 	float sigmaL;
-
 	int level;
 	vec2 texelSize;
 };
@@ -59,19 +58,11 @@ public:
 	vector<RenderTexture*> waveletDirect;
 	vector<RenderTexture*> waveletIndirect;
 
-	
-
 	// SVGF parameters
 	SVGFParameters param;
 	SVGFParameters defaultParam;
 
-	//float mAlpha = 0.05f;
-	//float mMomentsAlpha = 0.2f;
-	//float sigmaP = 1.0f;
-	//float sigmaN = 128.0f;
-	//float sigmaL = 4.0f;
-
-	bool mEnabled = false;
+	bool mEnabled = true;
 	bool mEnableVarianceFilter = true;
 
 	const int maxWaveletCount = 5;

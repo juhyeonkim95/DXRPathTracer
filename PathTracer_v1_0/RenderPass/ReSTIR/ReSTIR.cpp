@@ -17,17 +17,19 @@ ReSTIR::ReSTIR(ID3D12Device5Ptr mpDevice)
 
 void ReSTIR::processGUI()
 {
+    mDirty = false;
+
     if (ImGui::CollapsingHeader("ReSTIR"))
     {
-        ImGui::Checkbox("enable", &mEnabled);
+        mDirty |= ImGui::Checkbox("enable", &mEnabled);
         
         const char* items[] = { "No Resampling", "Temporal reuse only", "Spatial reuse only", "Spatiotemporal reuse"};
-        ImGui::Combo("ReSTIR Mode", &param.resamplingMode, items, IM_ARRAYSIZE(items), 4);
+        mDirty |= ImGui::Combo("ReSTIR Mode", &param.resamplingMode, items, IM_ARRAYSIZE(items), 4);
         
-        ImGui::SliderInt("Light samples", &param.lightCandidateCount, 1, 5);
-        ImGui::SliderInt("Max History Length", &param.maxHistoryLength, 1, 32);
-        ImGui::SliderFloat("Normal Threshold", &param.normalThreshold, 0.1f, 1.0f);
-        ImGui::SliderFloat("Depth Threshold", &param.depthThreshold, 0.1f, 1.0f);
+        mDirty |= ImGui::SliderInt("Light samples", &param.lightCandidateCount, 1, 5);
+        mDirty |= ImGui::SliderInt("Max History Length", &param.maxHistoryLength, 1, 32);
+        mDirty |= ImGui::SliderFloat("Normal Threshold", &param.normalThreshold, 0.1f, 1.0f);
+        mDirty |= ImGui::SliderFloat("Depth Threshold", &param.depthThreshold, 0.1f, 1.0f);
     }
     param.enabled = mEnabled;
 

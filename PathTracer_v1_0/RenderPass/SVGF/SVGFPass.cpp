@@ -58,22 +58,25 @@ void SVGFPass::createRenderTextures(
 
 void SVGFPass::processGUI()
 {
+
+    mDirty = false;
     if (ImGui::CollapsingHeader("SVGF")) 
     {
-        ImGui::Checkbox("enable", &mEnabled);
-        ImGui::Checkbox("enableVarianceFilter", &mEnableVarianceFilter);
+        mDirty |= ImGui::Checkbox("enable SVGF", &mEnabled);
+        mDirty |= ImGui::Checkbox("enableVarianceFilter", &mEnableVarianceFilter);
 
-        ImGui::SliderFloat("sigmaP", &param.sigmaP, 1.0f, 10.0f);
-        ImGui::SliderFloat("sigmaN", &param.sigmaN, 1.0f, 256.0f);
-        ImGui::SliderFloat("sigmaL", &param.sigmaL, 1.0f, 10.0f);
-        ImGui::SliderFloat("alpha", &param.alpha, 0.01f, 1.0f);
-        ImGui::SliderFloat("alphaMoment", &param.momentsAlpha, 0.01f, 1.0f);
-        ImGui::SliderInt("waveletCount", &waveletCount, 1, maxWaveletCount);
+        mDirty |= ImGui::SliderFloat("sigmaP", &param.sigmaP, 0.01f, 128.0f);
+        mDirty |= ImGui::SliderFloat("sigmaN", &param.sigmaN, 0.01f, 256.0f);
+        mDirty |= ImGui::SliderFloat("sigmaL", &param.sigmaL, 0.01f, 128.0f);
+        mDirty |= ImGui::SliderFloat("alpha", &param.alpha, 0.01f, 1.0f);
+        mDirty |= ImGui::SliderFloat("alphaMoment", &param.momentsAlpha, 0.01f, 1.0f);
+        mDirty |= ImGui::SliderInt("waveletCount", &waveletCount, 1, maxWaveletCount);
 
         if (ImGui::Button("Reset"))
         {
             param = defaultParam;
             waveletCount = 3;
+            mDirty = true;
         }
     }
 }

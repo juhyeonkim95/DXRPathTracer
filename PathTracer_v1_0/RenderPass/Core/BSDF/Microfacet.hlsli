@@ -1,4 +1,5 @@
-#include "ShaderStructs.hlsli"
+#ifndef MICROFACET
+#define MICROFACET
 
 enum MICROFACET_DISTRIBUTION_TYPE : uint
 {
@@ -74,9 +75,6 @@ namespace microfacet
         }
 
         return 0.0f;
-        //float a = alphaG * alphaG;
-        //float b = NDotV * NDotV;
-        //return 2 * NDotV / (NDotV + sqrt(a + b - a * b));
     }
 
     float G(uint dist, float alpha, in float3 wi, in float3 wo, in float3 m)
@@ -114,3 +112,5 @@ namespace microfacet
         return float3(cos(phi) * r, sin(phi) * r, cosTheta);
     }
 }
+
+#endif

@@ -1,3 +1,8 @@
+#ifndef FRESNEL
+#define FRESNEL
+
+#include "../Common/MathUtils.hlsli"
+
 namespace fresnel
 {
 	float ConductorReflectance(float eta, float k, float cosThetaI) {
@@ -73,3 +78,4 @@ namespace fresnel
 		return result;
 	}
 }
+#endif

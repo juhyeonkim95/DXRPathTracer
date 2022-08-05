@@ -168,13 +168,14 @@
     <ClCompile Include="DX12\DX12DxilLibrary.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
+    <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp" />
     <ClCompile Include="Scene\BSDF\Conductor.cpp" />
     <ClCompile Include="Scene\BSDF\Dielectric.cpp" />
     <ClCompile Include="Scene\BSDF\Diffuse.cpp" />
     <ClCompile Include="DX12\DX12BufferUtils.cpp" />
     <ClCompile Include="DX12\DX12Utils.cpp" />
     <ClCompile Include="AppCore\HeapData.cpp" />
-    <ClCompile Include="RenderPass\Pathtracer\PathTracer.cpp" />
+    <ClCompile Include="RenderPass\PathTracer\PathTracer.cpp" />
     <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp" />
     <ClCompile Include="Utils\light_utils.cpp" />
     <ClCompile Include="Utils\loader_utils.cpp" />
@@ -211,6 +212,7 @@
     <ClInclude Include="DX12\DX12AccelerationStructureUtils.h" />
     <ClInclude Include="DX12\DX12StateSubobjects.h" />
     <ClInclude Include="RenderPass\FXAA\FXAA.h" />
+    <ClInclude Include="RenderPass\BlendPass\BlendPass.h" />
     <ClInclude Include="Scene\BSDF\BSDF.h" />
     <ClInclude Include="Scene\BSDF\Conductor.h" />
     <ClInclude Include="Scene\BSDF\Dielectric.h" />
@@ -221,10 +223,7 @@
     <ClInclude Include="Scene\Emitter\Emitter.h" />
     <ClInclude Include="AppCore\HeapData.h" />
     <ClInclude Include="ImGuiManager.h" />
-    <ClInclude Include="RenderPass\Pathtracer\PathTracer.h" />
-    <ClInclude Include="RenderPass\Pathtracer\ReSTIRPathTraceOriginal.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="RenderPass\PathTracer\PathTracer.h" />
     <ClInclude Include="RenderPass\RenderPass.h" />
     <ClInclude Include="RenderPass\ReSTIR\ReSTIR.h" />
     <ClInclude Include="Utils\light_utils.h" />
@@ -255,7 +254,22 @@
   <ItemGroup>
     <None Include="..\README.md" />
     <None Include="..\WorkProgress.md" />
-    <None Include="RenderPass\Common\ColorHelpers.hlsli">
+    <None Include="RenderPass\Core\stdafx.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\EvalUtils.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\ColorHelpers.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\CommonStructs.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\Constants.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\DescriptorTable.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="RenderPass\ReSTIR\ReSTIRInitTemporal.hlsli">
@@ -264,25 +278,22 @@
     <None Include="RenderPass\SVGF\SVGFCommon.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="RenderPass\Pathtracer\BSDF.hlsli">
+    <None Include="RenderPass\Core\BSDF\BSDF.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="RenderPass\Pathtracer\Constants.hlsli">
+    <None Include="RenderPass\Core\BSDF\Fresnel.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="RenderPass\Pathtracer\Fresnel.hlsli">
+    <None Include="RenderPass\Core\BSDF\Microfacet.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="RenderPass\Pathtracer\Microfacet.hlsli">
+    <None Include="RenderPass\Core\Light\LightSampling.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="RenderPass\Pathtracer\SampleLight.hlsli">
+    <None Include="RenderPass\PathTracer\PathTracerConstants.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="RenderPass\Pathtracer\ShaderStructs.hlsli">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </None>
-    <None Include="RenderPass\Pathtracer\ShaderUtils.hlsli">
+    <None Include="RenderPass\Core\Common\MathUtils.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="RenderPass\Tonemap\TonemapParams.hlsli">
@@ -290,10 +301,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="RenderPass\Pathtracer\PathTracer.hlsl">
+    <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="RenderPass\Pathtracer\ReSTIRPathTracer.hlsl">
+    <FxCompile Include="RenderPass\PathTracer\PathTracer.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl">

@@ -20,9 +20,5 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
     float3 originalColor = original.Sample(s1, input.texCoord).rgb;
 
-    //if (input.texCoord.x < 0.5) {
-    //    color = originalColor;
-    //}
-
     return float4(color, 1.0f);
 }

@@ -117,17 +117,23 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     // load scene resources
     sceneResourceManager = new SceneResourceManager(scene, mpDevice, mpSrvUavHeap);
     sceneResourceManager->createSceneAccelerationStructure(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
+    sceneResourceManager->createSceneSRVs();
+    sceneResourceManager->createSceneTextureResources(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
+
     // add path tracer shader// init render passes
     pathTracer = new PathTracer(mpDevice, scene, mSwapChainSize);
-    pathTracer->createShaderResources(mpSrvUavHeap, sceneResourceManager);
-
-    sceneResourceManager->createSceneTextureResources(mpCmdQueue, mFrameObjects[0].pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
+    pathTracer->createShaderResources(mpSrvUavHeap);
     pathTracer->createShaderTable(mpSrvUavHeap);
 
     restirPass = new ReSTIR(mpDevice);
     svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
     svgfPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    blendPass = new BlendPass(mpDevice, mSwapChainSize);
+    blendPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
     tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
+    
     postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
 
     sceneResourceManager->createSceneCBVs();
@@ -181,11 +187,26 @@ void RenderApplication::onFrameRender()
 
     D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
 
-    /*if (svgfPass->mEnabled) 
+    if (svgfPass->mEnabled) 
     {
         svgfPass->forward(&renderContext, renderDataPathTracer);
         output = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
-    }*/
+        // output = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
+        // output = svgfPass->waveletDirect[svgfPass->waveletCount-1]->getGPUSrvHandler();
+
+        if (blendPass->mEnabled) 
+        {
+            RenderData renderDataBlend;
+            renderDataBlend.gpuHandleDictionary["src1"] = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+            renderDataBlend.gpuHandleDictionary["src2"] = output;// mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+            blendPass->setAlpha(mFrameNumber);
+
+            blendPass->forward(&renderContext, renderDataBlend);
+
+            output = blendPass->blendRenderTexture->getGPUSrvHandler();
+        }
+
+    }
 
     RenderData renderDataTonemap;
     renderDataTonemap.gpuHandleDictionary["src"] = output; // mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
@@ -214,8 +235,9 @@ void RenderApplication::onFrameRender()
     restirPass->processGUI();
     svgfPass->processGUI();
     tonemapPass->processGUI();
+    blendPass->processGUI();
 
-    mDirty = pathTracer->mDirty;
+    mDirty = (pathTracer->mDirty) || (svgfPass->mDirty) || (restirPass->mDirty);
 
     //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
     //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
@@ -405,13 +427,16 @@ void RenderApplication::update()
     frameData.v = vec4(camera->v, 1.0f);
     frameData.w = vec4(camera->w, 1.0f);
     frameData.cameraPosition = vec4(camera->position, 1.0f);
+    frameData.paramChanged = mDirty;
+    frameData.cameraChanged = cameraMoved;
+
     frameData.frameNumber = mFrameNumber;
     frameData.totalFrameNumber = mTotalFrameNumber;
 
     frameData.lightNumber = scene->lights.size();
     frameData.envMapTransform = transpose((scene->envMapTransform));
-    this->sceneResourceManager->update(frameData);
 
+    this->sceneResourceManager->update(frameData);
 
     elapsedTime[mTotalFrameNumber % FRAME_ACCUMULATE_NUMBER] = elapsedTimeSec;
 

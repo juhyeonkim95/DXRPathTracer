@@ -1,3 +1,6 @@
+#include "../Core/stdafx.hlsli"
+#include "../PathTracer/PathTracerConstants.hlsli"
+
 RWStructuredBuffer<Reservoir> gPrevReserviors : register(u9);
 RWStructuredBuffer<Reservoir> gCurrReserviors : register(u10);
 
@@ -122,7 +125,7 @@ Reservoir getLightSampleReSTIR(in RayPayload payload, in PathTraceResult pathRes
     float3 prevNormal = gOutputNormalPrev[prevPixelCoord].rgb;
 
     // Temporal reuse only consistency holds.
-    bool consistency = (gOutputPositionGeomIDPrev[prevPixelCoord].a == pathResult.instanceIndex) && dot(prevNormal, pathResult.normal) > gReSTIR.normalThreshold;
+    bool consistency = (!g_frameData.cameraChanged) || (!g_frameData.paramChanged && (gOutputPositionGeomIDPrev[prevPixelCoord].a == pathResult.instanceIndex) && dot(prevNormal, pathResult.normal) > gReSTIR.normalThreshold);
 
     uint linearIndex = launchIndex.x + launchIndex.y * launchDim.x;
 
@@ -133,7 +136,7 @@ Reservoir getLightSampleReSTIR(in RayPayload payload, in PathTraceResult pathRes
 
     bool inside = prevPixelCoordX >= 0 && prevPixelCoordX < dims.x&& prevPixelCoordY >= 0 && prevPixelCoordY < dims.y;
 
-    bool doTemporalReuse = (gReSTIR.resamplingMode == ReSTIR_MODE_TEMPORAL_REUSE || gReSTIR.resamplingMode == ReSTIR_MODE_SPATIOTEMPORAL_REUSE) && inside && consistency && (g_frameData.totalFrameNumber > 1);
+    bool doTemporalReuse = (gReSTIR.resamplingMode == ReSTIR_MODE_TEMPORAL_REUSE || gReSTIR.resamplingMode == ReSTIR_MODE_SPATIOTEMPORAL_REUSE) && inside && consistency;
 
     if (doTemporalReuse)
     {

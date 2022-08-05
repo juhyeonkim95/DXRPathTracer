@@ -53,6 +53,11 @@ struct PerFrameData
     uint totalFrameNumber;
     uint lightNumber;
     uint renderMode;
+
+    uint cameraChanged;
+    uint paramChanged;
+    uint unused1;
+    uint unused2;
 };
 
 struct LightParameter

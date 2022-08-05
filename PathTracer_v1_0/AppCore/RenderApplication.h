@@ -7,8 +7,8 @@
 #include <fstream>
 #include "SVGF/SVGFPass.h"
 #include "ReSTIR/ReSTIR.h"
-#include "Pathtracer/PathTracer.h"
-
+#include "PathTracer/PathTracer.h"
+#include "BlendPass/BlendPass.h"
 #include "Tonemap/ToneMapper.h"
 #include "HeapData.h"
 #include "SceneResourceManager.h"
@@ -16,7 +16,7 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
-static const int FRAME_ACCUMULATE_NUMBER = 10;
+static const int FRAME_ACCUMULATE_NUMBER = 32;
 
 class RenderApplication : public Application
 {
@@ -85,11 +85,12 @@ private:
 
     // Post processing
     PostProcessQuad* postProcessQuad;
-    SVGFPass* svgfPass;
-    ToneMapper* tonemapPass;
-    ReSTIR* restirPass;
     PathTracer* pathTracer;
-    bool mDirty = false;
+    ReSTIR* restirPass;
+    SVGFPass* svgfPass;
+    BlendPass* blendPass;
+    ToneMapper* tonemapPass;
+    bool mDirty = true;
 
     Shader* defaultCopyShader;
     ID3D12ResourcePtr mParamBuffer = nullptr;

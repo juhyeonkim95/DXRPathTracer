@@ -36,6 +36,7 @@ public:
 		this->mpDevice = mpDevice;
 		this->size = size;
 	}
+	bool mDirty = false;
 	virtual void processGUI() = 0;
 	virtual void forward(RenderContext* pRenderContext, RenderData& renderData) = 0;
 

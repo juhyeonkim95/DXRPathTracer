@@ -9,8 +9,8 @@ PathTracer::PathTracer(ID3D12Device5Ptr mpDevice, Scene* scene, uvec2 size)
 {
     this->scene = scene;
 
-    param.maxDepthDiffuse = 3;
-    param.maxDepthSpecular = 3;
+    param.maxDepthDiffuse = 4;
+    param.maxDepthSpecular = 4;
     param.maxDepthTransmittance = 10;
     param.accumulate = true;
     defaultParam = param;
@@ -45,8 +45,11 @@ void PathTracer::createRtPipelineState()
     HitProgram shadowHitProgram(nullptr, kShadowChs, kShadowHitGroup);
     subobjects[index++] = shadowHitProgram.subObject; // 2 Shadow Hit Group
 
+    D3D12_ROOT_SIGNATURE_DESC emptyDesc = {};
+    emptyDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
     // Create the ray-gen root-signature and association
-    LocalRootSignature rgsRootSignature(mpDevice, createRayGenRootDesc().desc);
+    LocalRootSignature rgsRootSignature(mpDevice, emptyDesc);// createRayGenRootDesc().desc);
     subobjects[index] = rgsRootSignature.subobject; // 3 RayGen Root Sig
 
     uint32_t rgsRootIndex = index++; // 3
@@ -62,8 +65,6 @@ void PathTracer::createRtPipelineState()
     subobjects[index++] = hitRootAssociation.subobject; // 6 Associate Hit Root Sig to Hit Group
 
     // Create the miss root-signature and association
-    D3D12_ROOT_SIGNATURE_DESC emptyDesc = {};
-    emptyDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
     LocalRootSignature missRootSignature(mpDevice, emptyDesc);
     subobjects[index] = missRootSignature.subobject; // 7 Miss Root Sig
 
@@ -103,24 +104,18 @@ RootSignatureDesc PathTracer::createRayGenRootDesc()
 {
     // Create the root-signature
     RootSignatureDesc desc;
-    desc.range.resize(2);
-    // gOutput
+    desc.range.resize(1);
+
+    // gRtScene
     desc.range[0].BaseShaderRegister = 0;
     desc.range[0].NumDescriptors = 1;
     desc.range[0].RegisterSpace = 0;
-    desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-    desc.range[0].OffsetInDescriptorsFromTableStart = 0;
-
-    // gRtScene
-    desc.range[1].BaseShaderRegister = 0;
-    desc.range[1].NumDescriptors = 1;
-    desc.range[1].RegisterSpace = 0;
-    desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    desc.range[1].OffsetInDescriptorsFromTableStart = 1;
+    desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    // desc.range[0].OffsetInDescriptorsFromTableStart = 0;
 
     desc.rootParams.resize(1);
     desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    desc.rootParams[0].DescriptorTable.NumDescriptorRanges = 2;
+    desc.rootParams[0].DescriptorTable.NumDescriptorRanges = 1;
     desc.rootParams[0].DescriptorTable.pDescriptorRanges = desc.range.data();
 
     // Create the desc
@@ -176,14 +171,19 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
     desc.range.resize(2);
 
     // SRV
-    desc.range[0].BaseShaderRegister = 1;
-    desc.range[0].NumDescriptors = 5;
+    // (1) material Info (Structured Buffer)
+    // (2) geometry Info (Structured Buffer)
+    // (3) indices Info (uint Buffer)
+    // (4) vertices Info (Structured Buffer)
+    // (5) Envmap ()
+    desc.range[0].BaseShaderRegister = 0;
+    desc.range[0].NumDescriptors = 6;
     desc.range[0].RegisterSpace = 0;
     desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 
     // UAV
-    desc.range[1].BaseShaderRegister = 1;
-    desc.range[1].NumDescriptors = 10;
+    desc.range[1].BaseShaderRegister = 0;
+    desc.range[1].NumDescriptors = 11;
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
@@ -267,7 +267,7 @@ void PathTracer::createShaderTable(HeapData* pSrvUavHeap)
 
     // Entry 0 - ray-gen program ID and descriptor data
     memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-    uint64_t heapStart = pSrvUavHeap->getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart().ptr;
+    uint64_t heapStart = pSrvUavHeap->getGPUHandleByName("AccelerationStructure").ptr;// ->getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart().ptr;
     *(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
 
     // Entry 1 - miss program
@@ -301,9 +301,9 @@ void PathTracer::createShaderTable(HeapData* pSrvUavHeap)
             Texture* texture = scene->textures[textureID];
             *(uint64_t*)(pCbDesc) = pSrvUavHeap->getGPUHandle(texture->descriptorHandleOffset).ptr;
         }
-        else {
-            *(uint64_t*)(pCbDesc) = mpTextureStartHandle.ptr;
-        }
+        //else {
+        //    *(uint64_t*)(pCbDesc) = mpTextureStartHandle.ptr;
+        //}
 
         // Closest hit for shadow ray
         uint8_t* pEntryShadow = pData + mShaderTableEntrySize * (2 * i + 4);
@@ -314,19 +314,10 @@ void PathTracer::createShaderTable(HeapData* pSrvUavHeap)
     mpShaderTable->Unmap(0, nullptr);
 }
 
-void PathTracer::createShaderResources(HeapData *pSrvUavHeap, SceneResourceManager* pSceneResourceManager)
+void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
 {
     // 1. Create the output resource. The dimensions and format should match the swap-chain
     outputUAVBuffers["gOutput"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gOutput", 1);
-
-    // 2. Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.RaytracingAccelerationStructure.Location = pSceneResourceManager->getSceneAS()->getTopLevelAS()->GetGPUVirtualAddress();
-    mpDevice->CreateShaderResourceView(nullptr, &srvDesc, pSrvUavHeap->addDescriptorHandle("AccelerationStructure"));
-
-    pSceneResourceManager->createSceneSRVs();
 
     // 7. HDR
     outputUAVBuffers["gOutputHDR"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputHDR", 1);
@@ -354,7 +345,7 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap, SceneResourceManag
     outputUAVBuffers["gPrevReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
     outputUAVBuffers["gCurrReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gCurrReserviors", 1, sizeof(Reservoir));
 
-    mpTextureStartHandle = pSrvUavHeap->getLastGPUHandle();
+    // mpTextureStartHandle = pSrvUavHeap->getLastGPUHandle();
 }
 
 void PathTracer::processGUI()
@@ -433,7 +424,7 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
     pCmdList->SetComputeRootDescriptorTable(3, pSceneResourceManager->getSRVStartHandle());//2 at createGlobalRootDesc
 
     // UAVs
-    pCmdList->SetComputeRootDescriptorTable(4, pSrvUavHeap->getGPUHandleByName("gOutputHDR"));//3 at createGlobalRootDesc
+    pCmdList->SetComputeRootDescriptorTable(4, pSrvUavHeap->getGPUHandleByName("gOutput"));//3 at createGlobalRootDesc
 
     // Dispatch
     pCmdList->SetPipelineState1(mpPipelineState.GetInterfacePtr());

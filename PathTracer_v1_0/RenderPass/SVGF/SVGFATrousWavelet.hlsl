@@ -70,7 +70,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
                 float w = calculateWeight(pPosition, qPosition, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
-                float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;// h[5 * (offsety + support) + offsetx + support] * w;
+                float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 
                 c += weight * qColor;
                 v += weight * weight * qVariance;

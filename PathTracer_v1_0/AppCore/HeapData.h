@@ -14,7 +14,6 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandleByName(const char* name);
 	D3D12_CPU_DESCRIPTOR_HANDLE addDescriptorHandle(const char* name);
 	D3D12_CPU_DESCRIPTOR_HANDLE addDescriptorHandle();
-	// D3D12_CPU_DESCRIPTOR_HANDLE createRTV(ID3D12ResourcePtr pResource, DXGI_FORMAT format);
 	ID3D12DescriptorHeapPtr getDescriptorHeap() { return pHeap; }
 	uint32_t getLastIndex() { return usedEntries; }
 	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> &getGPUHandleMap() { return gpuHandlesMap; };

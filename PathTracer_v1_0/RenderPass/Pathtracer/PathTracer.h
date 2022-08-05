@@ -33,9 +33,8 @@ public:
 	// void forward(ID3D12GraphicsCommandList4Ptr pCmdList, SceneResourceManager* pSceneResourceManager, HeapData* pSrvUavHeap, ReSTIRParameters& restirParam);
 	
 	void copyback(ID3D12GraphicsCommandList4Ptr pCmdList);
-	void createShaderResources(HeapData* pSrvUavHeap, SceneResourceManager* pSceneResourceManager);
+	void createShaderResources(HeapData* pSrvUavHeap);
 	void createShaderTable(HeapData* pSrvUavHeap);
-	bool mDirty = false;
 private:
 	void createRtPipelineState();
 	RootSignatureDesc createRayGenRootDesc();
@@ -58,8 +57,8 @@ private:
 	ID3D12ResourcePtr mpParamBuffer = nullptr;
 	map<string, ID3D12ResourcePtr> outputUAVBuffers;
 
-	const WCHAR* kShaderFile = L"RenderPass/Pathtracer/ReSTIRPathTracer.hlsl";
-	//const WCHAR* kShaderFile = L"RenderPass/Pathtracer/PathTracer.hlsl";
+	const WCHAR* kShaderFile = L"RenderPass/Pathtracer/PathTracer.hlsl";
+	//const WCHAR* kShaderFile = L"RenderPass/Pathtracer/MinimalPathTracer.hlsl";
 
 	const WCHAR* kShaderModel = L"lib_6_3";
 
