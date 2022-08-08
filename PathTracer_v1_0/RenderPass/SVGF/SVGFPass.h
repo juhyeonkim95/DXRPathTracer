@@ -4,13 +4,13 @@
 
 struct SVGFParameters
 {
+	vec2 texelSize;
 	float alpha;
 	float momentsAlpha;
 	float sigmaP;
 	float sigmaN;
 	float sigmaL;
 	int level;
-	vec2 texelSize;
 };
 
 class SVGFPass : public PostProcessPass

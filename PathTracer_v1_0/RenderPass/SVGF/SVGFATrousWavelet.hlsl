@@ -51,7 +51,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         }
     }
 
-    float customSigmaL = (sigmaL * sqrt(var) + epsilon) / ((float) step);
+    float customSigmaL = (sigmaL * sqrt(var) + epsilon);
     float customSigmaP = sigmaP * step;
 
     for (int offsetx = -support; offsetx <= support; offsetx++) {

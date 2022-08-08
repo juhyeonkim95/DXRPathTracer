@@ -20,7 +20,7 @@ SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     param.sigmaP = 1.0f;
     param.sigmaN = 128.0f;
     param.sigmaL = 4.0f;
-    param.texelSize = vec2(1.0f / size.x, 1.0f / size.y);
+    param.texelSize = vec2(1.0f / ((float)size.x), (1.0f / (float) size.y));
     defaultParam = param;
 }
 
@@ -29,9 +29,9 @@ void SVGFPass::createRenderTextures(
     HeapData* srvHeap)
 {
 
-    motionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
-    historyLengthRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_UINT);
-    historyLengthRenderTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_UINT);
+    motionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R16G16_UNORM);
+    historyLengthRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
+    historyLengthRenderTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
 
     temporalAccumulationTextureDirect = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
     temporalAccumulationTextureIndirect = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -282,7 +282,8 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     std::swap(temporalAccumulationTextureIndirectMoment, temporalAccumulationTextureIndirectMomentPrev);
     std::swap(temporalAccumulationTextureDirect, temporalAccumulationTextureDirectPrev);
     std::swap(temporalAccumulationTextureIndirect, temporalAccumulationTextureIndirectPrev);
-
+    //std::swap(waveletDirect[0], temporalAccumulationTextureDirectPrev);
+    //std::swap(waveletIndirect[0], temporalAccumulationTextureIndirectPrev);
     /*if (waveletCount > 0) {
         std::swap(waveletDirect[0], temporalAccumulationTextureDirectPrev);
         std::swap(waveletIndirect[0], temporalAccumulationTextureIndirectPrev);
@@ -291,8 +292,5 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         std::swap(temporalAccumulationTextureDirect, temporalAccumulationTextureDirectPrev);
         std::swap(temporalAccumulationTextureIndirect, temporalAccumulationTextureIndirectPrev);
     }*/
-
-    
-    
     return;
 }

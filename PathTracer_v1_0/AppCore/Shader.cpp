@@ -150,6 +150,8 @@ void Shader::createRootSignature(int inputTextureNumber)
     // create a static sampler
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     sampler.Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+    //sampler.Filter = D3D12_FILTER_ANISOTROPIC;
+    //sampler.Filter = D3D12_FILTER_ANISOTROPIC;
     sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
     sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
     sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;

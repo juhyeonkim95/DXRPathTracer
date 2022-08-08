@@ -2,13 +2,13 @@ static const float epsilon = 0.00001;
 
 cbuffer ConstantBuffer : register(b0)
 {
+	float2 texelSize;
 	float gAlpha;
 	float gMomentsAlpha;
 	float sigmaP;
 	float sigmaN;
 	float sigmaL;
 	int level;
-	float2 texelSize;
 };
 
 
