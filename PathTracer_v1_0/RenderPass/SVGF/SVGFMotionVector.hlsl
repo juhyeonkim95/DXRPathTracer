@@ -48,11 +48,15 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     float previousMeshID = gPositionMeshIDPrev.Sample(s1, prevPixel).w;
     float meshID = gPositionMeshID.Sample(s1, input.texCoord).w;
 
+    float3 previousPosition = gPositionMeshIDPrev.Sample(s1, prevPixel).rgb;
+
     bool outside = (prevPixel.x < 0) || (prevPixel.x > 1) || (prevPixel.y < 0) || (prevPixel.y > 1);
-    consistency = !g_frameData.cameraChanged || (!g_frameData.paramChanged && !outside && (meshID == previousMeshID) && (dot(normal, previousNormal) > sqrt(2) / 2.0));
+    consistency = (!g_frameData.paramChanged && !outside && (meshID == previousMeshID) && (dot(normal, previousNormal) > sqrt(2) / 2.0)) && (length(position - previousPosition) < 0.1f);
+    consistency = !g_frameData.cameraChanged || consistency;
 
     float historyLength = gHistoryLength.Sample(s1, prevPixel).r;
-    historyLength = min(32.0f, (consistency ? (historyLength + 1.0f) : 1.0f));
+    // historyLength = min(32.0f, (consistency ? (historyLength + 1.0f) : 1.0f));
+    historyLength =  (consistency ? (historyLength + 1.0f) : 1.0f);
 
     PS_OUT output;
     output.motionVector = float4(prevPixel.x, prevPixel.y, 0, float(consistency));

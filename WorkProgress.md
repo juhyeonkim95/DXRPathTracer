@@ -137,6 +137,12 @@ About x1.5 speed up!
 - Integrated ReSTIR into path tracing pipeline.
 - Restructuring program to implement ReSTIR with spatial reuse.
 
-## 20220804
+## 20220804, 20220805
 - Still restructuring project.
-- 
+- Making several render pass that inspired from Falcor's.
+
+- Path Tracer Pass
+- SVGF Pass
+- Blend Pass
+- Tonamap Pass
+- FXAA Pas

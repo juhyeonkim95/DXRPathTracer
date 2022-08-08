@@ -22,6 +22,7 @@ void BlendPass::processGUI()
     {
         ImGui::Checkbox("Blend with accumulated HDR", &mEnabled);
         ImGui::SliderInt("Max FrameNumber", &maxFrameNumber, 1, 512);
+        ImGui::SliderInt("Divide?", &mParam.divide, 0, 1);
     }
 }
 

@@ -335,11 +335,11 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     outputUAVBuffers["gPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
 
     // 12. Normal
-    outputUAVBuffers["gNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gNormal", 1);
+    outputUAVBuffers["gNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormal", 1);
 
     // 13, 14 Prev buffer
     outputUAVBuffers["gPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev", 1);
-    outputUAVBuffers["gNormalPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gNormalPrev", 1);
+    outputUAVBuffers["gNormalPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalPrev", 1);
 
     // 15 prev reserviors
     outputUAVBuffers["gPrevReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));

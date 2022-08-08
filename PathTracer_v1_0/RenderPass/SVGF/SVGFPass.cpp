@@ -30,8 +30,8 @@ void SVGFPass::createRenderTextures(
 {
 
     motionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
-    historyLengthRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R16_FLOAT);
-    historyLengthRenderTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R16_FLOAT);
+    historyLengthRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_UINT);
+    historyLengthRenderTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_UINT);
 
     temporalAccumulationTextureDirect = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
     temporalAccumulationTextureIndirect = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -65,12 +65,12 @@ void SVGFPass::processGUI()
         mDirty |= ImGui::Checkbox("enable SVGF", &mEnabled);
         mDirty |= ImGui::Checkbox("enableVarianceFilter", &mEnableVarianceFilter);
 
-        mDirty |= ImGui::SliderFloat("sigmaP", &param.sigmaP, 0.01f, 128.0f);
+        mDirty |= ImGui::SliderFloat("sigmaP", &param.sigmaP, 0.01f, 16.0f);
         mDirty |= ImGui::SliderFloat("sigmaN", &param.sigmaN, 0.01f, 256.0f);
-        mDirty |= ImGui::SliderFloat("sigmaL", &param.sigmaL, 0.01f, 128.0f);
+        mDirty |= ImGui::SliderFloat("sigmaL", &param.sigmaL, 0.01f, 16.0f);
         mDirty |= ImGui::SliderFloat("alpha", &param.alpha, 0.01f, 1.0f);
         mDirty |= ImGui::SliderFloat("alphaMoment", &param.momentsAlpha, 0.01f, 1.0f);
-        mDirty |= ImGui::SliderInt("waveletCount", &waveletCount, 1, maxWaveletCount);
+        mDirty |= ImGui::SliderInt("waveletCount", &waveletCount, 0, maxWaveletCount);
 
         if (ImGui::Button("Reset"))
         {
@@ -247,9 +247,21 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetPipelineState(reconstructionShader->getPipelineStateObject());
     mpCmdList->SetGraphicsRootSignature(reconstructionShader->getRootSignature()); // set the root signature
 
-    RenderTexture* directRenderTexture = waveletDirect[waveletCount - 1];
-    RenderTexture* indirectRenderTexture = waveletIndirect[waveletCount - 1];
+    RenderTexture* directRenderTexture;
+    RenderTexture* indirectRenderTexture;
 
+    if (waveletCount > 0) 
+    {
+        directRenderTexture = waveletDirect[waveletCount - 1];
+        indirectRenderTexture = waveletIndirect[waveletCount - 1];
+    }
+    else 
+    {
+        directRenderTexture = temporalAccumulationTextureDirect;
+        indirectRenderTexture = temporalAccumulationTextureIndirect;
+    }
+
+    
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
@@ -268,11 +280,19 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     std::swap(historyLengthRenderTexture, historyLengthRenderTexturePrev);
     std::swap(temporalAccumulationTextureDirectMoment, temporalAccumulationTextureDirectMomentPrev);
     std::swap(temporalAccumulationTextureIndirectMoment, temporalAccumulationTextureIndirectMomentPrev);
-    std::swap(waveletDirect[0], temporalAccumulationTextureDirectPrev);
-    std::swap(waveletIndirect[0], temporalAccumulationTextureIndirectPrev);
+    std::swap(temporalAccumulationTextureDirect, temporalAccumulationTextureDirectPrev);
+    std::swap(temporalAccumulationTextureIndirect, temporalAccumulationTextureIndirectPrev);
 
-    // std::swap(temporalAccumulationTextureDirect, temporalAccumulationTextureDirectPrev);
-    // std::swap(temporalAccumulationTextureIndirect, temporalAccumulationTextureIndirectPrev);
+    /*if (waveletCount > 0) {
+        std::swap(waveletDirect[0], temporalAccumulationTextureDirectPrev);
+        std::swap(waveletIndirect[0], temporalAccumulationTextureIndirectPrev);
+    } else 
+    {
+        std::swap(temporalAccumulationTextureDirect, temporalAccumulationTextureDirectPrev);
+        std::swap(temporalAccumulationTextureIndirect, temporalAccumulationTextureIndirectPrev);
+    }*/
 
+    
+    
     return;
 }

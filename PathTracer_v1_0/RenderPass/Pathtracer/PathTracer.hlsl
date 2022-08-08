@@ -28,6 +28,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.direct = float3(0, 0, 0);
     pathResult.reflectance = payload.attenuation;
 
+
     uint materialType = g_materialinfo[payload.materialIndex].materialType;
     uint maxDepth = gPathTracer.maxDepth;
     switch (materialType) {

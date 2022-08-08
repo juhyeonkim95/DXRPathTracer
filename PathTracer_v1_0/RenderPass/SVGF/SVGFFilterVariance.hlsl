@@ -41,7 +41,7 @@ float4 main(VS_OUTPUT input) : SV_Target
 
                 float qLuminance = luma(qColor);
 
-                float w = calculateWeight(pPosition, qPosition, pNormal, qNormal, pLuminance, qLuminance, sigmaL);
+                float w = calculateWeight(pPosition, qPosition, sigmaP, pNormal, qNormal, pLuminance, qLuminance, sigmaL);
                 weights += w;
 
                 sumColor += w * qColor;

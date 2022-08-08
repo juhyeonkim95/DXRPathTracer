@@ -10,6 +10,7 @@
 #include "PathTracer/PathTracer.h"
 #include "BlendPass/BlendPass.h"
 #include "Tonemap/ToneMapper.h"
+#include "FXAA/FXAA.h"
 #include "HeapData.h"
 #include "SceneResourceManager.h"
 
@@ -89,6 +90,8 @@ private:
     ReSTIR* restirPass;
     SVGFPass* svgfPass;
     BlendPass* blendPass;
+    FXAA* fxaaPass;
+
     ToneMapper* tonemapPass;
     bool mDirty = true;
 

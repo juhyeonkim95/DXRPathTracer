@@ -189,10 +189,10 @@
     <ClCompile Include="DX12\DX12AccelerationStructureUtils.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass\FXAA\FXAA.cpp">
+    <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp">
+    <ClCompile Include="RenderPass\FXAA\FXAA.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -341,10 +341,10 @@
     <ClInclude Include="RenderPass\RenderPass.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass\FXAA\FXAA.h">
+    <ClInclude Include="RenderPass\BlendPass\BlendPass.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass\BlendPass\BlendPass.h">
+    <ClInclude Include="RenderPass\FXAA\FXAA.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

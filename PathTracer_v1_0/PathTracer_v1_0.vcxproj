@@ -167,8 +167,8 @@
     <ClCompile Include="DX12\DX12StateSubobjects.cpp" />
     <ClCompile Include="DX12\DX12DxilLibrary.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
     <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp" />
+    <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
     <ClCompile Include="Scene\BSDF\Conductor.cpp" />
     <ClCompile Include="Scene\BSDF\Dielectric.cpp" />
     <ClCompile Include="Scene\BSDF\Diffuse.cpp" />
@@ -211,8 +211,8 @@
     <ClInclude Include="AppCore\SceneAccelerationStructure.h" />
     <ClInclude Include="DX12\DX12AccelerationStructureUtils.h" />
     <ClInclude Include="DX12\DX12StateSubobjects.h" />
-    <ClInclude Include="RenderPass\FXAA\FXAA.h" />
     <ClInclude Include="RenderPass\BlendPass\BlendPass.h" />
+    <ClInclude Include="RenderPass\FXAA\FXAA.h" />
     <ClInclude Include="Scene\BSDF\BSDF.h" />
     <ClInclude Include="Scene\BSDF\Conductor.h" />
     <ClInclude Include="Scene\BSDF\Dielectric.h" />

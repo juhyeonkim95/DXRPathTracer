@@ -51,7 +51,8 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         }
     }
 
-    float customSigmaL = (sigmaL * sqrt(var) + epsilon);
+    float customSigmaL = (sigmaL * sqrt(var) + epsilon) / ((float) step);
+    float customSigmaP = sigmaP * step;
 
     for (int offsetx = -support; offsetx <= support; offsetx++) {
         for (int offsety = -support; offsety <= support; offsety++) {
@@ -60,15 +61,18 @@ float4 main(VS_OUTPUT input) : SV_TARGET
             float4 qPositionMeshId = gPositionMeshID.Sample(s1, loc);
             float qMeshID = qPositionMeshId.a;
 
-            if (eps_equal(pMeshID, qMeshID)) {
+            const bool outside = (loc.x < 0) || (loc.x > 1) || (loc.y < 0) || (loc.y > 1);
+
+            if (!outside && (offsetx != 0 || offsety != 0)) {
                 float3 qPosition = qPositionMeshId.rgb;
                 float3 qNormal = gNormal.Sample(s1, loc).rgb;
 
                 float3 qColor = gColorVariance.Sample(s1, loc).rgb;
                 float qVariance = gColorVariance.Sample(s1, loc).a;
                 float qLuminance = luma(qColor);
+                // customSigmaP* length(float2(offsetx, offsety))
 
-                float w = calculateWeight(pPosition, qPosition, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                float w = calculateWeight(pPosition, qPosition, sigmaP, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 

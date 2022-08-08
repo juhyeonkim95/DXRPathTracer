@@ -4,7 +4,7 @@
 struct BlendParameters
 {
 	float alpha;
-	uint divide;
+	int divide;
 	uint unused1;
 	uint unused2;
 };

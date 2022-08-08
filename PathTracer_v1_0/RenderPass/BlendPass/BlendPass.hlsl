@@ -6,9 +6,9 @@ SamplerState s1 : register(s0);
 cbuffer PerImageCB : register(b0)
 {
     float alpha;
-    uint divide;
-    uint unused1;
-    uint unused2;
+    int divide;
+    int unused1;
+    int unused2;
 };
 
 struct VS_OUTPUT
@@ -23,6 +23,11 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 color2 = t2.Sample(s1, input.texCoord).rgb;
 
     float3 color = lerp(color1, color2, alpha);
+
+    if (divide) 
+    {
+        color = input.texCoord.x > 0.5 ? color1 : color2;
+    }
 
     return float4(color, 1.0f);
 }

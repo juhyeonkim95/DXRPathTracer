@@ -52,6 +52,9 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     const float alpha = success ? max(gAlpha, 1.0 / historyLength) :1.0f;
     const float alphaMoments = success ? max(gMomentsAlpha, 1.0 / historyLength) :1.0f;
     
+    //const float alpha = success ? 1.0 / historyLength : 1.0f;
+    //const float alphaMoments = success ? 1.0 / historyLength : 1.0f;
+
     //const float alpha =  max(gAlpha, 1.0 / historyLength);
     //const float alphaMoments =  max(gMomentsAlpha, 1.0 / historyLength);
 

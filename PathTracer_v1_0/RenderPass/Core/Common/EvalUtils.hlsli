@@ -6,7 +6,8 @@
 
 float3 EvalDiffuseReflectance(in Material material, in RayPayload payload) {
 	if (material.diffuseReflectanceTextureID) {
-		return g_textures.SampleLevel(g_s0, payload.uv, 0.0f).xyz;
+		float3 color = g_textures.SampleLevel(g_s0, payload.uv, 0.0f).xyz;
+		return color;
 	}
 	return material.diffuseReflectance;
 }

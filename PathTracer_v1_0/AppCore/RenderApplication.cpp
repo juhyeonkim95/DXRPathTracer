@@ -132,8 +132,11 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     blendPass = new BlendPass(mpDevice, mSwapChainSize);
     blendPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
+    fxaaPass = new FXAA(mpDevice, mSwapChainSize);
+    fxaaPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
     tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
-    
+
     postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
 
     sceneResourceManager->createSceneCBVs();
@@ -208,8 +211,22 @@ void RenderApplication::onFrameRender()
 
     }
 
+    if (fxaaPass->mEnabled)
+    {
+        RenderData renderDataBlend;
+        renderDataBlend.gpuHandleDictionary["src"] = output;
+
+        fxaaPass->forward(&renderContext, renderDataBlend);
+
+        output = fxaaPass->renderTexture->getGPUSrvHandler();
+    }
+
     RenderData renderDataTonemap;
-    renderDataTonemap.gpuHandleDictionary["src"] = output; // mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+    // renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
+    renderDataTonemap.gpuHandleDictionary["src"] = output;
+    // renderDataTonemap.gpuHandleDictionary["src"] = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+
+    // output; // mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
     renderDataTonemap.cpuHandleDictionary["dst"] = mFrameObjects[rtvIndex].rtvHandle;
     renderDataTonemap.resourceDictionary["dst"] = mFrameObjects[rtvIndex].pSwapChainBuffer;
 
@@ -236,6 +253,7 @@ void RenderApplication::onFrameRender()
     svgfPass->processGUI();
     tonemapPass->processGUI();
     blendPass->processGUI();
+    fxaaPass->processGUI();
 
     mDirty = (pathTracer->mDirty) || (svgfPass->mDirty) || (restirPass->mDirty);
 
