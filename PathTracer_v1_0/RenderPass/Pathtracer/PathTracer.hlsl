@@ -80,8 +80,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
 #endif
 
         Material material = g_materialinfo[payload.materialIndex];
-
-
+#if USE_NEXT_EVENT_ESTIMATION
         // ------------------------------------------------------------
         // --------------------- Emitter sampling ---------------------
         // ------------------------------------------------------------
@@ -157,7 +156,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
             }
         }
 
-
+#endif
         // ------------------------------------------------------------
         // --------------------- BSDF sampling ------------------------
         // ------------------------------------------------------------
@@ -174,7 +173,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         depth += 1;
 
         TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2, 0, ray, payload);
-
+#if USE_NEXT_EVENT_ESTIMATION
         // Handle if BSDF sampled ray hits lights source.
         float scatterPdf = payload.scatterPdf;
         if (useReSTIR)
@@ -189,8 +188,8 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         else {
             emissionWeight = 1.0f;
         }
+#endif
     }
-
     pathResult.radiance = result;
     return;
 }

@@ -68,7 +68,6 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     
     // bool depthConsistency = (abs(depth - previousDepth) / (fwidthZ + 1e-2) < 10.0f);
     // consistency = consistency && depthConsistency;
-    //
 
     bool positionConsistency = (length(position - previousPosition) < 0.5f );
     consistency = consistency && positionConsistency;

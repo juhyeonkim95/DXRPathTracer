@@ -245,8 +245,8 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         else {
             mpCmdList->SetGraphicsRootDescriptorTable(1, waveletDirectPingPong2->getGPUSrvHandler());
         }
-        param.stepSize = 1 << i;
         uploadParams();
+        param.stepSize = 1 << i;
 
         mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffer->GetGPUVirtualAddress());
 
@@ -264,7 +264,7 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         std::swap(waveletDirectPingPong1, waveletDirectPingPong2);
     }
 
-
+    param.stepSize = 1;
     // Indirect
     for (int i = 0; i < waveletCount; i++) {
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletIndirectPingPong1->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -276,8 +276,8 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         else {
             mpCmdList->SetGraphicsRootDescriptorTable(1, waveletIndirectPingPong2->getGPUSrvHandler());
         }
-        param.stepSize = 1 << i;
         uploadParams();
+        param.stepSize = 1 << i;
 
         mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffer->GetGPUVirtualAddress());
 

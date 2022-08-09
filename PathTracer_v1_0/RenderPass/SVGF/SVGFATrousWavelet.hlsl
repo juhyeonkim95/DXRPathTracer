@@ -42,6 +42,9 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float pVariance = gColorVariance.Sample(s1, input.texCoord).a;
     float pLuminance = luma(pColor);
 
+    int step = stepSize;
+
+
     float var = 0.0;
     for (int y0 = -1; y0 <= 1; y0++) {
         for (int x0 = -1; x0 <= 1; x0++) {
@@ -52,16 +55,20 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float2 depthDerivative = gDepthDerivative.Sample(s1, input.texCoord).rg;
     float fwidthZ = max(abs(depthDerivative.x), abs(depthDerivative.y));
 
-    float customSigmaL = (sigmaL * sqrt(var) + epsilon) / ((float)stepSize);
-    float customSigmaZ = sigmaZ * stepSize * max(fwidthZ, 1e-8);
+    float customSigmaL = (sigmaL * sqrt(var) + epsilon);
+    float customSigmaZ = sigmaZ * step * max(fwidthZ, 1e-8);
 
     float3 c = pColor;
     float v = pVariance;
     float weights = 1.0f;
 
+    int2 ipos = input.pos.xy;
+
     for (int offsetx = -support; offsetx <= support; offsetx++) {
         for (int offsety = -support; offsety <= support; offsety++) {
-            float2 loc = input.texCoord + texelSize * float2(offsetx, offsety) * stepSize;
+            int2 pos = ipos + int2(offsetx * step, offsety * step);
+            float2 loc = float2(pos.x * texelSize.x, pos.y * texelSize.y);
+            //float2 loc = input.texCoord + texelSize * float2(offsetx, offsety) * step;
             const bool outside = (loc.x < 0) || (loc.x > 1) || (loc.y < 0) || (loc.y > 1);
 
             
@@ -76,10 +83,11 @@ float4 main(VS_OUTPUT input) : SV_TARGET
                 float3 qColor = gColorVariance.Sample(s1, loc).rgb;
                 float qVariance = gColorVariance.Sample(s1, loc).a;
                 float qLuminance = luma(qColor);
-                
-                // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
-                float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
+                // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                // float w = calculateWeight(pDepth, qDepth, step * sigmaZ * abs(dot(depthDerivative, float2(offsetx, offsety))), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                float w = calculateWeightPosition(pPosition, qPosition, sigmaZ , pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                // w = 1.0f;
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 
                 c += weight * qColor;
