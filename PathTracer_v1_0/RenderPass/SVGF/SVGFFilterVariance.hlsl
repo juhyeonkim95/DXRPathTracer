@@ -51,8 +51,8 @@ float4 main(VS_OUTPUT input) : SV_Target
 
                     float qLuminance = luma(qColor);
 
-                    float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, sigmaL);
-                    // float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                    // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, sigmaL);
+                    float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, sigmaL);
 
 
                     weights += w;

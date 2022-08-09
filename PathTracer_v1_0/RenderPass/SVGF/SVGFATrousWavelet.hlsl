@@ -52,7 +52,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float2 depthDerivative = gDepthDerivative.Sample(s1, input.texCoord).rg;
     float fwidthZ = max(abs(depthDerivative.x), abs(depthDerivative.y));
 
-    float customSigmaL = (sigmaL * sqrt(var) + epsilon);// / ((float)stepSize);
+    float customSigmaL = (sigmaL * sqrt(var) + epsilon) / ((float)stepSize);
     float customSigmaZ = sigmaZ * stepSize * max(fwidthZ, 1e-8);
 
     float3 c = pColor;
@@ -77,8 +77,8 @@ float4 main(VS_OUTPUT input) : SV_TARGET
                 float qVariance = gColorVariance.Sample(s1, loc).a;
                 float qLuminance = luma(qColor);
                 
-                float w = calculateWeight(pDepth, qDepth, customSigmaZ* length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
-                // float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 
