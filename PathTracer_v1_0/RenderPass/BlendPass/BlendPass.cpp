@@ -4,7 +4,8 @@ BlendPass::BlendPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     : PostProcessPass(mpDevice, size)
 {
     // Create Shader
-    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/BlendPass/BlendPass.hlsl", mpDevice, 2);
+    std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
+    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/BlendPass/BlendPass.hlsl", mpDevice, 2, rtvFormats);
 
     mpParameterBuffer = createBuffer(mpDevice, sizeof(BlendParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
 }

@@ -195,6 +195,9 @@
     <ClCompile Include="RenderPass\FXAA\FXAA.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="AppCore\ComputeShader.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\RenderApplication.h">
@@ -345,6 +348,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\FXAA\FXAA.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="External\stb_image_write.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="AppCore\ComputeShader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

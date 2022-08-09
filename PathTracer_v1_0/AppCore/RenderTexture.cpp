@@ -25,8 +25,14 @@ void RenderTexture::createWithSize(size_t width, size_t height, DXGI_FORMAT form
     // Create RTV.
     mpDevice->CreateRenderTargetView(mResource, &rtvdesc, mRtvDescriptorHandle);
 
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = format;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = 1;
+
     // Create SRV.
-    mpDevice->CreateShaderResourceView(mResource, nullptr, mSrvDescriptorHandle);
+    mpDevice->CreateShaderResourceView(mResource, &srvDesc, mSrvDescriptorHandle);
 
     mWidth = width;
     mHeight = height;

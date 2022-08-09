@@ -24,8 +24,8 @@ public:
 		ID3D12ResourcePtr mpCameraConstantBuffer
 	);*/
 	void createRenderTextures(
-		HeapData *rtvHeap,
-		HeapData *srvHeap);
+		HeapData* rtvHeap,
+		HeapData* srvHeap);
 
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;

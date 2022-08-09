@@ -116,7 +116,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\DirectXTK12\Inc;$(SolutionDir)\..\DirectXTex\DirectXTex;$(SolutionDir)\Framework\;$(SolutionDir)Framework\Externals\imgui;$(SolutionDir)Framework\Externals\imgui\backends;$(ProjectDir)\;$(ProjectDir)\Scene;$(ProjectDir)\External;$(ProjectDir)\Utils;$(ProjectDir)\DX12;$(ProjectDir)\RenderPass;$(ProjectDir)\AppCore</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -162,6 +162,7 @@
     <ClCompile Include="..\Framework\Externals\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="AppCore\ComputeShader.cpp" />
     <ClCompile Include="AppCore\SceneAccelerationStructure.cpp" />
     <ClCompile Include="DX12\DX12AccelerationStructureUtils.cpp" />
     <ClCompile Include="DX12\DX12StateSubobjects.cpp" />
@@ -208,9 +209,11 @@
     <ClInclude Include="..\Framework\Externals\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\Framework\Externals\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Framework\Externals\imgui\imstb_truetype.h" />
+    <ClInclude Include="AppCore\ComputeShader.h" />
     <ClInclude Include="AppCore\SceneAccelerationStructure.h" />
     <ClInclude Include="DX12\DX12AccelerationStructureUtils.h" />
     <ClInclude Include="DX12\DX12StateSubobjects.h" />
+    <ClInclude Include="External\stb_image_write.h" />
     <ClInclude Include="RenderPass\BlendPass\BlendPass.h" />
     <ClInclude Include="RenderPass\FXAA\FXAA.h" />
     <ClInclude Include="Scene\BSDF\BSDF.h" />

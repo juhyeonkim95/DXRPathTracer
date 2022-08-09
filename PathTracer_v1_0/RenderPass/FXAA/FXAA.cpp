@@ -4,7 +4,8 @@ FXAA::FXAA(ID3D12Device5Ptr mpDevice, uvec2 size)
     : PostProcessPass(mpDevice, size)
 {
     // Create Shader
-    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/FXAA/FXAA.hlsl", mpDevice, 2);
+    std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
+    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/FXAA/FXAA.hlsl", mpDevice, 2, rtvFormats);
 
     mParam.qualityEdgeThreshold = 0.166f;
     mParam.qualitySubPix = 0.75f;

@@ -4,7 +4,8 @@ ToneMapper::ToneMapper(ID3D12Device5Ptr mpDevice, uvec2 size)
     : PostProcessPass(mpDevice, size)
 {
     // Create Shader
-    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/Tonemap/Tonemap.hlsl", mpDevice, 1);
+    std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R8G8B8A8_UNORM };
+    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/Tonemap/Tonemap.hlsl", mpDevice, 1, rtvFormats);
 
     mParam.mode = (int)ToneMapperOperator::Reinhard;
     mParam.whiteMaxLuminance = 1.0f;

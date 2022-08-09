@@ -1,13 +1,13 @@
 #include "Shader.h"
 
-Shader::Shader(const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, ID3D12Device5Ptr mpDevice, int inputTextureNumber)
+Shader::Shader(const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, ID3D12Device5Ptr mpDevice, int inputTextureNumber, std::vector<DXGI_FORMAT> &rtvFormats)
 {
     this->mpDevice = mpDevice;
     this->createRootSignature(inputTextureNumber);
-    this->compileShaderFile(vertexShaderPath, pixelShaderPath);
+    this->compileShaderFile(vertexShaderPath, pixelShaderPath, rtvFormats);
 }
 
-void Shader::compileShaderFile(const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath)
+void Shader::compileShaderFile(const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, std::vector<DXGI_FORMAT>& rtvFormats)
 {
     HRESULT hr;
 
@@ -86,17 +86,23 @@ void Shader::compileShaderFile(const wchar_t* vertexShaderPath, const wchar_t* p
     psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
     psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
+
+    for (int i = 0; i < rtvFormats.size(); i++) 
+    {
+        psoDesc.RTVFormats[i] = rtvFormats[i];
+    }
+    // psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
+    psoDesc.NumRenderTargets = rtvFormats.size(); // we are only binding one render target
+
     psoDesc.SampleDesc.Count = 1; // must be the same sample description as the swapchain and depth/stencil buffer
     psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT); // a default rasterizer state.
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blend state.
-    psoDesc.NumRenderTargets = 1; // we are only binding one render target
-
+    
     // create the pso
     hr = mpDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStateObject));
     if (FAILED(hr)) {
-        throw std::invalid_argument("a or b negative");
+        throw std::invalid_argument("Shader Compile Failed!");
     }
 }
 
