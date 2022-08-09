@@ -223,6 +223,9 @@ void RenderApplication::onFrameRender()
 
     RenderData renderDataTonemap;
     // renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
+    // renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->motionVectorRenderTexture->getGPUSrvHandler();
+    //renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->waveletDirectPingPong2->getGPUSrvHandler();
+
     renderDataTonemap.gpuHandleDictionary["src"] = output;
     // renderDataTonemap.gpuHandleDictionary["src"] = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
 

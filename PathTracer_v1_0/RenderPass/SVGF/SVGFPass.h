@@ -10,7 +10,7 @@ struct SVGFParameters
 	float sigmaP;
 	float sigmaN;
 	float sigmaL;
-	int level;
+	int stepSize;
 };
 
 class SVGFPass : public PostProcessPass
@@ -36,6 +36,9 @@ public:
 	Shader* waveletShader;
 	Shader* reconstructionShader;
 
+	Shader* depthDerivativeShader;
+	RenderTexture* depthDerivativeTexture;
+
 	RenderTexture* motionVectorRenderTexture;
 	RenderTexture* historyLengthRenderTexture;
 	RenderTexture* historyLengthRenderTexturePrev;
@@ -58,6 +61,11 @@ public:
 	vector<RenderTexture*> waveletDirect;
 	vector<RenderTexture*> waveletIndirect;
 
+	RenderTexture* waveletDirectPingPong1;
+	RenderTexture* waveletDirectPingPong2;
+	RenderTexture* waveletIndirectPingPong1;
+	RenderTexture* waveletIndirectPingPong2;
+
 	// SVGF parameters
 	SVGFParameters param;
 	SVGFParameters defaultParam;
@@ -65,8 +73,10 @@ public:
 	bool mEnabled = true;
 	bool mEnableVarianceFilter = true;
 
-	const int maxWaveletCount = 5;
+	const int maxWaveletCount = 8;
 	int waveletCount = 3;
+	int mFeedbackTap = 0;
+
 
 	RenderTexture* reconstructionRenderTexture;
 

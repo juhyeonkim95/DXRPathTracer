@@ -2,6 +2,7 @@
 Texture2D gColorVariance : register(t0);
 Texture2D gNormal : register(t1);
 Texture2D gPositionMeshID : register(t2);
+Texture2D gDepthDerivative : register(t3);
 
 SamplerState s1 : register(s0);
 
@@ -35,14 +36,11 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float pMeshID = pPositionMeshId.a;
 
     float3 pNormal = gNormal.Sample(s1, input.texCoord).rgb;
+    float pDepth = gNormal.Sample(s1, input.texCoord).w;
+
     float3 pColor = gColorVariance.Sample(s1, input.texCoord).rgb;
+    float pVariance = gColorVariance.Sample(s1, input.texCoord).a;
     float pLuminance = luma(pColor);
-
-    int step = 1 << level;
-
-    float3 c = float3(0.0f, 0.0f, 0.0f);
-    float v = 0.0f;
-    float weights = 0.0f;
 
     float var = 0.0;
     for (int y0 = -1; y0 <= 1; y0++) {
@@ -51,28 +49,36 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         }
     }
 
-    float customSigmaL = (sigmaL * sqrt(var) + epsilon);
-    float customSigmaP = sigmaP * step;
+    float2 depthDerivative = gDepthDerivative.Sample(s1, input.texCoord).rg;
+    float fwidthZ = max(abs(depthDerivative.x), abs(depthDerivative.y));
+
+    float customSigmaL = (sigmaL * sqrt(var) + epsilon);// / ((float)stepSize);
+    float customSigmaZ = sigmaZ * stepSize * max(fwidthZ, 1e-8);
+
+    float3 c = pColor;
+    float v = pVariance;
+    float weights = 1.0f;
 
     for (int offsetx = -support; offsetx <= support; offsetx++) {
         for (int offsety = -support; offsety <= support; offsety++) {
-            float2 loc = input.texCoord + texelSize * float2(offsetx, offsety) * step;
-
-            float4 qPositionMeshId = gPositionMeshID.Sample(s1, loc);
-            float qMeshID = qPositionMeshId.a;
-
+            float2 loc = input.texCoord + texelSize * float2(offsetx, offsety) * stepSize;
             const bool outside = (loc.x < 0) || (loc.x > 1) || (loc.y < 0) || (loc.y > 1);
 
+            
             if (!outside && (offsetx != 0 || offsety != 0)) {
+                float4 qPositionMeshId = gPositionMeshID.Sample(s1, loc);
+                float qMeshID = qPositionMeshId.a;
+
                 float3 qPosition = qPositionMeshId.rgb;
                 float3 qNormal = gNormal.Sample(s1, loc).rgb;
+                float qDepth = gNormal.Sample(s1, loc).w;
 
                 float3 qColor = gColorVariance.Sample(s1, loc).rgb;
                 float qVariance = gColorVariance.Sample(s1, loc).a;
                 float qLuminance = luma(qColor);
-                // customSigmaP* length(float2(offsetx, offsety))
-
-                float w = calculateWeight(pPosition, qPosition, sigmaP, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                
+                float w = calculateWeight(pDepth, qDepth, customSigmaZ* length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                // float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 
@@ -92,6 +98,5 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     else {
         cvnext = gColorVariance.Sample(s1, input.texCoord);
     }
-
     return cvnext;
 }

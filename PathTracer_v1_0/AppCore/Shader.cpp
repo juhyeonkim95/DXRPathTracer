@@ -149,9 +149,9 @@ void Shader::createRootSignature(int inputTextureNumber)
 
     // create a static sampler
     D3D12_STATIC_SAMPLER_DESC sampler = {};
-    sampler.Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-    //sampler.Filter = D3D12_FILTER_ANISOTROPIC;
-    //sampler.Filter = D3D12_FILTER_ANISOTROPIC;
+    // sampler.Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+    // sampler.Filter = D3D12_FILTER_ANISOTROPIC;
+    // sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
     sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
     sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
     sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
@@ -165,11 +165,21 @@ void Shader::createRootSignature(int inputTextureNumber)
     sampler.RegisterSpace = 0;
     sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
+    CD3DX12_STATIC_SAMPLER_DESC bilinearClamp(
+        0,
+        D3D12_FILTER_ANISOTROPIC,
+        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+        0.0f,
+        4
+    );
+
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Init(rootParameters.size(), // we have 2 root parameters
         rootParameters.data(), // a pointer to the beginning of our root parameters array
         1, // we have one static sampler
-        &sampler, // a pointer to our static sampler (array)
+        &bilinearClamp, // a pointer to our static sampler (array)
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | // we can deny shader stages here for better performance
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |

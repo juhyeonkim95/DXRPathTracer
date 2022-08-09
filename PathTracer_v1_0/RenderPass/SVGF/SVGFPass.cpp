@@ -7,11 +7,12 @@ SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     : PostProcessPass(mpDevice, size)
 {
     // Create Shaders
-    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFMotionVector.hlsl", mpDevice, 5);
+    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFMotionVector.hlsl", mpDevice, 6);
     this->temporalAccumulationShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFTemporalAccumulation.hlsl", mpDevice, 5);
-    this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFATrousWavelet.hlsl", mpDevice, 3);
+    this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFATrousWavelet.hlsl", mpDevice, 4);
     this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFReconstruction.hlsl", mpDevice, 4);
-    this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFFilterVariance.hlsl", mpDevice, 5);
+    this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFFilterVariance.hlsl", mpDevice, 6);
+    this->depthDerivativeShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFDepthDerivative.hlsl", mpDevice, 1);
 
     mSVGFParameterBuffer = createBuffer(mpDevice, sizeof(SVGFParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
 
@@ -20,7 +21,7 @@ SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     param.sigmaP = 1.0f;
     param.sigmaN = 128.0f;
     param.sigmaL = 4.0f;
-    param.texelSize = vec2(1.0f / ((float)size.x), (1.0f / (float) size.y));
+    param.texelSize = vec2(1.0f / ((float)size.x), (1.0f / (float)size.y));
     defaultParam = param;
 }
 
@@ -28,7 +29,7 @@ void SVGFPass::createRenderTextures(
     HeapData* rtvHeap,
     HeapData* srvHeap)
 {
-
+    depthDerivativeTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32_FLOAT);
     motionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R16G16_UNORM);
     historyLengthRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
     historyLengthRenderTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
@@ -46,12 +47,18 @@ void SVGFPass::createRenderTextures(
     temporalAccumulationTextureIndirectMomentPrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 
-    for (int i = 0; i < maxWaveletCount; i++) {
+    waveletDirectPingPong1 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+    waveletDirectPingPong2 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+    waveletIndirectPingPong1 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+    waveletIndirectPingPong2 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+
+
+    /*for (int i = 0; i < maxWaveletCount; i++) {
         RenderTexture* waveletDirecti = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
         RenderTexture* waveletIndirecti = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
         this->waveletDirect.push_back(waveletDirecti);
         this->waveletIndirect.push_back(waveletIndirecti);
-    }
+    }*/
 
     this->reconstructionRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 }
@@ -60,7 +67,7 @@ void SVGFPass::processGUI()
 {
 
     mDirty = false;
-    if (ImGui::CollapsingHeader("SVGF")) 
+    if (ImGui::CollapsingHeader("SVGF"))
     {
         mDirty |= ImGui::Checkbox("enable SVGF", &mEnabled);
         mDirty |= ImGui::Checkbox("enableVarianceFilter", &mEnableVarianceFilter);
@@ -71,11 +78,14 @@ void SVGFPass::processGUI()
         mDirty |= ImGui::SliderFloat("alpha", &param.alpha, 0.01f, 1.0f);
         mDirty |= ImGui::SliderFloat("alphaMoment", &param.momentsAlpha, 0.01f, 1.0f);
         mDirty |= ImGui::SliderInt("waveletCount", &waveletCount, 0, maxWaveletCount);
+        mDirty |= ImGui::SliderInt("Feedback Tap", &mFeedbackTap, 0, std::max(0, waveletCount));
+
 
         if (ImGui::Button("Reset"))
         {
             param = defaultParam;
             waveletCount = 3;
+            mFeedbackTap = 0;
             mDirty = true;
         }
     }
@@ -93,8 +103,22 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 {
     ID3D12GraphicsCommandList4Ptr mpCmdList = pRenderContext->pCmdList;
     HeapData* pSrvUavHeap = pRenderContext->pSrvUavHeap;
-    map<string, D3D12_GPU_DESCRIPTOR_HANDLE> &gpuHandles = pSrvUavHeap->getGPUHandleMap();
+    map<string, D3D12_GPU_DESCRIPTOR_HANDLE>& gpuHandles = pSrvUavHeap->getGPUHandleMap();
     this->setViewPort(mpCmdList);
+
+    // (0) prepare depth derivative
+    mpCmdList->SetPipelineState(depthDerivativeShader->getPipelineStateObject());
+    mpCmdList->SetGraphicsRootSignature(depthDerivativeShader->getRootSignature()); // set the root signature
+
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthDerivativeTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+    mpCmdList->OMSetRenderTargets(1, &depthDerivativeTexture->mRtvDescriptorHandle, FALSE, nullptr);
+    ;
+    mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gNormal"));
+
+    mpCmdList->DrawInstanced(6, 1, 0, 0);
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthDerivativeTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
 
     // (1) Render to motionVectorRenderTexture !!
     mpCmdList->SetPipelineState(motionVectorShader->getPipelineStateObject());
@@ -111,6 +135,7 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gNormal"));
     mpCmdList->SetGraphicsRootDescriptorTable(5, historyLengthRenderTexturePrev->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(6, depthDerivativeTexture->getGPUSrvHandler());
 
     mpCmdList->SetGraphicsRootConstantBufferView(0, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
 
@@ -125,7 +150,7 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirectMoment->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    
+
     D3D12_CPU_DESCRIPTOR_HANDLE handles[2] = { temporalAccumulationTextureDirect->mRtvDescriptorHandle, temporalAccumulationTextureDirectMoment->mRtvDescriptorHandle };
     mpCmdList->OMSetRenderTargets(2, handles, FALSE, nullptr);
 
@@ -146,7 +171,7 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     // Indirect
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirect->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirectMoment->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    
+
     D3D12_CPU_DESCRIPTOR_HANDLE handlesIndirect[2] = { temporalAccumulationTextureIndirect->mRtvDescriptorHandle, temporalAccumulationTextureIndirectMoment->mRtvDescriptorHandle };
     mpCmdList->OMSetRenderTargets(2, handlesIndirect, FALSE, nullptr);
 
@@ -159,7 +184,7 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirect->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureIndirectMoment->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    
+
     if (mEnableVarianceFilter) {
         // (2.5) Filter variance if length is <4
         // direct
@@ -171,10 +196,13 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         mpCmdList->OMSetRenderTargets(1, &temporalAccumulationTextureDirectVarianceFilter->mRtvDescriptorHandle, FALSE, nullptr);
 
         mpCmdList->SetGraphicsRootDescriptorTable(1, temporalAccumulationTextureDirect->getGPUSrvHandler());
+        // mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gOutputHDR"));
+
         mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormal"));
         mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
         mpCmdList->SetGraphicsRootDescriptorTable(4, temporalAccumulationTextureDirectMoment->getGPUSrvHandler());
         mpCmdList->SetGraphicsRootDescriptorTable(5, historyLengthRenderTexture->getGPUSrvHandler());
+        mpCmdList->SetGraphicsRootDescriptorTable(6, depthDerivativeTexture->getGPUSrvHandler());
 
         this->uploadParams();
 
@@ -203,44 +231,68 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormal"));
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(4, depthDerivativeTexture->getGPUSrvHandler());
+
+
     // Direct
     for (int i = 0; i < waveletCount; i++) {
-        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletDirect[i]->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletDirectPingPong1->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-        mpCmdList->OMSetRenderTargets(1, &waveletDirect[i]->mRtvDescriptorHandle, FALSE, nullptr);
+        mpCmdList->OMSetRenderTargets(1, &waveletDirectPingPong1->mRtvDescriptorHandle, FALSE, nullptr);
         if (i == 0) {
             mpCmdList->SetGraphicsRootDescriptorTable(1, temporalAccumulationTextureDirect->getGPUSrvHandler());
         }
         else {
-            mpCmdList->SetGraphicsRootDescriptorTable(1, waveletDirect[i - 1]->getGPUSrvHandler());
+            mpCmdList->SetGraphicsRootDescriptorTable(1, waveletDirectPingPong2->getGPUSrvHandler());
         }
-        param.level = i;
+        param.stepSize = 1 << i;
         uploadParams();
 
         mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffer->GetGPUVirtualAddress());
 
         mpCmdList->DrawInstanced(6, 1, 0, 0);
-        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletDirect[i]->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletDirectPingPong1->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+        if (i + 1 == mFeedbackTap)
+        {
+            resourceBarrier(mpCmdList, waveletDirectPingPong1->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            resourceBarrier(mpCmdList, temporalAccumulationTextureDirectPrev->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+            mpCmdList->CopyResource(temporalAccumulationTextureDirectPrev->mResource, waveletDirectPingPong1->mResource);
+            resourceBarrier(mpCmdList, waveletDirectPingPong1->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
+        }
+
+        std::swap(waveletDirectPingPong1, waveletDirectPingPong2);
     }
+
 
     // Indirect
     for (int i = 0; i < waveletCount; i++) {
-        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletIndirect[i]->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletIndirectPingPong1->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-        mpCmdList->OMSetRenderTargets(1, &waveletIndirect[i]->mRtvDescriptorHandle, FALSE, nullptr);
+        mpCmdList->OMSetRenderTargets(1, &waveletIndirectPingPong1->mRtvDescriptorHandle, FALSE, nullptr);
         if (i == 0) {
             mpCmdList->SetGraphicsRootDescriptorTable(1, temporalAccumulationTextureIndirect->getGPUSrvHandler());
         }
         else {
-            mpCmdList->SetGraphicsRootDescriptorTable(1, waveletIndirect[i - 1]->getGPUSrvHandler());
+            mpCmdList->SetGraphicsRootDescriptorTable(1, waveletIndirectPingPong2->getGPUSrvHandler());
         }
-        param.level = i;
+        param.stepSize = 1 << i;
         uploadParams();
 
         mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffer->GetGPUVirtualAddress());
 
         mpCmdList->DrawInstanced(6, 1, 0, 0);
-        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletIndirect[i]->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletIndirectPingPong1->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+        if (i + 1 == mFeedbackTap)
+        {
+            resourceBarrier(mpCmdList, waveletIndirectPingPong1->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            resourceBarrier(mpCmdList, temporalAccumulationTextureIndirectPrev->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+            mpCmdList->CopyResource(temporalAccumulationTextureIndirectPrev->mResource, waveletIndirectPingPong1->mResource);
+            resourceBarrier(mpCmdList, waveletIndirectPingPong1->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
+        }
+
+        std::swap(waveletIndirectPingPong1, waveletIndirectPingPong2);
     }
 
     // (4) Reconstruction!
@@ -250,18 +302,18 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     RenderTexture* directRenderTexture;
     RenderTexture* indirectRenderTexture;
 
-    if (waveletCount > 0) 
+    if (waveletCount > 0)
     {
-        directRenderTexture = waveletDirect[waveletCount - 1];
-        indirectRenderTexture = waveletIndirect[waveletCount - 1];
+        directRenderTexture = waveletDirectPingPong2;
+        indirectRenderTexture = waveletIndirectPingPong2;
     }
-    else 
+    else
     {
         directRenderTexture = temporalAccumulationTextureDirect;
         indirectRenderTexture = temporalAccumulationTextureIndirect;
     }
 
-    
+
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
@@ -280,17 +332,11 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     std::swap(historyLengthRenderTexture, historyLengthRenderTexturePrev);
     std::swap(temporalAccumulationTextureDirectMoment, temporalAccumulationTextureDirectMomentPrev);
     std::swap(temporalAccumulationTextureIndirectMoment, temporalAccumulationTextureIndirectMomentPrev);
-    std::swap(temporalAccumulationTextureDirect, temporalAccumulationTextureDirectPrev);
-    std::swap(temporalAccumulationTextureIndirect, temporalAccumulationTextureIndirectPrev);
-    //std::swap(waveletDirect[0], temporalAccumulationTextureDirectPrev);
-    //std::swap(waveletIndirect[0], temporalAccumulationTextureIndirectPrev);
-    /*if (waveletCount > 0) {
-        std::swap(waveletDirect[0], temporalAccumulationTextureDirectPrev);
-        std::swap(waveletIndirect[0], temporalAccumulationTextureIndirectPrev);
-    } else 
+
+    if (mFeedbackTap == 0)
     {
         std::swap(temporalAccumulationTextureDirect, temporalAccumulationTextureDirectPrev);
         std::swap(temporalAccumulationTextureIndirect, temporalAccumulationTextureIndirectPrev);
-    }*/
+    }
     return;
 }

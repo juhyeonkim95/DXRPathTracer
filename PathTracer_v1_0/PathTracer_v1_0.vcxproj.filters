@@ -384,6 +384,7 @@
     <None Include="RenderPass\Core\Common\EvalUtils.hlsli" />
     <None Include="RenderPass\Core\Common\DescriptorTable.hlsli" />
     <None Include="RenderPass\Core\stdafx.hlsli" />
+    <None Include="RenderPass\SVGF\SVGFDepthDerivative.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">
