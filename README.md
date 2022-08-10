@@ -69,7 +69,9 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 - [x] Variance filtering
 
 ### (Week 6, 7) Enhancing Sampling Quality (ReSTIR)
-- [ ] Basic ReSTIR
+- [x] Basic Resampling
+- [x] Temporal Reuse
+- [] Spatial Reuse
 
 ## Usage
 (WIP)

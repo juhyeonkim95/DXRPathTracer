@@ -137,12 +137,31 @@ About x1.5 speed up!
 - Integrated ReSTIR into path tracing pipeline.
 - Restructuring program to implement ReSTIR with spatial reuse.
 
-## 20220804, 20220805
+## 20220804
 - Still restructuring project.
 - Making several render pass that inspired from Falcor's.
 
-- Path Tracer Pass
-- SVGF Pass
-- Blend Pass
-- Tonamap Pass
-- FXAA Pas
+## 20220805
+- Created following render passes.
+  - Path Tracer Pass
+  - SVGF Pass
+  - Blend Pass
+  - Tonamap Pass
+  - FXAA Pass
+
+![20220808_renderpass](assets/20220808_renderpass.jpg)
+
+- Overall descriptor / resource heap structure
+
+![20220808_renderpass2](assets/20220808_renderpass_2.jpg)
+
+## 20220808
+- Reading [RELAX](https://www.nvidia.com/en-us/on-demand/session/gtcspring21-s32759/), the follow up work for SVGF.
+- Code refacoring (path tracer shader parts).
+
+## 20220809
+- Still struggling with SVGF artifacts. (a-trous filtering seems has a problem)
+
+## 20220810
+- Succeed to resolve A-trous filtering problem.
+- Should make a different constant buffers so that uploading value to one buffer does not interrupt the others ([reference](https://www.braynzarsoft.net/viewtutorial/q16390-directx-12-constant-buffers-root-descriptor-tables)).
