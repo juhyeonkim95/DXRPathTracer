@@ -38,7 +38,9 @@ bool isReprojectionTapValid(in float3 currentWorldPos, in float3 previousWorldPo
 
 PS_OUT main(VS_OUTPUT input) : SV_TARGET
 {
-    float3 position = gPositionMeshID.Sample(s1, input.texCoord).rgb;
+    const int2 ipos = int2(input.pos.xy);
+
+    float3 position = gPositionMeshID.Load(int3(ipos, 0)).rgb;
 
     // Reprojection
     float4 projCoord = mul(float4(position, 1.0f), g_frameData.previousProjView);
@@ -49,13 +51,13 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     bool consistency = true;
 
     float3 previousNormal = gNormalPrev.Sample(s1, prevPixel).rgb;
-    float3 normal = gNormal.Sample(s1, input.texCoord).rgb;
+    float3 normal = gNormal.Load(int3(ipos, 0)).rgb;
 
     float previousDepth = gNormalPrev.Sample(s1, prevPixel).w;
-    float depth = gNormal.Sample(s1, input.texCoord).w;
+    float depth = gNormal.Load(int3(ipos, 0)).w;
 
     float previousMeshID = gPositionMeshIDPrev.Sample(s1, prevPixel).w;
-    float meshID = gPositionMeshID.Sample(s1, input.texCoord).w;
+    float meshID = gPositionMeshID.Load(int3(ipos, 0)).w;
 
     float3 previousPosition = gPositionMeshIDPrev.Sample(s1, prevPixel).rgb;
 
@@ -83,10 +85,8 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     historyLength = min(255.0f, (consistency ? (historyLength + 1.0f) : 1.0f));
 
     PS_OUT output;
-    // output.motionVector = float4(prevPixel.x, prevPixel.y, 0, float(consistency));
-    // output.motionVector = float3(prevPixel.x, prevPixel.y, float(consistency));
     output.motionVector = float2((prevPixel.x + float(consistency)) * 0.5, prevPixel.y);
-    output.historyLength = (historyLength);
+    output.historyLength = historyLength;
 
     return output;
 }

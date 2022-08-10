@@ -2,7 +2,7 @@ static const float epsilon = 0.00001;
 
 cbuffer ConstantBuffer : register(b0)
 {
-	float2 texelSize;
+	int2 screenSize;
 	float gAlpha;
 	float gMomentsAlpha;
 	float sigmaZ;

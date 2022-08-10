@@ -4,7 +4,7 @@
 
 struct SVGFParameters
 {
-	vec2 texelSize;
+	ivec2 screenSize;
 	float alpha;
 	float momentsAlpha;
 	float sigmaP;
@@ -80,7 +80,7 @@ public:
 
 	RenderTexture* reconstructionRenderTexture;
 
-	ID3D12ResourcePtr mSVGFParameterBuffer = nullptr;
+	vector<ID3D12ResourcePtr> mSVGFParameterBuffers;
 
-	void uploadParams();
+	void uploadParams(uint32_t index);
 };

@@ -25,14 +25,17 @@ SVGFPass::SVGFPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     rtvFormats = { DXGI_FORMAT_R32G32_FLOAT };
     this->depthDerivativeShader = new Shader(kQuadVertexShader, L"RenderPass/SVGF/SVGFDepthDerivative.hlsl", mpDevice, 1, rtvFormats);
 
-    mSVGFParameterBuffer = createBuffer(mpDevice, sizeof(SVGFParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+    for (int i = 0; i < maxWaveletCount; i++) 
+    {
+        mSVGFParameterBuffers.push_back(createBuffer(mpDevice, sizeof(SVGFParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps));
+    }
 
     param.alpha = 0.05f;
     param.momentsAlpha = 0.2f;
     param.sigmaP = 1.0f;
     param.sigmaN = 128.0f;
     param.sigmaL = 4.0f;
-    param.texelSize = vec2(1.0f / ((float)size.x), (1.0f / (float)size.y));
+    param.screenSize = ivec2(size.x, size.y);
     defaultParam = param;
 }
 
@@ -102,12 +105,12 @@ void SVGFPass::processGUI()
     }
 }
 
-void SVGFPass::uploadParams()
+void SVGFPass::uploadParams(uint32_t index)
 {
     uint8_t* pData;
-    d3d_call(mSVGFParameterBuffer->Map(0, nullptr, (void**)&pData));
+    d3d_call(mSVGFParameterBuffers.at(index)->Map(0, nullptr, (void**)&pData));
     memcpy(pData, &param, sizeof(SVGFParameters));
-    mSVGFParameterBuffer->Unmap(0, nullptr);
+    mSVGFParameterBuffers.at(index)->Unmap(0, nullptr);
 }
 
 void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
@@ -170,8 +173,8 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gDirectIllumination"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, temporalAccumulationTextureDirectMomentPrev->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(5, historyLengthRenderTexture->getGPUSrvHandler());
-    this->uploadParams();
-    mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffer->GetGPUVirtualAddress());
+    this->uploadParams(0);
+    mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffers[0]->GetGPUVirtualAddress());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
 
@@ -215,9 +218,8 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         mpCmdList->SetGraphicsRootDescriptorTable(5, historyLengthRenderTexture->getGPUSrvHandler());
         mpCmdList->SetGraphicsRootDescriptorTable(6, depthDerivativeTexture->getGPUSrvHandler());
         
-        this->uploadParams();
-
-        mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffer->GetGPUVirtualAddress());
+        this->uploadParams(0);
+        mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffers.at(0)->GetGPUVirtualAddress());
 
         mpCmdList->DrawInstanced(6, 1, 0, 0);
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDirectVarianceFilter->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -252,16 +254,16 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
         mpCmdList->OMSetRenderTargets(1, &waveletDirectPingPong1->mRtvDescriptorHandle, FALSE, nullptr);
         if (i == 0) {
-            mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gOutputHDR"));
-            // mpCmdList->SetGraphicsRootDescriptorTable(1, temporalAccumulationTextureDirect->getGPUSrvHandler());
+            // mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gOutputHDR"));
+            mpCmdList->SetGraphicsRootDescriptorTable(1, temporalAccumulationTextureDirect->getGPUSrvHandler());
         }
         else {
             mpCmdList->SetGraphicsRootDescriptorTable(1, waveletDirectPingPong2->getGPUSrvHandler());
         }
         param.stepSize = 1 << i;
-        uploadParams();
+        uploadParams(i);
 
-        mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffer->GetGPUVirtualAddress());
+        mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffers.at(i)->GetGPUVirtualAddress());
 
         mpCmdList->DrawInstanced(6, 1, 0, 0);
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletDirectPingPong1->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -290,9 +292,9 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
             mpCmdList->SetGraphicsRootDescriptorTable(1, waveletIndirectPingPong2->getGPUSrvHandler());
         }
         param.stepSize = 1 << i;
-        uploadParams();
+        uploadParams(i);
 
-        mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffer->GetGPUVirtualAddress());
+        mpCmdList->SetGraphicsRootConstantBufferView(0, mSVGFParameterBuffers.at(i)->GetGPUVirtualAddress());
 
         mpCmdList->DrawInstanced(6, 1, 0, 0);
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletIndirectPingPong1->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
