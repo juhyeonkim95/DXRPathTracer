@@ -71,7 +71,7 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 ### (Week 6, 7) Enhancing Sampling Quality (ReSTIR)
 - [x] Basic Resampling
 - [x] Temporal Reuse
-- [] Spatial Reuse
+- [ ] Spatial Reuse
 
 ## Usage
 (WIP)
