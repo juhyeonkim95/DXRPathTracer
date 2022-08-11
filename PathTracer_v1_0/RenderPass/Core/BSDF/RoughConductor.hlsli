@@ -100,6 +100,7 @@ namespace roughconductor
 		bs.wo = wo;
 		bs.pdf = pdf;
 		bs.weight = si.specularReflectance * F * weight;
+		bs.sampledLobe = BSDF_LOBE_GLOSSY_REFLECTION;
 	}
 }
 #endif

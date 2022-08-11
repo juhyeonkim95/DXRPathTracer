@@ -22,18 +22,7 @@ enum BSDF_TYPE : uint
 	BSDF_TRANSMISSION = BSDF_TYPE_DIELECTRIC | BSDF_TYPE_ROUGH_DIELECTRIC
 };
 
-enum BSDF_LOBE : uint
-{
-	BSDF_LOBE_DIFFUSE_REFLECTION = 1 << 0,
-	BSDF_LOBE_DIFFUSE_TRANSMISSION = 1 << 2,
-	BSDF_LOBE_SPECULAR_REFLECTION = 1 << 2,
-	BSDF_LOBE_SPECULAR_TRANSMISSION = 1 << 3,
-	BSDF_LOBE_DELTA_REFLECTION = 1 << 4,
-	BSDF_LOBE_DELTA_TRANSMISSION = 1 << 5,
 
-	BSDF_LOBE_REFLECTION = BSDF_LOBE_DIFFUSE_REFLECTION | BSDF_LOBE_SPECULAR_REFLECTION | BSDF_LOBE_DELTA_REFLECTION,
-	BSDF_LOBE_TRANSMISSION = BSDF_LOBE_DIFFUSE_TRANSMISSION | BSDF_LOBE_SPECULAR_TRANSMISSION | BSDF_LOBE_DELTA_TRANSMISSION
-};
 
 namespace bsdf
 {
@@ -57,8 +46,34 @@ namespace bsdf
 		case BSDF_TYPE_ROUGH_CONDUCTOR: return roughconductor::Eval(material, payload, wo);
 		case BSDF_TYPE_DIELECTRIC: return dielectric::Eval(material, payload, wo);
 		case BSDF_TYPE_ROUGH_DIELECTRIC: return roughdielectric::Eval(material, payload, wo);
-		case BSDF_TYPE_PLASTIC: return plastic::Eval(material, payload, wo);
-		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Eval(material, payload, wo);
+		case BSDF_TYPE_PLASTIC: return plastic::Eval(material, payload, wo, true, true);
+		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Eval(material, payload, wo, true, true);
+		}
+		return diffuse::Eval(material, payload, wo);
+	}
+
+	float3 EvalDiffuse(in Material material, in RayPayload payload, in float3 wo) {
+		switch (material.materialType) {
+		case BSDF_TYPE_DIFFUSE: return diffuse::Eval(material, payload, wo);
+		case BSDF_TYPE_CONDUCTOR: return float3(0,0,0);
+		case BSDF_TYPE_ROUGH_CONDUCTOR: return float3(0, 0, 0);
+		case BSDF_TYPE_DIELECTRIC: return float3(0, 0, 0);
+		case BSDF_TYPE_ROUGH_DIELECTRIC: return float3(0, 0, 0);
+		case BSDF_TYPE_PLASTIC: return plastic::Eval(material, payload, wo, false, true);
+		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Eval(material, payload, wo, false, true);
+		}
+		return diffuse::Eval(material, payload, wo);
+	}
+
+	float3 EvalSpecular(in Material material, in RayPayload payload, in float3 wo) {
+		switch (material.materialType) {
+		case BSDF_TYPE_DIFFUSE: return float3(0,0,0);
+		case BSDF_TYPE_CONDUCTOR: return conductor::Eval(material, payload, wo);
+		case BSDF_TYPE_ROUGH_CONDUCTOR: return roughconductor::Eval(material, payload, wo);
+		case BSDF_TYPE_DIELECTRIC: return dielectric::Eval(material, payload, wo);
+		case BSDF_TYPE_ROUGH_DIELECTRIC: return roughdielectric::Eval(material, payload, wo);
+		case BSDF_TYPE_PLASTIC: return plastic::Eval(material, payload, wo, true, false);
+		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Eval(material, payload, wo, true, false);
 		}
 		return diffuse::Eval(material, payload, wo);
 	}

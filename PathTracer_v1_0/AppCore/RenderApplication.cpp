@@ -126,8 +126,12 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     pathTracer->createShaderTable(mpSrvUavHeap);
 
     restirPass = new ReSTIR(mpDevice);
-    svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
-    svgfPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    //svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
+    //svgfPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    relaxPass = new RELAXPass(mpDevice, mSwapChainSize);
+    relaxPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
     blendPass = new BlendPass(mpDevice, mSwapChainSize);
     blendPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
@@ -190,36 +194,70 @@ void RenderApplication::onFrameRender()
 
     D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
 
-    if (svgfPass->mEnabled) 
+    if (this->renderMode > 0) {
+        switch (this->renderMode) {
+        case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
+        //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
+        //case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
+
+        case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionRadiance"); break;
+        case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionRadiance"); break;
+
+        case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
+        case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
+        case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
+        case 7: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;
+        case 8: output = mpSrvUavHeap->getGPUHandleByName("gSpecularReflectance"); break;
+        default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
+        }
+    }
+    else
     {
-        svgfPass->forward(&renderContext, renderDataPathTracer);
-        output = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
-        // output = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
-        // output = svgfPass->waveletDirect[svgfPass->waveletCount-1]->getGPUSrvHandler();
-
-        if (blendPass->mEnabled) 
+        if (svgfPass && svgfPass->mEnabled)
         {
-            RenderData renderDataBlend;
-            renderDataBlend.gpuHandleDictionary["src1"] = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
-            renderDataBlend.gpuHandleDictionary["src2"] = output;// mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
-            blendPass->setAlpha(mFrameNumber);
-
-            blendPass->forward(&renderContext, renderDataBlend);
-
-            output = blendPass->blendRenderTexture->getGPUSrvHandler();
+            svgfPass->forward(&renderContext, renderDataPathTracer);
+            output = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
+        }
+        else 
+        if (relaxPass && relaxPass->mEnabled)
+        {
+            relaxPass->forward(&renderContext, renderDataPathTracer);
+            output = relaxPass->reconstructionRenderTexture->getGPUSrvHandler();
         }
 
+        //if (svgfPass->mEnabled) 
+        //{
+        //    svgfPass->forward(&renderContext, renderDataPathTracer);
+        //    output = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
+        //    // output = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
+        //    // output = svgfPass->waveletDirect[svgfPass->waveletCount-1]->getGPUSrvHandler();
+
+        //    if (blendPass->mEnabled) 
+        //    {
+        //        RenderData renderDataBlend;
+        //        renderDataBlend.gpuHandleDictionary["src1"] = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+        //        renderDataBlend.gpuHandleDictionary["src2"] = output;// mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+        //        blendPass->setAlpha(mFrameNumber);
+
+        //        blendPass->forward(&renderContext, renderDataBlend);
+
+        //        output = blendPass->blendRenderTexture->getGPUSrvHandler();
+        //    }
+        //}
+
+        if (fxaaPass->mEnabled)
+        {
+            RenderData renderDataBlend;
+            renderDataBlend.gpuHandleDictionary["src"] = output;
+
+            fxaaPass->forward(&renderContext, renderDataBlend);
+
+            output = fxaaPass->renderTexture->getGPUSrvHandler();
+        }
     }
 
-    if (fxaaPass->mEnabled)
-    {
-        RenderData renderDataBlend;
-        renderDataBlend.gpuHandleDictionary["src"] = output;
-
-        fxaaPass->forward(&renderContext, renderDataBlend);
-
-        output = fxaaPass->renderTexture->getGPUSrvHandler();
-    }
+    
+    
 
     RenderData renderDataTonemap;
     // renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
@@ -253,12 +291,15 @@ void RenderApplication::onFrameRender()
     
     pathTracer->processGUI();
     restirPass->processGUI();
-    svgfPass->processGUI();
+    if(svgfPass)
+        svgfPass->processGUI();
+    if (relaxPass)
+        relaxPass->processGUI();
     tonemapPass->processGUI();
     blendPass->processGUI();
     fxaaPass->processGUI();
 
-    mDirty = (pathTracer->mDirty) || (svgfPass->mDirty) || (restirPass->mDirty);
+    mDirty = (pathTracer->mDirty) || (svgfPass && svgfPass->mDirty) || (relaxPass && relaxPass->mDirty) || (restirPass->mDirty);
 
     //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
     //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
@@ -297,27 +338,6 @@ void RenderApplication::onFrameRender()
     endFrame(rtvIndex);
 }
 
-void RenderApplication::initPostProcess()
-{
-
-    // this->defaultCopyShader = new Shader(L"QuadVertexShader.hlsl", L"CopyShader.hlsl", mpDevice, 1);
-    // pathTracer = new PathTracer(mpDevice);
-    // tonemapPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
-}
-
-void RenderApplication::postProcess(int rtvIndex)
-{
-    //map<string, D3D12_GPU_DESCRIPTOR_HANDLE> & gpuHandlesMap = mpSrvUavHeap->getGPUHandleMap();
-
-    //postProcessQuad->bind(mpCmdList);
-    //svgfPass->setViewPort(mpCmdList);
-    //svgfPass->forward(mpCmdList, gpuHandlesMap, pathTracer->getOutputs(), sceneResourceManager->getCameraConstantBuffer());
-
-    //D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
-    //// D3D12_GPU_DESCRIPTOR_HANDLE inputHandle = svgfPass->waveletDirect[4]->getGPUSrvHandler();
-
-    //tonemapPass->forward(mpCmdList, inputHandle, mFrameObjects[rtvIndex].rtvHandle, mFrameObjects[rtvIndex].pSwapChainBuffer);
-}
 
 
 void RenderApplication::onShutdown()

@@ -1,4 +1,4 @@
-#include "SVGFCommon.hlsli"
+#include "RELAXCommon.hlsli"
 
 Texture2D col_history : register(t0);
 Texture2D motion_vectors : register(t1);
@@ -55,8 +55,8 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     //const float alpha = max(1 - historyLength, 0.2f);
     //const float alphaMoments = max(1 - historyLength, 0.2f);
 
-    const float alpha = success ? max(gAlpha, 1.0 / historyLength) : 1.0f;
-    const float alphaMoments = success ? max(gMomentsAlpha, 1.0 / historyLength) : 1.0f;
+    const float alpha = success ? max(1.0 / gMaxAccumulatedFrame, 1.0 / historyLength) : 1.0f;
+    const float alphaMoments = success ? max(1.0 / gMaxAccumulatedFrame, 1.0 / historyLength) : 1.0f;
 
     //const float alpha = success ? 1.0 / historyLength : 1.0f;
     //const float alphaMoments = success ? 1.0 / historyLength : 1.0f;

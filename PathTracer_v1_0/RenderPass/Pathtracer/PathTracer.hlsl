@@ -4,6 +4,17 @@
 #include "../ReSTIR/ReSTIRInitTemporal.hlsli"
 #include "PathTracerConstants.hlsli"
 
+void accumulateSpecificRadiance(uint primaryReflectionLobe, in float3 radiance, inout PathTraceResult pathResult)
+{
+    switch (primaryReflectionLobe)
+    {
+    case BSDF_LOBE_DIFFUSE_REFLECTION: pathResult.diffuseRadiance += radiance; break;
+    case BSDF_LOBE_GLOSSY_REFLECTION: pathResult.specularRadiance += radiance; break;
+    case BSDF_LOBE_DELTA_REFLECTION: pathResult.deltaReflectionRadiance += radiance; break;
+    case BSDF_LOBE_DELTA_TRANSMISSION: pathResult.deltaTransmissionRadiance += radiance; break;
+    default: break;
+    }
+}
 
 void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult)
 {
@@ -26,10 +37,17 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.depth = payload.t;
     pathResult.instanceIndex = payload.instanceIndex;
     pathResult.position = payload.origin;
-    pathResult.direct = float3(0, 0, 0);
+    pathResult.directRadiance = float3(0, 0, 0);
+    pathResult.diffuseRadiance = float3(0, 0, 0);
+    pathResult.specularRadiance = float3(0, 0, 0);
+    pathResult.deltaReflectionRadiance = float3(0, 0, 0);
+    pathResult.deltaTransmissionRadiance = float3(0, 0, 0);
+
+    pathResult.emission = 0.0f;
+
     pathResult.reflectance = payload.diffuseReflectance;
     pathResult.diffuseReflectance = payload.diffuseReflectance;
-    pathResult.specularReflectance = payload.diffuseReflectance;
+    pathResult.specularReflectance = payload.specularReflectance;
     pathResult.indirectReflectance = payload.diffuseReflectance;
 
     uint materialType = g_materialinfo[payload.materialIndex].materialType;
@@ -66,20 +84,31 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     uint depth = 1;
     bool useReSTIR = false;
 
+    uint primaryReflectionLobe = payload.sampledLobe;
+
     while (true)
     {
-
         // ---------------- Intersection with emitters ----------------
-        result += emissionWeight * throughput * payload.emission;
+        float3 currentRadiance = emissionWeight * throughput * payload.emission;
+        result += currentRadiance;
 
         // ---------------- Terminate ray tracing ----------------
         // (1) over max depth
         // (2) ray missed
         // (3) hit emission
         if (payload.done || depth >= maxDepth) {
-            if (depth <= 2) {
-                pathResult.direct += emissionWeight * throughput * payload.emission;
+            if (depth == 1) {
+                pathResult.emission = payload.emission;
             }
+            else if (depth == 2) {
+                pathResult.directRadiance += currentRadiance;
+            }
+
+            if (depth >= 2)
+            {
+                accumulateSpecificRadiance(primaryReflectionLobe, currentRadiance, pathResult);
+            }
+
             break;
         }
 
@@ -102,6 +131,9 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
 
         // Check whether use ReSTIR
         useReSTIR = gReSTIR.enableReSTIR && (depth == 1) && (material.materialType & BSDF_TYPE_GLOSSY);
+        float3 Li = 0.0f;
+        float weight = 0.0f;
+        float3 wo = 0.0f;
 
         // Emitter sampling Case 1
         // --------------------- ReSTIR ---------------------
@@ -120,13 +152,14 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
                 shadowPayload.hit = false;
                 // TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
                 if (!shadowPayload.hit) {
-                    float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
-                    const float3 f = bsdf::Eval(material, payload, wo);
+                    wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
+                    // const float3 f = bsdf::Eval(material, payload, wo);
                     const float nDl = dot(payload.normal, L);
                     const float LnDl = -dot(newReservoir.lightSample.normal, L);
 
-                    const float3 L = newReservoir.lightSample.Li * f * max(LnDl, 0) / (Ldist * Ldist) * newReservoir.W;
-                    result += L;
+                    Li = newReservoir.lightSample.Li;
+                    weight = max(LnDl, 0) / (Ldist * Ldist) * newReservoir.W;
+                    // L =  * f * max(LnDl, 0) / (Ldist * Ldist) * newReservoir.W;
                 }
             }
         }
@@ -155,22 +188,42 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
                 shadowPayload.hit = false;
                 TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
                 if (!shadowPayload.hit) {
-                    float3 wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
+                    wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
                     const float scatterPdf = bsdf::Pdf(material, payload, wo);
-                    const float3 f = bsdf::Eval(material, payload, wo);
+                    // const float3 f = bsdf::Eval(material, payload, wo);
 
-                    const float weight = powerHeuristic(lightPdf, scatterPdf);
+                    Li = lightSample.Li;
+                    weight = powerHeuristic(lightPdf, scatterPdf) / lightPdf;
 
-                    const float3 L = weight * lightSample.Li * f / lightPdf * throughput;
-                    result += L;
-                    if (depth == 1)
-                    {
-                        pathResult.direct += L;
-                    }
+                    // L = weight * lightSample.Li * f / lightPdf * throughput;
+                    
                 }
             }
         }
+        if (weight > 0) 
+        {
+            // const float3 f = bsdf::Eval(material, payload, wo);
+            
 
+            const float3 fDiffuse = bsdf::EvalDiffuse(material, payload, wo);
+            const float3 fSpecular = bsdf::EvalSpecular(material, payload, wo);
+
+            const float3 LDiffuse = weight * Li * fDiffuse * throughput;
+            const float3 LSpecular = weight * Li * fSpecular * throughput;
+
+            const float3 L = LDiffuse + LSpecular;
+            result += L;
+            if (depth == 1)
+            {
+                pathResult.diffuseRadiance += LDiffuse;
+                pathResult.specularRadiance += LSpecular;
+                pathResult.directRadiance += L;
+            }
+            else {
+                accumulateSpecificRadiance(primaryReflectionLobe, L, pathResult);
+            }
+        }
+        
 #endif
         // ------------------------------------------------------------
         // --------------------- BSDF sampling ------------------------
@@ -223,10 +276,20 @@ void rayGen()
     float aspectRatio = dims.x / dims.y;
 
     float3 radiance = float3(0, 0, 0);
-    float3 direct = float3(0, 0, 0);
+    float3 directRadiance = float3(0, 0, 0);
+    float3 diffuseRadiance = float3(0, 0, 0);
+    float3 specularRadiance = float3(0, 0, 0);
+    float3 deltaReflectionRadiance = float3(0, 0, 0);
+    float3 deltaTransmissionRadiance = float3(0, 0, 0);
+
+    float3 emission = float3(0, 0, 0);
+
     float3 normal = float3(0, 0, 0);
     float3 position = float3(0, 0, 0);
+
     float3 reflectance = float3(0, 0, 0);
+    float3 diffuseReflectance = float3(0, 0, 0);
+    float3 specularReflectance = float3(0, 0, 0);
 
     float depth = 0.0f;
     RayDesc ray;
@@ -245,21 +308,42 @@ void rayGen()
         ray.Origin = g_frameData.cameraPosition.xyz;
         ray.Direction = normalize(g_frameData.u.xyz * d.x - g_frameData.v.xyz * d.y + g_frameData.w.xyz);
         PathTrace(ray, seed, pathResult);
+
         radiance += pathResult.radiance;
+        directRadiance += pathResult.directRadiance;
+        diffuseRadiance += pathResult.diffuseRadiance;
+        specularRadiance += pathResult.specularRadiance;
+        emission += pathResult.emission;
+        deltaReflectionRadiance += pathResult.deltaReflectionRadiance;
+        deltaTransmissionRadiance += pathResult.deltaTransmissionRadiance;
+
         normal += pathResult.normal;
         depth += pathResult.depth;
         position += pathResult.position;
-        direct += pathResult.direct;
+
         reflectance += pathResult.reflectance;
+        specularReflectance += pathResult.specularReflectance;
+        diffuseReflectance += pathResult.diffuseReflectance;
     }
     radiance /= PATHTRACE_SPP;
+    directRadiance /= PATHTRACE_SPP;
+    diffuseRadiance /= PATHTRACE_SPP;
+    specularRadiance /= PATHTRACE_SPP;
+    deltaReflectionRadiance /= PATHTRACE_SPP;
+    deltaTransmissionRadiance /= PATHTRACE_SPP;
+
+    emission /= PATHTRACE_SPP;
+
     normal /= PATHTRACE_SPP;
     depth /= PATHTRACE_SPP;
     position /= PATHTRACE_SPP;
-    direct /= PATHTRACE_SPP;
-    reflectance /= PATHTRACE_SPP;
 
-    float3 indirect = radiance - direct;
+    reflectance /= PATHTRACE_SPP;
+    diffuseReflectance /= PATHTRACE_SPP;
+    specularReflectance /= PATHTRACE_SPP;
+
+
+    float3 indirectRadiance = radiance - emission - directRadiance;
     uint currentMeshID = pathResult.instanceIndex;
     uint pathType = pathResult.pathType;
 
@@ -267,12 +351,27 @@ void rayGen()
     gOutputPositionGeomID[launchIndex.xy] = float4(position, currentMeshID);
     gOutputNormal[launchIndex.xy] = float4(normal, depth);
 
-    float3 directIllumination = direct / max(reflectance, float3(0.001, 0.001, 0.001));
-    float3 indirectIllumination = indirect / max(reflectance, float3(0.001, 0.001, 0.001));
+    float3 directIllumination = directRadiance / max(reflectance, float3(0.001, 0.001, 0.001));
+    float3 indirectIllumination = indirectRadiance / max(reflectance, float3(0.001, 0.001, 0.001));
 
     gDirectIllumination[launchIndex.xy] = float4(directIllumination, 1.0f);
     gIndirectIllumination[launchIndex.xy] = float4(indirectIllumination, 1.0f);
+
+    float3 diffuseIllumination = diffuseRadiance / max(diffuseReflectance, float3(0.001, 0.001, 0.001));
+    float3 specularIllumination = specularRadiance / max(specularReflectance, float3(0.001, 0.001, 0.001));
+
+    gDiffuseRadiance[launchIndex.xy] = float4(diffuseIllumination, 1.0f);
+    gSpecularRadiance[launchIndex.xy] = float4(specularIllumination, 1.0f);
+    
+    gDeltaReflectionRadiance[launchIndex.xy] = float4(deltaReflectionRadiance, 1.0f);
+    gDeltaTransmissionRadiance[launchIndex.xy] = float4(deltaTransmissionRadiance, 1.0f);
+
+
+    gEmission[launchIndex.xy] = float4(emission, 1.0f);
+
     gReflectance[launchIndex.xy] = float4(reflectance, 1.0f);
+    gDiffuseReflectance[launchIndex.xy] = float4(diffuseReflectance, 1.0f);
+    gSpecularReflectance[launchIndex.xy] = float4(specularReflectance, 1.0f);
 
 #endif
     if (g_frameData.frameNumber > 1 && gPathTracer.accumulateFrames) {
@@ -349,12 +448,6 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     payload.t = t;
     payload.origin = hitpoint;
 
-    if (isEmitter) {
-        payload.done = true;
-        payload.emission = nDotV > 0 ? lights[geometryInfo.lightIndex].emission.xyz : float3(0, 0, 0);
-        return;
-    }
-
     float2 uvtemp = vtx0.uv * barycentrics.x + vtx1.uv * barycentrics.y + vtx2.uv * barycentrics.z;
     payload.uv = float2(uvtemp.x, 1 - uvtemp.y);
 
@@ -368,6 +461,12 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     float3 wi = -rayDir;
     payload.wi = float3(dot(payload.tangent, wi), dot(payload.bitangent, wi), dot(payload.normal, wi));
     
+    if (isEmitter) {
+        payload.done = true;
+        payload.emission = nDotV > 0 ? lights[geometryInfo.lightIndex].emission.xyz : float3(0, 0, 0);
+        return;
+    }
+
     BSDFSample bs;
 
     bsdf::Sample(materialInfo, payload, payload.seed, bs);
@@ -375,6 +474,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     payload.direction = bs.wo.x * payload.tangent + bs.wo.y * payload.bitangent + bs.wo.z * payload.normal;
     payload.attenuation = bs.weight;
     payload.scatterPdf = bs.pdf;
+    payload.sampledLobe = bs.sampledLobe;
 }
 
 

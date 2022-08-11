@@ -26,13 +26,24 @@ struct Material
     uint unused;
 };
 
+
+static const uint BSDF_LOBE_DIFFUSE_REFLECTION = 1 << 0;
+static const uint BSDF_LOBE_DIFFUSE_TRANSMISSION = 1 << 1;
+static const uint BSDF_LOBE_GLOSSY_REFLECTION = 1 << 2;
+static const uint BSDF_LOBE_GLOSSY_TRANSMISSION = 1 << 3;
+static const uint BSDF_LOBE_DELTA_REFLECTION = 1 << 4;
+static const uint BSDF_LOBE_DELTA_TRANSMISSION = 1 << 5;
+static const uint BSDF_LOBE_REFLECTION = BSDF_LOBE_DIFFUSE_REFLECTION | BSDF_LOBE_GLOSSY_REFLECTION | BSDF_LOBE_DELTA_REFLECTION;
+static const uint BSDF_LOBE_TRANSMISSION = BSDF_LOBE_DIFFUSE_TRANSMISSION | BSDF_LOBE_GLOSSY_TRANSMISSION | BSDF_LOBE_DELTA_TRANSMISSION;
+
+
 struct BSDFSample
 {
     float3 wo;
     float3 weight;
     float pdf;
+    uint sampledLobe;
 };
-
 
 struct GeometryInfo
 {
@@ -116,6 +127,7 @@ struct SurfaceInteraction
     float scatterPdf;
 };
 
+
 struct RayPayload
 {
     float3 emission;
@@ -146,7 +158,7 @@ struct RayPayload
     float t;
     float unused;
 
-    uint bsdfLobe;
+    uint sampledLobe;
 };
 
 struct ShadowPayload
@@ -161,12 +173,26 @@ struct PathTraceResult
     float depth;
     uint instanceIndex;
     float3 position;
-    float3 direct;
-    float3 indirect;
+
+    float3 emission;
+    float3 directRadiance;
+    float3 indirectRadiance;
+    float3 diffuseRadiance;
+    float3 specularRadiance;
+
+    float3 deltaReflectionReflectance;
+    float3 deltaReflectionEmission;
+    float3 deltaReflectionRadiance;
+
+    float3 deltaTransmissionReflectance;
+    float3 deltaTransmissionEmission;
+    float3 deltaTransmissionRadiance;
+
     float3 reflectance;
     float3 diffuseReflectance;
     float3 specularReflectance;
     float3 indirectReflectance;
+
     uint pathType;
 };
 

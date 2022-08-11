@@ -6,6 +6,7 @@
 #include <dinput.h>
 #include <fstream>
 #include "SVGF/SVGFPass.h"
+#include "RELAX/RELAXPass.h"
 #include "ReSTIR/ReSTIR.h"
 #include "PathTracer/PathTracer.h"
 #include "BlendPass/BlendPass.h"
@@ -89,6 +90,10 @@ private:
     PathTracer* pathTracer;
     ReSTIR* restirPass;
     SVGFPass* svgfPass;
+    RELAXPass* relaxPass;
+
+    bool createSVGF = false;
+
     BlendPass* blendPass;
     FXAA* fxaaPass;
 

@@ -17,7 +17,7 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXATrousWavelet.hlsl", mpDevice, 4, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, };
-    this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXReconstruction.hlsl", mpDevice, 4, rtvFormats);
+    this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXReconstruction.hlsl", mpDevice, 5, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXFilterVariance.hlsl", mpDevice, 6, rtvFormats);
@@ -30,8 +30,8 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size)
         mRELAXParameterBuffers.push_back(createBuffer(mpDevice, sizeof(RELAXParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps));
     }
 
-    param.alpha = 0.05f;
-    param.momentsAlpha = 0.2f;
+    param.diffuseMaxAccumulatedFrame = 32;
+    param.specularMaxAccumulatedFrame = 32;
     param.sigmaP = 1.0f;
     param.sigmaN = 128.0f;
     param.sigmaL = 4.0f;
@@ -89,8 +89,8 @@ void RELAXPass::processGUI()
         mDirty |= ImGui::SliderFloat("sigmaP", &param.sigmaP, 0.01f, 16.0f);
         mDirty |= ImGui::SliderFloat("sigmaN", &param.sigmaN, 0.01f, 256.0f);
         mDirty |= ImGui::SliderFloat("sigmaL", &param.sigmaL, 0.01f, 16.0f);
-        mDirty |= ImGui::SliderFloat("alpha", &param.alpha, 0.01f, 1.0f);
-        mDirty |= ImGui::SliderFloat("alphaMoment", &param.momentsAlpha, 0.01f, 1.0f);
+        mDirty |= ImGui::SliderInt("diffuseMaxAccumulatedFrame", &param.diffuseMaxAccumulatedFrame, 1, 64);
+        mDirty |= ImGui::SliderInt("specularMaxAccumulatedFrame", &param.specularMaxAccumulatedFrame, 1, 64);
         mDirty |= ImGui::SliderInt("waveletCount", &waveletCount, 0, maxWaveletCount);
         mDirty |= ImGui::SliderInt("Feedback Tap", &mFeedbackTap, 0, std::max(0, waveletCount));
 
@@ -170,7 +170,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     mpCmdList->SetGraphicsRootDescriptorTable(1, temporalAccumulationTextureDiffusePrev->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(2, motionVectorRenderTexture->getGPUSrvHandler());
-    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gDiffuseIllumination"));
+    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gDiffuseRadiance"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, temporalAccumulationTextureDiffuseMomentPrev->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(5, historyLengthRenderTexture->getGPUSrvHandler());
     this->uploadParams(0);
@@ -191,7 +191,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     mpCmdList->SetGraphicsRootDescriptorTable(1, temporalAccumulationTextureSpecularPrev->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(2, motionVectorRenderTexture->getGPUSrvHandler());
-    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gSpecularIllumination"));
+    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gSpecularRadiance"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, temporalAccumulationTextureSpecularMomentPrev->getGPUSrvHandler());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
@@ -201,7 +201,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     if (mEnableVarianceFilter) {
         // (2.5) Filter variance if length is <4
-        // direct
+        // diffuse
         mpCmdList->SetPipelineState(varianceFilterShader->getPipelineStateObject());
         mpCmdList->SetGraphicsRootSignature(varianceFilterShader->getRootSignature()); // set the root signature
 
@@ -225,7 +225,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureDiffuseVarianceFilter->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
         std::swap(temporalAccumulationTextureDiffuseVarianceFilter, temporalAccumulationTextureDiffuse);
 
-        // indirect
+        // specular
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureSpecularVarianceFilter->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
         mpCmdList->OMSetRenderTargets(1, &temporalAccumulationTextureSpecularVarianceFilter->mRtvDescriptorHandle, FALSE, nullptr);
@@ -314,18 +314,18 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetPipelineState(reconstructionShader->getPipelineStateObject());
     mpCmdList->SetGraphicsRootSignature(reconstructionShader->getRootSignature()); // set the root signature
 
-    RenderTexture* directRenderTexture;
-    RenderTexture* indirectRenderTexture;
+    RenderTexture* diffuseRenderTexture;
+    RenderTexture* specularRenderTexture;
 
     if (waveletCount > 0)
     {
-        directRenderTexture = waveletDiffusePingPong2;
-        indirectRenderTexture = waveletSpecularPingPong2;
+        diffuseRenderTexture = waveletDiffusePingPong2;
+        specularRenderTexture = waveletSpecularPingPong2;
     }
     else
     {
-        directRenderTexture = temporalAccumulationTextureDiffuse;
-        indirectRenderTexture = temporalAccumulationTextureSpecular;
+        diffuseRenderTexture = temporalAccumulationTextureDiffuse;
+        specularRenderTexture = temporalAccumulationTextureSpecular;
     }
 
 
@@ -334,10 +334,11 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     mpCmdList->OMSetRenderTargets(1, &reconstructionRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
 
-    mpCmdList->SetGraphicsRootDescriptorTable(1, directRenderTexture->getGPUSrvHandler());
-    mpCmdList->SetGraphicsRootDescriptorTable(2, indirectRenderTexture->getGPUSrvHandler());
-    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gReflectance"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gOutputHDR"));
+    mpCmdList->SetGraphicsRootDescriptorTable(1, diffuseRenderTexture->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(2, specularRenderTexture->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gDiffuseReflectance"));
+    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gSpecularReflectance"));
+    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gEmission"));
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
     mpCmdList->DrawInstanced(6, 1, 0, 0);

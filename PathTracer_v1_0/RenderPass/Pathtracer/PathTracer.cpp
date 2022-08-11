@@ -183,7 +183,7 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
 
     // UAV
     desc.range[1].BaseShaderRegister = 0;
-    desc.range[1].NumDescriptors = 11;
+    desc.range[1].NumDescriptors = 22;
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
@@ -322,17 +322,24 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     // 7. HDR
     outputUAVBuffers["gOutputHDR"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputHDR", 1);
 
-    // 8. Direct Illumination
+    // Direct & indirect
     outputUAVBuffers["gDirectIllumination"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIllumination", 1);
-
-    // 9. Indirect Illumination
     outputUAVBuffers["gIndirectIllumination"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIllumination", 1);
 
+    // Diffuse & specular
+    outputUAVBuffers["gDiffuseRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDiffuseRadiance", 1);
+    outputUAVBuffers["gSpecularRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gSpecularRadiance", 1);
+
+    outputUAVBuffers["gEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gEmission", 1);
+
     // 10. Reflectance
-    outputUAVBuffers["gReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gReflectance", 1);
-    //outputUAVBuffers["gSpecularReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gSpecularReflectance", 1);
-    //outputUAVBuffers["gIndirectReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectReflectance", 1);
+    outputUAVBuffers["gReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gReflectance", 1);
+    outputUAVBuffers["gDiffuseReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDiffuseReflectance", 1);
+    outputUAVBuffers["gSpecularReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gSpecularReflectance", 1);
+    // outputUAVBuffers["gIndirectReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gIndirectReflectance", 1);
     
+    // outputUAVBuffers["gResidualRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gResidualRadiance", 1);
+
 
     // 11. Position / ID
     outputUAVBuffers["gPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
@@ -347,6 +354,17 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     // 15 prev reserviors
     outputUAVBuffers["gPrevReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
     outputUAVBuffers["gCurrReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gCurrReserviors", 1, sizeof(Reservoir));
+
+
+    // Delta
+    outputUAVBuffers["gDeltaReflectionReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDeltaReflectionReflectance", 1);
+    outputUAVBuffers["gDeltaReflectionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionEmission", 1);
+    outputUAVBuffers["gDeltaReflectionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionRadiance", 1);
+
+    outputUAVBuffers["gDeltaTransmissionReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDeltaTransmissionReflectance", 1);
+    outputUAVBuffers["gDeltaTransmissionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionEmission", 1);
+    outputUAVBuffers["gDeltaTransmissionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionRadiance", 1);
+
 
 }
 

@@ -165,3 +165,8 @@ About x1.5 speed up!
 ## 20220810
 - Succeed to resolve A-trous filtering problem.
 - Should make a different constant buffers so that uploading value to one buffer does not interrupt the others ([reference](https://www.braynzarsoft.net/viewtutorial/q16390-directx-12-constant-buffers-root-descriptor-tables)).
+
+## 20220811
+- Complete unfinished part in materials (plastic, roughplastic).
+- Implementing RELAX + NVIDIA NRD pass.
+- Divided radiance into diffuse, specular, delta reflection, delta transmission components (What's next?).

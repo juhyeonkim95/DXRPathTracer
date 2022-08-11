@@ -5,8 +5,8 @@
 struct RELAXParameters
 {
 	ivec2 screenSize;
-	float alpha;
-	float momentsAlpha;
+	int diffuseMaxAccumulatedFrame;
+	int specularMaxAccumulatedFrame;
 	float sigmaP;
 	float sigmaN;
 	float sigmaL;

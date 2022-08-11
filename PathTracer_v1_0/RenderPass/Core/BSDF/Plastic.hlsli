@@ -57,16 +57,13 @@ namespace plastic
 		return 0.0f;
 	}
 
-	float3 Eval(in Material mat, in RayPayload si, in float3 wo) {
+	float3 Eval(in Material mat, in RayPayload si, in float3 wo, bool evalR, bool evalT) {
 		const float3 wi = si.wi;
 
 		if (wo.z < 0 || wi.z < 0) 
 		{
 			return float3(0, 0, 0);
 		}
-
-		bool evalR = true;
-		bool evalT = true;
 
 		float ior = mat.intIOR / mat.extIOR;
 		float eta = 1 / ior;
@@ -130,6 +127,7 @@ namespace plastic
 			bs.wo = float3(-wi.x, -wi.y, wi.z);
 			bs.pdf = probSpecular;
 			bs.weight = (Fi / probSpecular);
+			bs.sampledLobe = BSDF_LOBE_DELTA_REFLECTION;
 		}
 		else
 		{
@@ -143,6 +141,7 @@ namespace plastic
 
 			bs.pdf = bs.wo.z * probDiffuse;
 			bs.weight = value;
+			bs.sampledLobe = BSDF_LOBE_DIFFUSE_REFLECTION;
 		}
 		return;
 	}

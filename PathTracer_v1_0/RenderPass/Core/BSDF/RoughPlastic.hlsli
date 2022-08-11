@@ -37,14 +37,15 @@ namespace roughplastic
 		return diffusePdf + specularPdf;
 	}
 
-	float3 Eval(in Material mat, in RayPayload si, in float3 wo) {
+	float3 Eval(in Material mat, in RayPayload si, in float3 wo, bool sampleR, bool sampleT) {
 		const float3 wi = si.wi;
 		if (wi.z <= 0 || wo.z <= 0) 
 		{
 			return float3(0, 0, 0);
 		}
-		bool sampleR = true;
-		bool sampleT = true;
+		//bool sampleR = true;
+		//bool sampleT = true;
+
 		if (!sampleR && !sampleT)
 			return float3(0, 0, 0);
 
@@ -91,7 +92,7 @@ namespace roughplastic
 
 		float diffuseFresnel = fresnel::DiffuseFresnel(eta);
 
-		if (sampleR && nextRand(seed) <= probSpecular || !sampleT)
+		if ((sampleR && (nextRand(seed) <= probSpecular)) || !sampleT)
 		{
 			// Reflect
 			roughdielectric::SampleBase(mat, true, false, si, seed, bs);
@@ -114,12 +115,15 @@ namespace roughplastic
 				bs.weight = (brdfSpecular + brdfSubstrate) / (pdfSpecular + pdfSubstrate);
 				bs.pdf = pdfSpecular + pdfSubstrate;
 			}
+
+			bs.sampledLobe = BSDF_LOBE_GLOSSY_REFLECTION;
 		}
 		else
 		{
 			bs.wo = getCosHemisphereSampleLocal(seed);
 			float Fo = fresnel::DielectricReflectance(eta, bs.wo.z);
 			float3 temp = (mat.nonlinear ? diffuseReflectance * diffuseFresnel : float3(diffuseFresnel, diffuseFresnel, diffuseFresnel));
+
 			bs.weight = ((1.0f - Fi) * (1.0f - Fo) * eta * eta) * (diffuseReflectance / (1.0f - temp));
 			bs.pdf = bs.wo.z * M_1_PIf;
 			if (sampleR) 
@@ -133,6 +137,8 @@ namespace roughplastic
 				bs.weight = (brdfSpecular + brdfSubstrate) / (pdfSpecular + pdfSubstrate);
 				bs.pdf = pdfSpecular + pdfSubstrate;
 			}
+
+			bs.sampledLobe = BSDF_LOBE_DIFFUSE_REFLECTION;
 		}
 		return;
 	}

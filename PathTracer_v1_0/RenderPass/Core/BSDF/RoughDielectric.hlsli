@@ -230,11 +230,13 @@ namespace roughdielectric
 		if (reflect) {
 			bs.pdf = pm * 0.25f / abs(wiDotM);
 			bs.weight = specularReflectance * weightMultiplier;
+			bs.sampledLobe = BSDF_LOBE_GLOSSY_REFLECTION;
 		}
 		else {
 			float denom = (eta * wiDotM + woDotM);
 			bs.pdf = pm * abs(woDotM) / (denom * denom);
 			bs.weight = specularTransmittance * weightMultiplier * eta * eta;
+			bs.sampledLobe = BSDF_LOBE_GLOSSY_TRANSMISSION;
 		}
 
 		if (sampleR && sampleT) {

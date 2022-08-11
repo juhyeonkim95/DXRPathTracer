@@ -1,8 +1,8 @@
 #include "../Core/stdafx.hlsli"
 #include "../PathTracer/PathTracerConstants.hlsli"
 
-RWStructuredBuffer<Reservoir> gPrevReserviors : register(u9);
-RWStructuredBuffer<Reservoir> gCurrReserviors : register(u10);
+RWStructuredBuffer<Reservoir> gPrevReserviors : register(u14);
+RWStructuredBuffer<Reservoir> gCurrReserviors : register(u15);
 
 void UpdateReservoir(inout Reservoir r, in LightSample lightSample, float weight, inout uint seed)
 {

@@ -26,6 +26,7 @@ namespace conductor
 		bs.wo = float3(-si.wi.x, -si.wi.y, si.wi.z);
 		bs.pdf = 0.0f;
 		bs.weight = si.specularReflectance * fresnel::ConductorReflectance(mat.eta, mat.k, si.wi.z);
+		bs.sampledLobe = BSDF_LOBE_DELTA_REFLECTION;
 	}
 }
 #endif

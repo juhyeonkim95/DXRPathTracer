@@ -34,6 +34,7 @@ namespace diffuse
 		bs.wo = getCosHemisphereSampleLocal(seed);
 		bs.weight = si.diffuseReflectance;
 		bs.pdf = bs.wo.z * M_1_PIf;
+		bs.sampledLobe = BSDF_LOBE_DIFFUSE_REFLECTION;
 	}
 }
 #endif

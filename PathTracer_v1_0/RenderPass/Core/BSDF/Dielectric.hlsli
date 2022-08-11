@@ -29,6 +29,7 @@ namespace dielectric
 			bs.wo = float3(-si.wi.x, -si.wi.y, si.wi.z);
 			bs.pdf = F;
 			bs.weight = EvalSpecularReflectance(mat, si);
+			bs.sampledLobe = BSDF_LOBE_DELTA_REFLECTION;
 		}
 		else
 		{
@@ -36,6 +37,7 @@ namespace dielectric
 			bs.wo = float3(-si.wi.x * eta, -si.wi.y * eta, -sign(si.wi.z) * cosThetaT);
 			bs.pdf = 1 - F;
 			bs.weight = EvalSpecularTransmittance(mat, si) * eta * eta;
+			bs.sampledLobe = BSDF_LOBE_DELTA_TRANSMISSION;
 		}
 	}
 }

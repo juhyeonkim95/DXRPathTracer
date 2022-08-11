@@ -3,8 +3,8 @@ static const float epsilon = 0.00001;
 cbuffer ConstantBuffer : register(b0)
 {
 	int2 screenSize;
-	float gAlpha;
-	float gMomentsAlpha;
+	int gMaxAccumulatedFrame;
+	int unused;
 	float sigmaZ;
 	float sigmaN;
 	float sigmaL;

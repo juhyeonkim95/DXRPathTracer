@@ -337,7 +337,7 @@ void SVGFPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetGraphicsRootDescriptorTable(1, directRenderTexture->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(2, indirectRenderTexture->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gReflectance"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gOutputHDR"));
+    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gEmission"));
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
     mpCmdList->DrawInstanced(6, 1, 0, 0);
