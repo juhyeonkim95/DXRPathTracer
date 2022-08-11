@@ -126,4 +126,9 @@ float3 getRandomColor(uint index)
 	float b = nextRand(seed);
 	return float3(r, g, b);
 }
+
+float copySign(float x, float y)
+{
+	return abs(x) * sgnE(y);
+}
 #endif

@@ -8,6 +8,8 @@ RWTexture2D<float4> gOutputHDR : register(u1);
 RWTexture2D<float4> gDirectIllumination : register(u2);
 RWTexture2D<float4> gIndirectIllumination : register(u3);
 RWTexture2D<float4> gReflectance : register(u4);
+RWTexture2D<float4> gSpecularReflectance : register(u4);
+
 RWTexture2D<float4> gOutputPositionGeomID : register(u5);
 RWTexture2D<float4> gOutputNormal : register(u6);
 RWTexture2D<float4> gOutputPositionGeomIDPrev : register(u7);

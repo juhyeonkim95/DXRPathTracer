@@ -198,6 +198,9 @@
     <ClCompile Include="AppCore\ComputeShader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\RenderApplication.h">
@@ -356,6 +359,9 @@
     <ClInclude Include="AppCore\ComputeShader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\RELAX\RELAXPass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RenderPass\Core\Common\MathUtils.hlsli">
@@ -394,6 +400,8 @@
     <None Include="RenderPass\Core\Common\DescriptorTable.hlsli" />
     <None Include="RenderPass\Core\stdafx.hlsli" />
     <None Include="RenderPass\SVGF\SVGFDepthDerivative.hlsl" />
+    <None Include="RenderPass\Core\BSDF\RoughPlastic.hlsli" />
+    <None Include="RenderPass\Core\BSDF\BSDFUtils.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">
@@ -424,5 +432,6 @@
       <Filter>RenderPass\ReSTIR</Filter>
     </FxCompile>
     <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl" />
+    <FxCompile Include="RenderPass\RELAX\RELAXDepthDerivative.hlsl" />
   </ItemGroup>
 </Project>

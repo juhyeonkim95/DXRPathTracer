@@ -170,6 +170,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp" />
     <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
+    <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp" />
     <ClCompile Include="Scene\BSDF\Conductor.cpp" />
     <ClCompile Include="Scene\BSDF\Dielectric.cpp" />
     <ClCompile Include="Scene\BSDF\Diffuse.cpp" />
@@ -216,6 +217,7 @@
     <ClInclude Include="External\stb_image_write.h" />
     <ClInclude Include="RenderPass\BlendPass\BlendPass.h" />
     <ClInclude Include="RenderPass\FXAA\FXAA.h" />
+    <ClInclude Include="RenderPass\RELAX\RELAXPass.h" />
     <ClInclude Include="Scene\BSDF\BSDF.h" />
     <ClInclude Include="Scene\BSDF\Conductor.h" />
     <ClInclude Include="Scene\BSDF\Dielectric.h" />
@@ -257,6 +259,12 @@
   <ItemGroup>
     <None Include="..\README.md" />
     <None Include="..\WorkProgress.md" />
+    <None Include="RenderPass\Core\BSDF\BSDFUtils.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\BSDF\RoughPlastic.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="RenderPass\Core\stdafx.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
@@ -311,6 +319,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="RenderPass\PathTracer\PathTracer.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\RELAX\RELAXDepthDerivative.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl">

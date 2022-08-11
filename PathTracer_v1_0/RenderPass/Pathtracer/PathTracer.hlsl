@@ -21,13 +21,16 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
 
     // ---------------------- First intersection ----------------------
     TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2, 0, ray, payload);
+
     pathResult.normal = payload.normal;
     pathResult.depth = payload.t;
     pathResult.instanceIndex = payload.instanceIndex;
     pathResult.position = payload.origin;
     pathResult.direct = float3(0, 0, 0);
-    pathResult.reflectance = payload.attenuation;
-
+    pathResult.reflectance = payload.diffuseReflectance;
+    pathResult.diffuseReflectance = payload.diffuseReflectance;
+    pathResult.specularReflectance = payload.diffuseReflectance;
+    pathResult.indirectReflectance = payload.diffuseReflectance;
 
     uint materialType = g_materialinfo[payload.materialIndex].materialType;
     uint maxDepth = gPathTracer.maxDepth;
@@ -37,12 +40,23 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     case BSDF_TYPE_ROUGH_CONDUCTOR:     maxDepth = gPathTracer.maxDepthSpecular; break;
     case BSDF_TYPE_DIELECTRIC:          maxDepth = gPathTracer.maxDepthTransmittance; break;
     case BSDF_TYPE_ROUGH_DIELECTRIC:    maxDepth = gPathTracer.maxDepthTransmittance; break;
-    case BSDF_TYPE_PLASTIC:             maxDepth = gPathTracer.maxDepthDiffuse; break;
+    case BSDF_TYPE_PLASTIC:             maxDepth = gPathTracer.maxDepthSpecular; break;
+    case BSDF_TYPE_ROUGH_PLASTIC:       maxDepth = gPathTracer.maxDepthDiffuse; break;
+    default:                            maxDepth = gPathTracer.maxDepth; break;
     }
+    pathResult.pathType = materialType;
 
-    if (materialType != BSDF_TYPE_DIFFUSE) {
-        pathResult.reflectance = float3(1, 1, 1);
+    switch (materialType) {
+    case BSDF_TYPE_DIFFUSE:             pathResult.reflectance = payload.diffuseReflectance; break;
+    case BSDF_TYPE_CONDUCTOR:           pathResult.reflectance = payload.specularReflectance; break;
+    case BSDF_TYPE_ROUGH_CONDUCTOR:     pathResult.reflectance = payload.specularReflectance; break;
+    case BSDF_TYPE_DIELECTRIC:          pathResult.reflectance = payload.specularReflectance; break;
+    case BSDF_TYPE_ROUGH_DIELECTRIC:    pathResult.reflectance = payload.specularReflectance; break;
+    case BSDF_TYPE_PLASTIC:             pathResult.reflectance = payload.diffuseReflectance; break;
+    case BSDF_TYPE_ROUGH_PLASTIC:       pathResult.reflectance = payload.diffuseReflectance; break;
+    default:                            pathResult.reflectance = payload.diffuseReflectance; break;
     }
+    
 
     LightSample lightSample;
     RayDesc shadowRay;
@@ -54,6 +68,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
 
     while (true)
     {
+
         // ---------------- Intersection with emitters ----------------
         result += emissionWeight * throughput * payload.emission;
 
@@ -246,6 +261,7 @@ void rayGen()
 
     float3 indirect = radiance - direct;
     uint currentMeshID = pathResult.instanceIndex;
+    uint pathType = pathResult.pathType;
 
 #if DO_FILTERING
     gOutputPositionGeomID[launchIndex.xy] = float4(position, currentMeshID);
@@ -338,17 +354,14 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         payload.emission = nDotV > 0 ? lights[geometryInfo.lightIndex].emission.xyz : float3(0, 0, 0);
         return;
     }
-    //if((nDotV <= 0) && (materialInfo.materialType != BSDF_TYPE_DIELECTRIC) ){
-    //    payload.done = true;
-    //    payload.emission = float3(0, 0, 0);
-    //    return;
-    //}
 
     float2 uvtemp = vtx0.uv * barycentrics.x + vtx1.uv * barycentrics.y + vtx2.uv * barycentrics.z;
     payload.uv = float2(uvtemp.x, 1 - uvtemp.y);
 
-    //uint diffuseReflectanceTextureID = materialInfo.diffuseReflectanceTextureID;
-    //float3 diffuseReflectance = diffuseReflectanceTextureID ? g_textures.SampleLevel(g_s0, payload.uv, 0.0f).xyz : materialInfo.diffuseReflectance;
+    payload.diffuseReflectance = materialInfo.diffuseReflectanceTextureID ? g_textures.SampleLevel(g_s0, payload.uv, 0.0f).xyz : materialInfo.diffuseReflectance;
+    payload.specularReflectance = materialInfo.specularReflectance;
+    payload.roughness = materialInfo.roughness;
+
 
     payload.bitangent = getBinormal(normal);
     payload.tangent = cross(payload.bitangent, normal);

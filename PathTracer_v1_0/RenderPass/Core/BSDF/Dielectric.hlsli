@@ -13,6 +13,10 @@ namespace dielectric
 		return float3(0, 0, 0);
 	}
 
+	float4 EvalAndPdf(in Material mat, in RayPayload si, in float3 wo) {
+		return float4(0, 0, 0, 0);
+	}
+
 	void Sample(in Material mat, in RayPayload si, inout uint seed, inout BSDFSample bs) {
 		float ior = mat.intIOR / mat.extIOR;
 		float eta = si.wi.z < 0.0f ? ior : 1 / ior;

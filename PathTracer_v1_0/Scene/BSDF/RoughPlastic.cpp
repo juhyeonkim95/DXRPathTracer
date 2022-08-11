@@ -5,18 +5,35 @@
 
 RoughPlastic::RoughPlastic(XMLElement* e)
 {
-	if (e->FirstChildElement("rgb") == NULL) {
+	this->bsdfType = BSDF_TYPE_ROUGH_PLASTIC;
+
+	XMLElement* reflectance = findElementByName(e, "diffuseReflectance");
+
+	if (reflectance == NULL) {
 		this->diffuseReflectance = vec3(0.5f);
 	}
 	else {
-		this->diffuseReflectance = loadVec3(e->FirstChildElement("rgb"));
+		const char* valueType = reflectance->Value();
+
+		if (strcmp(valueType, "rgb") == 0) {
+			this->diffuseReflectance = loadVec3(reflectance);
+		}
+		else if (strcmp(valueType, "texture") == 0) {
+			const char* textureType;
+			reflectance->QueryStringAttribute("type", &textureType);
+
+			if (strcmp(textureType, "bitmap") == 0) {
+				this->diffuseReflectanceTexturePath = getValueByName(reflectance, "filename");
+			}
+		}
 	}
 
-	if (e->FirstChildElement("texture")) {
-		const char* texturepath;
-		e->FirstChildElement("texture")->FirstChildElement("string")->QueryStringAttribute("value", &texturepath);
-		this->diffuseReflectanceTexturePath = texturepath;
-	}
+	this->intIOR = getFloatByName(e, "intIOR", 1.5046f);
+	this->extIOR = getFloatByName(e, "extIOR", 1.000277f);
+	this->specularReflectance = getVec3ByName(e, "specularReflectance", vec3(1, 1, 1));
+	this->microfacetDistribution = getValueByNameDefault(e, "distribution", "beckmann");
+	this->alpha = getFloatByName(e, "alpha", 0.1f);
+	this->nonlinear = getBoolByName(e, "nonlinear", false);
 }
 
 std::string RoughPlastic::toString()

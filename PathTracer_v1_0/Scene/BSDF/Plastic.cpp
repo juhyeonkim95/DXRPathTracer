@@ -31,6 +31,7 @@ Plastic::Plastic(XMLElement* e)
 	this->intIOR = getFloatByName(e, "intIOR", 1.5046f);
 	this->extIOR = getFloatByName(e, "extIOR", 1.000277f);
 	this->specularReflectance = getVec3ByName(e, "specularReflectance", vec3(1, 1, 1));
+	this->nonlinear = getBoolByName(e, "nonlinear", false);
 }
 
 std::string Plastic::toString()

@@ -74,7 +74,7 @@ void PathTracer::createRtPipelineState()
     subobjects[index++] = missRootAssociation.subobject; // 8 Associate Miss Root Sig to Miss Shader
 
     // Bind the payload size to the programs
-    ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 38);
+    ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 46);
     subobjects[index] = shaderConfig.subobject; // 9 Shader Config
 
     uint32_t shaderConfigIndex = index++; // 9
@@ -330,6 +330,9 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
 
     // 10. Reflectance
     outputUAVBuffers["gReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gReflectance", 1);
+    //outputUAVBuffers["gSpecularReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gSpecularReflectance", 1);
+    //outputUAVBuffers["gIndirectReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectReflectance", 1);
+    
 
     // 11. Position / ID
     outputUAVBuffers["gPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
@@ -345,7 +348,6 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     outputUAVBuffers["gPrevReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
     outputUAVBuffers["gCurrReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gCurrReserviors", 1, sizeof(Reservoir));
 
-    // mpTextureStartHandle = pSrvUavHeap->getLastGPUHandle();
 }
 
 void PathTracer::processGUI()

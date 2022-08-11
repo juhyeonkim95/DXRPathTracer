@@ -16,9 +16,8 @@ namespace roughdielectric
 		float woDotN = wo.z;
 		bool reflect = wiDotN * woDotN >= 0.0f;
 
-		float sampleRoughness = (1.2f - 0.2f * sqrt(abs(wiDotN))) * EvalRoughness(mat, si);
+		float sampleRoughness = (1.2f - 0.2f * sqrt(abs(wiDotN))) * si.roughness;
 		float sampleAlpha = microfacet::roughnessToAlpha(dist, sampleRoughness);
-
 
 		float eta = wiDotN < 0.0f ? ior : 1.0f / ior;
 		float3 m;
@@ -52,15 +51,22 @@ namespace roughdielectric
 		return PdfBase(mat, true, true, si, wo);
 	}
 
-	float3 Eval(in Material mat, in RayPayload si, in float3 wo) {
+	float3 EvalBase(in Material mat, bool sampleR, bool sampleT, in RayPayload si, in float3 wo) {
 		const float3 wi = si.wi;
 		float ior = mat.intIOR / mat.extIOR;
-		float alpha = EvalRoughness(mat, si);
 		uint dist = mat.microfacetDistribution;
+
+		float roughness = EvalRoughness(mat, si);
+		float alpha = microfacet::roughnessToAlpha(dist, roughness);
 
 		float wiDotN = wi.z;
 		float woDotN = wo.z;
 		bool reflect = wiDotN * woDotN >= 0.0f;
+
+		if ((reflect && !sampleR) || (!reflect && !sampleT)) 
+		{
+			return float3(0, 0, 0);
+		}
 
 		float eta = wiDotN < 0.0f ? ior : 1.0f / ior;
 		float3 m;
@@ -82,6 +88,75 @@ namespace roughdielectric
 			float fs = abs(wiDotM * woDotM) * (1.0f - F) * G * D / (sqr(eta * wiDotM + woDotM) * abs(wiDotN));
 			return EvalSpecularTransmittance(mat, si) * fs;
 		}
+	}
+	
+	float3 Eval(in Material mat, in RayPayload si, in float3 wo) 
+	{
+		return EvalBase(mat, true, true, si, wo);
+	}
+
+	float4 EvalAndPdfBase(in Material mat, bool sampleR, bool sampleT, in RayPayload si, in float3 wo)
+	{
+		const float3 wi = si.wi;
+		float ior = mat.intIOR / mat.extIOR;
+		uint dist = mat.microfacetDistribution;
+
+		float wiDotN = wi.z;
+		float woDotN = wo.z;
+		bool reflect = wiDotN * woDotN >= 0.0f;
+
+		if ((reflect && !sampleR) || (!reflect && !sampleT))
+		{
+			return float4(0, 0, 0, 0);
+		}
+
+		float roughness = EvalRoughness(mat, si);
+		float alpha = microfacet::roughnessToAlpha(dist, roughness);
+		float sampleRoughness = (1.2f - 0.2f * sqrt(abs(wiDotN))) * si.roughness;
+		float sampleAlpha = microfacet::roughnessToAlpha(dist, sampleRoughness);
+
+		float eta = wiDotN < 0.0f ? ior : 1.0f / ior;
+		float3 m;
+		if (reflect)
+			m = sgnE(wiDotN) * normalize(wi + wo);
+		else
+			m = -normalize(wi * eta + wo);
+		float wiDotM = dot(wi, m);
+		float woDotM = dot(wo, m);
+		float F = fresnel::DielectricReflectance(1.0f / ior, wiDotM);
+		float G = microfacet::G(dist, alpha, wi, wo, m);
+		float D = microfacet::D(dist, alpha, m);
+		float pm = microfacet::Pdf(dist, sampleAlpha, m);
+
+		float3 f;
+		float pdf;
+		if (reflect) {
+			float fr = (F * G * D * 0.25f) / abs(wiDotN);
+			f = EvalSpecularReflectance(mat, si) * fr;
+		}
+		else {
+			float fs = abs(wiDotM * woDotM) * (1.0f - F) * G * D / (sqr(eta * wiDotM + woDotM) * abs(wiDotN));
+			f = EvalSpecularTransmittance(mat, si) * fs;
+		}
+
+		if (reflect) {
+			pdf = pm * 0.25f / abs(wiDotM);
+		}
+		else {
+			pdf = pm * abs(woDotM) / sqr(eta * wiDotM + woDotM);
+		}
+		if (sampleR && sampleT) {
+			if (reflect)
+				pdf *= F;
+			else
+				pdf *= 1.0f - F;
+		}
+		return float4(f, pdf);
+	}
+
+	float4 EvalAndPdf(in Material mat, in RayPayload si, in float3 wo)
+	{
+		return EvalAndPdfBase(mat, true, true, si, wo);
 	}
 
 	void SampleBase(in Material mat, bool sampleR, bool sampleT, in RayPayload si, inout uint seed, inout BSDFSample bs) {

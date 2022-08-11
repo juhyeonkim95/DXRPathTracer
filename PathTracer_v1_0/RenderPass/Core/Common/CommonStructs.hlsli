@@ -121,6 +121,10 @@ struct RayPayload
     float3 emission;
     float3 attenuation;
 
+    float3 diffuseReflectance;
+    float3 specularReflectance;
+    float roughness;
+
     float3 direction;
     float3 origin;
     float3 normal;
@@ -141,6 +145,8 @@ struct RayPayload
     int lightIndex;
     float t;
     float unused;
+
+    uint bsdfLobe;
 };
 
 struct ShadowPayload
@@ -158,6 +164,10 @@ struct PathTraceResult
     float3 direct;
     float3 indirect;
     float3 reflectance;
+    float3 diffuseReflectance;
+    float3 specularReflectance;
+    float3 indirectReflectance;
+    uint pathType;
 };
 
 struct TextureParameter

@@ -72,6 +72,17 @@ float getFloatByName(XMLElement* e, std::string const& targetName, float default
     return value;
 }
 
+bool getBoolByName(XMLElement* e, std::string const& targetName, bool defaultValue)
+{
+    XMLElement* child = findElementByName(e, targetName);
+    if (child == NULL) {
+        return defaultValue;
+    }
+    bool value;
+    child->QueryBoolAttribute("value", &value);
+    return value;
+}
+
 vec3 loadVec3(XMLElement* e)
 {
     const char* valueString;

@@ -16,6 +16,8 @@ std::string getValueByName(XMLElement* e, std::string const& targetName);
 int getIntByName(XMLElement* e, std::string const& targetName);
 vec3 getVec3ByName(XMLElement* e, std::string const& targetName, vec3 defaultValue);
 float getFloatByName(XMLElement* e, std::string const& targetName, float defaultValue);
+bool getBoolByName(XMLElement* e, std::string const& targetName, bool defaultValue);
+
 std::string getValueByNameDefault(XMLElement* e, std::string const& targetName, std::string defaultValue);
 
 vec3 loadVec3(XMLElement* e);

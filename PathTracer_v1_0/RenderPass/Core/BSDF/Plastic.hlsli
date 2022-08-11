@@ -2,16 +2,96 @@
 #define BSDF_PLASTIC
 
 #include "../stdafx.hlsli"
+#include "BSDFUtils.hlsli"
 
 namespace plastic
 {
-	float Pdf(in Material material, in RayPayload payload, in float3 wo) {
+	float getProbSpecular(in Material mat, in float3 diffuseReflectance, float Fi)
+	{
+		float s_mean = 1.0f;
+		float d_mean = (diffuseReflectance.x + diffuseReflectance.y + diffuseReflectance.z) / 3.0f;
+		float m_specular_sampling_weight = s_mean / (d_mean + s_mean);
+
+		float probSpecular = Fi * m_specular_sampling_weight;
+		float probDiffuse = (1 - Fi) * (1 - m_specular_sampling_weight);
+
+		probSpecular = probSpecular / (probSpecular + probDiffuse);
+		return probSpecular;
+	}
+
+	float Pdf(in Material mat, in RayPayload si, in float3 wo) {
+		const float3 wi = si.wi;
+
+		if (wo.z < 0 || wi.z < 0)
+		{
+			return 0.0f;
+		}
+		bool sampleR = true;
+		bool sampleT = true;
+		
+		if (sampleR && sampleT) {
+			float3 diffuseReflectance = si.diffuseReflectance;
+
+			float ior = mat.intIOR / mat.extIOR;
+			float eta = 1 / ior;
+			float Fi = fresnel::DielectricReflectance(eta, wi.z);
+
+			float probSpecular = getProbSpecular(mat, diffuseReflectance, Fi);
+
+
+			if (checkReflectionConstraint(wi, wo)) {
+				return probSpecular;
+			}
+			else
+			{
+				return wo.z * M_1_PIf * (1.0f - probSpecular);
+			}
+		}
+		else if (sampleT) {
+			return wo.z * M_1_PIf;
+		}
+		else if (sampleR)
+		{
+			return checkReflectionConstraint(wi, wo) ? 1.0f : 0.0f;
+		}
 		return 0.0f;
 	}
 
-	float3 Eval(in Material material, in RayPayload payload, in float3 wo) {
+	float3 Eval(in Material mat, in RayPayload si, in float3 wo) {
+		const float3 wi = si.wi;
+
+		if (wo.z < 0 || wi.z < 0) 
+		{
+			return float3(0, 0, 0);
+		}
+
+		bool evalR = true;
+		bool evalT = true;
+
+		float ior = mat.intIOR / mat.extIOR;
+		float eta = 1 / ior;
+		float Fi = fresnel::DielectricReflectance(eta, wi.z);
+		float Fo = fresnel::DielectricReflectance(eta, wo.z);
+
+		if (evalR && checkReflectionConstraint(wi, wo)) 
+		{
+			return float3(Fi, Fi, Fi);
+		}
+		else if(evalT)
+		{
+			float3 diffuseReflectance = si.diffuseReflectance;
+
+			float diffuseFresnel = fresnel::DiffuseFresnel(eta);
+			float3 value = diffuseReflectance;
+			value = value / (1 - (mat.nonlinear ? value * diffuseFresnel : (diffuseFresnel)));
+			value *= ((1.0f - Fi) * (1.0f - Fo) * eta * eta * wo.z * M_1_PIf);
+
+			return value;
+		}
 		return float3(0, 0, 0);
 	}
+
+
 
 	void Sample(in Material mat, in RayPayload si, inout uint seed, inout BSDFSample bs) {
 		const float3 wi = si.wi;
@@ -22,41 +102,46 @@ namespace plastic
 			return;
 		}
 
-		float3 diffuse_reflectance = EvalDiffuseReflectance(mat, si);
+		bool sampleR = true;
+		bool sampleT = true;
+
+		float3 diffuseReflectance = EvalDiffuseReflectance(mat, si);
 
 		float ior = mat.intIOR / mat.extIOR;
 		float eta = 1 / ior;
 		float Fi = fresnel::DielectricReflectance(eta, wi.z);
 
-		float s_mean = 1.0f;
-		float d_mean = (diffuse_reflectance.x + diffuse_reflectance.y + diffuse_reflectance.z) / 3.0f;
-		float m_specular_sampling_weight = s_mean / (d_mean + s_mean);
+		float probSpecular;
+		if (sampleR && sampleT)
+			probSpecular = getProbSpecular(mat, diffuseReflectance, Fi);
+		else if (sampleR)
+			probSpecular = 1.0f;
+		else if (sampleT)
+			probSpecular = 0.0f;
+		else
+			return;
 
-		float prob_specular = Fi * m_specular_sampling_weight;
-		float prob_diffuse = (1 - Fi) * (1 - m_specular_sampling_weight);
+		float probDiffuse = 1.f - probSpecular;
 
-		prob_specular = prob_specular / (prob_specular + prob_diffuse);
-		prob_diffuse = 1.f - prob_specular;
-
-		float m_fdr_int = fresnel::DiffuseFresnel(eta);
-		if (nextRand(seed) <= prob_specular)
+		float diffuseFresnel = fresnel::DiffuseFresnel(eta);
+		if (sampleR && nextRand(seed) <= probSpecular)
 		{
 			// Reflect
 			bs.wo = float3(-wi.x, -wi.y, wi.z);
-			bs.pdf = prob_specular;
-			bs.weight = (Fi / prob_specular);
+			bs.pdf = probSpecular;
+			bs.weight = (Fi / probSpecular);
 		}
 		else
 		{
 			bs.wo = getCosHemisphereSampleLocal(seed);
 			float Fo = fresnel::DielectricReflectance(eta, bs.wo.z);
 
-			float3 value = diffuse_reflectance;
-			value = value / (1 - (mat.nonlinear ? value * m_fdr_int : (m_fdr_int)));
+			float3 value = diffuseReflectance;
+			value = value / (1 - (mat.nonlinear ? value * diffuseFresnel : (diffuseFresnel)));
 			value *= ((1.0f - Fi) * (1.0f - Fo) * eta * eta);
-			value = value / prob_diffuse;
+			value = value / probDiffuse;
 
-			bs.pdf = bs.wo.z * prob_diffuse;
+			bs.pdf = bs.wo.z * probDiffuse;
 			bs.weight = value;
 		}
 		return;

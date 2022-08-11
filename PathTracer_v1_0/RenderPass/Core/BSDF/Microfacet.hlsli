@@ -1,6 +1,7 @@
 #ifndef MICROFACET
 #define MICROFACET
 
+
 enum MICROFACET_DISTRIBUTION_TYPE : uint
 {
     MICROFACET_DISTRIBUTION_TYPE_BECKMANN = 0,
@@ -111,6 +112,8 @@ namespace microfacet
         float r = sqrt(max(1.0f - cosTheta * cosTheta, 0.0f));
         return float3(cos(phi) * r, sin(phi) * r, cosTheta);
     }
+
+
 }
 
 #endif
