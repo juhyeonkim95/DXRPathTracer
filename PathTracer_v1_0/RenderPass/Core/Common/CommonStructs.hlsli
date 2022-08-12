@@ -35,6 +35,9 @@ static const uint BSDF_LOBE_DELTA_REFLECTION = 1 << 4;
 static const uint BSDF_LOBE_DELTA_TRANSMISSION = 1 << 5;
 static const uint BSDF_LOBE_REFLECTION = BSDF_LOBE_DIFFUSE_REFLECTION | BSDF_LOBE_GLOSSY_REFLECTION | BSDF_LOBE_DELTA_REFLECTION;
 static const uint BSDF_LOBE_TRANSMISSION = BSDF_LOBE_DIFFUSE_TRANSMISSION | BSDF_LOBE_GLOSSY_TRANSMISSION | BSDF_LOBE_DELTA_TRANSMISSION;
+static const uint BSDF_LOBE_DELTA = BSDF_LOBE_DELTA_REFLECTION | BSDF_LOBE_DELTA_TRANSMISSION;
+static const uint BSDF_LOBE_NON_DELTA = BSDF_LOBE_DIFFUSE_REFLECTION | BSDF_LOBE_DIFFUSE_TRANSMISSION | BSDF_LOBE_GLOSSY_REFLECTION | BSDF_LOBE_GLOSSY_TRANSMISSION;
+
 
 
 struct BSDFSample
@@ -187,6 +190,8 @@ struct PathTraceResult
     float3 deltaTransmissionReflectance;
     float3 deltaTransmissionEmission;
     float3 deltaTransmissionRadiance;
+
+    uint primaryPathType;
 
     float3 reflectance;
     float3 diffuseReflectance;

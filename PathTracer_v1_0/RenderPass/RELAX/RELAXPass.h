@@ -34,7 +34,7 @@ public:
 	Shader* temporalAccumulationShader;
 	Shader* varianceFilterShader;
 	Shader* waveletShader;
-	Shader* reconstructionShader;
+	// Shader* reconstructionShader;
 
 	Shader* depthDerivativeShader;
 	RenderTexture* depthDerivativeTexture;
@@ -58,13 +58,33 @@ public:
 	RenderTexture* temporalAccumulationTextureDiffuseVarianceFilter;
 	RenderTexture* temporalAccumulationTextureSpecularVarianceFilter;
 
-	vector<RenderTexture*> waveletDiffuse;
-	vector<RenderTexture*> waveletSpecular;
-
 	RenderTexture* waveletDiffusePingPong1;
 	RenderTexture* waveletDiffusePingPong2;
 	RenderTexture* waveletSpecularPingPong1;
 	RenderTexture* waveletSpecularPingPong2;
+
+
+	RenderTexture* temporalAccumulationTextureDeltaReflection;
+	RenderTexture* temporalAccumulationTextureDeltaReflectionPrev;
+
+	RenderTexture* temporalAccumulationTextureDeltaReflectionMoment;
+	RenderTexture* temporalAccumulationTextureDeltaReflectionMomentPrev;
+
+	RenderTexture* temporalAccumulationTextureDeltaTransmission;
+	RenderTexture* temporalAccumulationTextureDeltaTransmissionPrev;
+
+	RenderTexture* temporalAccumulationTextureDeltaTransmissionMoment;
+	RenderTexture* temporalAccumulationTextureDeltaTransmissionMomentPrev;
+
+	RenderTexture* temporalAccumulationTextureDeltaReflectionVarianceFilter;
+	RenderTexture* temporalAccumulationTextureDeltaTransmissionVarianceFilter;
+
+	RenderTexture* waveletDeltaReflectionPingPong1;
+	RenderTexture* waveletDeltaReflectionPingPong2;
+	RenderTexture* waveletDeltaTransmissionPingPong1;
+	RenderTexture* waveletDeltaTransmissionPingPong2;
+
+
 
 	// RELAX parameters
 	RELAXParameters param;
@@ -78,7 +98,7 @@ public:
 	int mFeedbackTap = 0;
 
 
-	RenderTexture* reconstructionRenderTexture;
+	// RenderTexture* reconstructionRenderTexture;
 
 	vector<ID3D12ResourcePtr> mRELAXParameterBuffers;
 

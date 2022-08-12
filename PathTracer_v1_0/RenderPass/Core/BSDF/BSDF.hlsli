@@ -26,6 +26,19 @@ enum BSDF_TYPE : uint
 
 namespace bsdf
 {
+	uint getReflectionLobe(in Material material) {
+		switch (material.materialType) {
+		case BSDF_TYPE_DIFFUSE:					return BSDF_LOBE_DIFFUSE_REFLECTION;
+		case BSDF_TYPE_CONDUCTOR:				return BSDF_LOBE_DELTA_REFLECTION;
+		case BSDF_TYPE_ROUGH_CONDUCTOR:			return BSDF_LOBE_GLOSSY_REFLECTION;
+		case BSDF_TYPE_DIELECTRIC:				return BSDF_LOBE_DELTA_REFLECTION | BSDF_LOBE_DELTA_TRANSMISSION;
+		case BSDF_TYPE_ROUGH_DIELECTRIC:		return BSDF_LOBE_GLOSSY_REFLECTION | BSDF_LOBE_GLOSSY_TRANSMISSION;
+		case BSDF_TYPE_PLASTIC:					return BSDF_LOBE_DELTA_REFLECTION | BSDF_LOBE_DIFFUSE_REFLECTION;
+		case BSDF_TYPE_ROUGH_PLASTIC:			return BSDF_LOBE_GLOSSY_REFLECTION | BSDF_LOBE_DIFFUSE_REFLECTION;
+		}
+		return BSDF_LOBE_DIFFUSE_REFLECTION;
+	}
+
 	float Pdf(in Material material, in RayPayload payload, in float3 wo) {
 		switch (material.materialType) {
 		case BSDF_TYPE_DIFFUSE: return diffuse::Pdf(material, payload, wo); 

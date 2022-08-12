@@ -133,6 +133,9 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     relaxPass = new RELAXPass(mpDevice, mSwapChainSize);
     relaxPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
+    modulatePass = new ModulateIllumination(mpDevice, mSwapChainSize);
+    modulatePass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
     blendPass = new BlendPass(mpDevice, mSwapChainSize);
     blendPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
@@ -204,10 +207,14 @@ void RenderApplication::onFrameRender()
         case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionRadiance"); break;
 
         case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
-        case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
-        case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
-        case 7: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;
-        case 8: output = mpSrvUavHeap->getGPUHandleByName("gSpecularReflectance"); break;
+        //case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
+        //case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
+        case 5: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;
+        case 6: output = mpSrvUavHeap->getGPUHandleByName("gSpecularReflectance"); break;
+
+        case 7: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionReflectance"); break;
+        case 8: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionReflectance"); break;
+
         default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
         }
     }
@@ -222,8 +229,11 @@ void RenderApplication::onFrameRender()
         if (relaxPass && relaxPass->mEnabled)
         {
             relaxPass->forward(&renderContext, renderDataPathTracer);
-            output = relaxPass->reconstructionRenderTexture->getGPUSrvHandler();
+            
+            // output = relaxPass->reconstructionRenderTexture->getGPUSrvHandler();
         }
+        modulatePass->forward(&renderContext, renderDataPathTracer);
+        output = modulatePass->blendRenderTexture->getGPUSrvHandler();
 
         //if (svgfPass->mEnabled) 
         //{
@@ -295,6 +305,7 @@ void RenderApplication::onFrameRender()
         svgfPass->processGUI();
     if (relaxPass)
         relaxPass->processGUI();
+    modulatePass->processGUI();
     tonemapPass->processGUI();
     blendPass->processGUI();
     fxaaPass->processGUI();
@@ -358,7 +369,7 @@ void RenderApplication::update()
     uint nextRenderMode = renderMode;
     for(int i = 0; i < 10; i++) {
         if (mpKeyboardState[DIK_1 + i] & 0x80) {
-            nextRenderMode = i;
+            nextRenderMode = i + 1;
         }
     }
     if (mpKeyboardState[DIK_P] & 0x80) {

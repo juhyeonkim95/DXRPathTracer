@@ -170,7 +170,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp" />
     <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
+    <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp" />
     <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp" />
+    <ClCompile Include="RenderPass\RELAX\temp.cpp" />
     <ClCompile Include="Scene\BSDF\Conductor.cpp" />
     <ClCompile Include="Scene\BSDF\Dielectric.cpp" />
     <ClCompile Include="Scene\BSDF\Diffuse.cpp" />
@@ -217,6 +219,7 @@
     <ClInclude Include="External\stb_image_write.h" />
     <ClInclude Include="RenderPass\BlendPass\BlendPass.h" />
     <ClInclude Include="RenderPass\FXAA\FXAA.h" />
+    <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h" />
     <ClInclude Include="RenderPass\RELAX\RELAXPass.h" />
     <ClInclude Include="Scene\BSDF\BSDF.h" />
     <ClInclude Include="Scene\BSDF\Conductor.h" />
@@ -315,6 +318,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>

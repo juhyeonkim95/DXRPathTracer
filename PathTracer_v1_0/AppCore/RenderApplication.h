@@ -7,6 +7,7 @@
 #include <fstream>
 #include "SVGF/SVGFPass.h"
 #include "RELAX/RELAXPass.h"
+#include "ModulateIllumination/ModulateIllumination.h"
 #include "ReSTIR/ReSTIR.h"
 #include "PathTracer/PathTracer.h"
 #include "BlendPass/BlendPass.h"
@@ -91,6 +92,8 @@ private:
     ReSTIR* restirPass;
     SVGFPass* svgfPass;
     RELAXPass* relaxPass;
+    ModulateIllumination* modulatePass;
+
 
     bool createSVGF = false;
 

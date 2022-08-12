@@ -16,8 +16,8 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXATrousWavelet.hlsl", mpDevice, 4, rtvFormats);
 
-    rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, };
-    this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXReconstruction.hlsl", mpDevice, 7, rtvFormats);
+    //rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, };
+    //this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXReconstruction.hlsl", mpDevice, 7, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXFilterVariance.hlsl", mpDevice, 6, rtvFormats);
@@ -67,6 +67,7 @@ void RELAXPass::createRenderTextures(
     waveletSpecularPingPong2 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 
+
     /*for (int i = 0; i < maxWaveletCount; i++) {
         RenderTexture* waveletDiffusei = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
         RenderTexture* waveletSpeculari = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -74,7 +75,7 @@ void RELAXPass::createRenderTextures(
         this->waveletSpecular.push_back(waveletSpeculari);
     }*/
 
-    this->reconstructionRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+    // this->reconstructionRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 }
 
 void RELAXPass::processGUI()
@@ -310,10 +311,6 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         std::swap(waveletSpecularPingPong1, waveletSpecularPingPong2);
     }
 
-    // (4) Reconstruction!
-    mpCmdList->SetPipelineState(reconstructionShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(reconstructionShader->getRootSignature()); // set the root signature
-
     RenderTexture* diffuseRenderTexture;
     RenderTexture* specularRenderTexture;
 
@@ -328,9 +325,17 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         specularRenderTexture = temporalAccumulationTextureSpecular;
     }
 
+    gpuHandles["gDiffuseRadianceDenoised"] = diffuseRenderTexture->getGPUSrvHandler();
+    gpuHandles["gSpecularRadianceDenoised"] = specularRenderTexture->getGPUSrvHandler();
 
 
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    // (4) Reconstruction!
+    // mpCmdList->SetPipelineState(reconstructionShader->getPipelineStateObject());
+    // mpCmdList->SetGraphicsRootSignature(reconstructionShader->getRootSignature()); // set the root signature
+
+    
+
+    /*mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
     mpCmdList->OMSetRenderTargets(1, &reconstructionRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
 
@@ -344,7 +349,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
+    mpCmdList->DrawInstanced(6, 1, 0, 0);*/
 
 
     // update buffer
