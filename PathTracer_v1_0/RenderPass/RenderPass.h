@@ -22,6 +22,7 @@ public:
 	void addOutputs(map<string, ID3D12ResourcePtr> output) {
 		resourceDictionary.insert(output.begin(), output.end());
 	};
+
 	void clear(){
 		this->gpuHandleDictionary.clear();
 		this->cpuHandleDictionary.clear();

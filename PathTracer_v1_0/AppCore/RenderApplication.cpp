@@ -133,6 +133,9 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     relaxPass = new RELAXPass(mpDevice, mSwapChainSize);
     relaxPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
+    deltaPass = new NRDDeltaReflection(mpDevice, mSwapChainSize);
+    deltaPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
     modulatePass = new ModulateIllumination(mpDevice, mSwapChainSize);
     modulatePass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
@@ -191,13 +194,14 @@ void RenderApplication::onFrameRender()
     renderContext.restirParam = &restirPass->param;
 
     RenderData renderDataPathTracer;
+    renderDataPathTracer.gpuHandleDictionary = mpSrvUavHeap->getGPUHandleMap();
     this->pathTracer->forward(&renderContext, renderDataPathTracer);
         
     postProcessQuad->bind(mpCmdList);
 
     D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
 
-    if (this->renderMode > 0) {
+    if (this->renderMode != 10 && renderMode != 0) {
         switch (this->renderMode) {
         case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
         //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
@@ -232,6 +236,13 @@ void RenderApplication::onFrameRender()
             
             // output = relaxPass->reconstructionRenderTexture->getGPUSrvHandler();
         }
+        if (deltaPass && deltaPass->mEnabled)
+        {
+            deltaPass->forward(&renderContext, renderDataPathTracer);
+
+            // output = relaxPass->reconstructionRenderTexture->getGPUSrvHandler();
+        }
+
         modulatePass->forward(&renderContext, renderDataPathTracer);
         output = modulatePass->blendRenderTexture->getGPUSrvHandler();
 
@@ -305,6 +316,9 @@ void RenderApplication::onFrameRender()
         svgfPass->processGUI();
     if (relaxPass)
         relaxPass->processGUI();
+    if (deltaPass)
+        deltaPass->processGUI();
+
     modulatePass->processGUI();
     tonemapPass->processGUI();
     blendPass->processGUI();

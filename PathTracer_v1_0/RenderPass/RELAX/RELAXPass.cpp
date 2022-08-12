@@ -118,7 +118,8 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 {
     ID3D12GraphicsCommandList4Ptr mpCmdList = pRenderContext->pCmdList;
     HeapData* pSrvUavHeap = pRenderContext->pSrvUavHeap;
-    map<string, D3D12_GPU_DESCRIPTOR_HANDLE>& gpuHandles = pSrvUavHeap->getGPUHandleMap();
+    map<string, D3D12_GPU_DESCRIPTOR_HANDLE>& gpuHandles = renderData.gpuHandleDictionary;
+    // map<string, D3D12_GPU_DESCRIPTOR_HANDLE>& gpuHandles = pSrvUavHeap->getGPUHandleMap();
     this->setViewPort(mpCmdList);
 
     // (0) prepare depth derivative
@@ -325,8 +326,8 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         specularRenderTexture = temporalAccumulationTextureSpecular;
     }
 
-    gpuHandles["gDiffuseRadianceDenoised"] = diffuseRenderTexture->getGPUSrvHandler();
-    gpuHandles["gSpecularRadianceDenoised"] = specularRenderTexture->getGPUSrvHandler();
+    gpuHandles["gDiffuseRadiance"] = diffuseRenderTexture->getGPUSrvHandler();
+    gpuHandles["gSpecularRadiance"] = specularRenderTexture->getGPUSrvHandler();
 
 
     // (4) Reconstruction!

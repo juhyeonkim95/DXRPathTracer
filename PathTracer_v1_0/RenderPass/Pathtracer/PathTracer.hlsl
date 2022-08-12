@@ -129,7 +129,10 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         material = g_materialinfo[payload.materialIndex];
         uint currentReflectionLobe = bsdf::getReflectionLobe(material);
 
-        if ((primaryReflectionLobe == BSDF_LOBE_DELTA_REFLECTION) && ((currentReflectionLobe & BSDF_LOBE_NON_DELTA) !=0) && !foundFirstNonDelta) {
+        bool nonDelta = (currentReflectionLobe & BSDF_LOBE_NON_DELTA) != 0;
+        bool saveDeltaInfo = !foundFirstNonDelta && (nonDelta || payload.done);
+
+        if ((primaryReflectionLobe == BSDF_LOBE_DELTA_REFLECTION) && saveDeltaInfo) {
             pathResult.deltaReflectionReflectance = getMaterialReflectanceForDeltaPaths(material, payload);
             if (payload.done) 
             {
@@ -137,7 +140,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
             }
             foundFirstNonDelta = true;
         }
-        else if ((primaryReflectionLobe == BSDF_LOBE_DELTA_TRANSMISSION) && ((currentReflectionLobe & BSDF_LOBE_NON_DELTA) != 0) && !foundFirstNonDelta) {
+        else if ((primaryReflectionLobe == BSDF_LOBE_DELTA_TRANSMISSION) && saveDeltaInfo) {
             pathResult.deltaTransmissionReflectance = getMaterialReflectanceForDeltaPaths(material, payload);
             if (payload.done)
             {

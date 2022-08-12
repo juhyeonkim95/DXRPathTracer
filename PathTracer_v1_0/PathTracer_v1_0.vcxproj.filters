@@ -207,6 +207,9 @@
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\NRDDeltaReflection\NRDDeltaReflection.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\RenderApplication.h">
@@ -371,6 +374,9 @@
     <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\NRDDeltaReflection\NRDDeltaReflection.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RenderPass\Core\Common\MathUtils.hlsli">
@@ -445,5 +451,7 @@
     <FxCompile Include="RenderPass\RELAX\RELAXMotionVector.hlsl" />
     <FxCompile Include="RenderPass\RELAX\RELAXOFFICIAL.hlsl" />
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl" />
+    <FxCompile Include="RenderPass\NRDDeltaReflection\NRDDeltaReflectionDepthDerivative.hlsl" />
+    <FxCompile Include="RenderPass\NRDDeltaReflection\NRDDeltaReflectionMotionVector.hlsl" />
   </ItemGroup>
 </Project>

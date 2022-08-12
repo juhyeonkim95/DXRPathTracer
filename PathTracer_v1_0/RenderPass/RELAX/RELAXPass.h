@@ -64,28 +64,6 @@ public:
 	RenderTexture* waveletSpecularPingPong2;
 
 
-	RenderTexture* temporalAccumulationTextureDeltaReflection;
-	RenderTexture* temporalAccumulationTextureDeltaReflectionPrev;
-
-	RenderTexture* temporalAccumulationTextureDeltaReflectionMoment;
-	RenderTexture* temporalAccumulationTextureDeltaReflectionMomentPrev;
-
-	RenderTexture* temporalAccumulationTextureDeltaTransmission;
-	RenderTexture* temporalAccumulationTextureDeltaTransmissionPrev;
-
-	RenderTexture* temporalAccumulationTextureDeltaTransmissionMoment;
-	RenderTexture* temporalAccumulationTextureDeltaTransmissionMomentPrev;
-
-	RenderTexture* temporalAccumulationTextureDeltaReflectionVarianceFilter;
-	RenderTexture* temporalAccumulationTextureDeltaTransmissionVarianceFilter;
-
-	RenderTexture* waveletDeltaReflectionPingPong1;
-	RenderTexture* waveletDeltaReflectionPingPong2;
-	RenderTexture* waveletDeltaTransmissionPingPong1;
-	RenderTexture* waveletDeltaTransmissionPingPong2;
-
-
-
 	// RELAX parameters
 	RELAXParameters param;
 	RELAXParameters defaultParam;

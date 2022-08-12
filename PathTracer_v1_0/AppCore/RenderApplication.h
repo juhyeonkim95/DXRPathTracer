@@ -15,6 +15,7 @@
 #include "FXAA/FXAA.h"
 #include "HeapData.h"
 #include "SceneResourceManager.h"
+#include "NRDDeltaReflection/NRDDeltaReflection.h"
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -92,6 +93,8 @@ private:
     ReSTIR* restirPass;
     SVGFPass* svgfPass;
     RELAXPass* relaxPass;
+    NRDDeltaReflection* deltaPass;
+
     ModulateIllumination* modulatePass;
 
 
