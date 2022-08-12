@@ -170,3 +170,5 @@ About x1.5 speed up!
 - Complete unfinished part in materials (plastic, roughplastic).
 - Implementing RELAX + NVIDIA NRD pass.
 - Divided radiance into diffuse, specular, delta reflection, delta transmission components (What's next?).
+
+![20220811_renderpass](assets/20220811_renderpass.jpg)

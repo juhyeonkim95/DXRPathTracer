@@ -3,6 +3,8 @@ Texture2D gSpecularRadiance : register(t1);
 Texture2D gDiffuseReflectance : register(t2);
 Texture2D gSpecularReflectance : register(t3);
 Texture2D gEmission : register(t4);
+Texture2D gDeltaReflectionRadiance : register(t5);
+Texture2D gDeltaTransmissionRadiance : register(t6);
 
 SamplerState s1 : register(s0);
 
@@ -20,8 +22,11 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 diffuseReflectance = gDiffuseReflectance.Load(int3(ipos, 0)).rgb;
     float3 specularReflectance = gSpecularReflectance.Load(int3(ipos, 0)).rgb;
 
+    float3 deltaReflectionRadiance = gDeltaReflectionRadiance.Load(int3(ipos, 0)).rgb;
+    float3 deltaTransmissionRadiance = gDeltaTransmissionRadiance.Load(int3(ipos, 0)).rgb;
+
     float3 emission = gEmission.Load(int3(ipos, 0)).rgb;
-    float3 color = diffuseReflectance * diffuseIlumination + specularReflectance * specularIllumination + emission;
+    float3 color = diffuseReflectance * diffuseIlumination + specularReflectance * specularIllumination + emission + deltaReflectionRadiance + deltaTransmissionRadiance;
 
     return float4(color, 1.0f);
 }

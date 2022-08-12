@@ -17,7 +17,7 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXATrousWavelet.hlsl", mpDevice, 4, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, };
-    this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXReconstruction.hlsl", mpDevice, 5, rtvFormats);
+    this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXReconstruction.hlsl", mpDevice, 7, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXFilterVariance.hlsl", mpDevice, 6, rtvFormats);
@@ -339,6 +339,9 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gDiffuseReflectance"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gSpecularReflectance"));
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gEmission"));
+    mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gDeltaReflectionRadiance"));
+    mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gDeltaTransmissionRadiance"));
+
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(reconstructionRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
     mpCmdList->DrawInstanced(6, 1, 0, 0);
