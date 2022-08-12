@@ -417,6 +417,7 @@
     <None Include="RenderPass\SVGF\SVGFDepthDerivative.hlsl" />
     <None Include="RenderPass\Core\BSDF\RoughPlastic.hlsli" />
     <None Include="RenderPass\Core\BSDF\BSDFUtils.hlsli" />
+    <None Include="RenderPass\Core\BSDF\BSDFLobes.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">

@@ -365,7 +365,7 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     outputUAVBuffers["gDeltaTransmissionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionEmission", 1);
     outputUAVBuffers["gDeltaTransmissionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionRadiance", 1);
 
-    outputUAVBuffers["gPrimaryPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8_UINT, "gPrimaryPathType", 1);
+    outputUAVBuffers["gPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8_UINT, "gPathType", 1);
 
 }
 

@@ -436,7 +436,7 @@ void rayGen()
     gDeltaTransmissionReflectance[launchIndex.xy] = float4(pathResult.deltaTransmissionReflectance, 1.0f);
 
 
-    gPrimaryPathType[launchIndex.xy] = pathResult.primaryPathType;
+    gPrimaryPathType[launchIndex.xy] = uint(pathResult.primaryPathType);
 
 #endif
     if (g_frameData.frameNumber > 1 && gPathTracer.accumulateFrames) {

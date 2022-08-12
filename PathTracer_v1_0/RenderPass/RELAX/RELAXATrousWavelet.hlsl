@@ -3,6 +3,7 @@ Texture2D gColorVariance : register(t0);
 Texture2D gNormal : register(t1);
 Texture2D gPositionMeshID : register(t2);
 Texture2D gDepthDerivative : register(t3);
+Texture2D<uint> gPathType : register(t4);
 
 SamplerState s1 : register(s0);
 
@@ -26,6 +27,11 @@ struct VS_OUTPUT
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
     int2 ipos = int2(input.pos.xy);
+
+    uint pPathType = gPathType.Load(int3(ipos, 0)).r;
+    if ((pPathType & BSDF_LOBE_NON_DELTA) == 0) {
+        return float4(0, 0, 0, 0);
+    }
 
     float4 pPositionMeshId = gPositionMeshID.Load(int3(ipos, 0));
     float3 pPosition = pPositionMeshId.rgb;
@@ -65,8 +71,11 @@ float4 main(VS_OUTPUT input) : SV_TARGET
             int2 ipos2 = ipos + int2(offsetx, offsety) * step;
 
             const bool outside = (ipos2.x < 0) || (ipos2.x >= screenSize.x) || (ipos2.y < 0) || (ipos2.y >= screenSize.y);
+            
+            uint qPathType = gPathType.Load(int3(ipos2, 0)).r;
+            const bool pathTypeValid = (qPathType & BSDF_LOBE_NON_DELTA);
 
-            if (!outside && (offsetx != 0 || offsety != 0)) {
+            if (!outside && (offsetx != 0 || offsety != 0) && pathTypeValid) {
                 float4 qPositionMeshId = gPositionMeshID.Load(int3(ipos2, 0));
                 float qMeshID = qPositionMeshId.a;
 

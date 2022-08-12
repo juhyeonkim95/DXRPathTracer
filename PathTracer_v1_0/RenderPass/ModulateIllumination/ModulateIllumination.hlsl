@@ -35,7 +35,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 deltaTransmissionEmission = gDeltaTransmissionEmission.Load(int3(ipos, 0)).rgb;
 
     float3 color = diffuseReflectance * diffuseRadiance + specularReflectance * specularRadiance + emission;
-    color = deltaReflectionRadiance * deltaReflectionReflectance + deltaReflectionEmission;
+    color += deltaReflectionRadiance * deltaReflectionReflectance + deltaReflectionEmission;
     color += deltaTransmissionRadiance * deltaTransmissionReflectance + deltaTransmissionEmission;
 
     return float4(color, 1.0f);

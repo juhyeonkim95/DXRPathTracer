@@ -14,7 +14,7 @@ NRDDeltaReflection::NRDDeltaReflection(ID3D12Device5Ptr mpDevice, uvec2 size)
     this->temporalAccumulationShader = new Shader(kQuadVertexShader, L"RenderPass/NRDDeltaReflection/NRDDeltaReflectionTemporalAccumulation.hlsl", mpDevice, 5, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
-    this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/NRDDeltaReflection/NRDDeltaReflectionATrousWavelet.hlsl", mpDevice, 4, rtvFormats);
+    this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/NRDDeltaReflection/NRDDeltaReflectionATrousWavelet.hlsl", mpDevice, 5, rtvFormats);
 
     //rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, };
     //this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/NRDDeltaReflection/NRDDeltaReflectionReconstruction.hlsl", mpDevice, 7, rtvFormats);
@@ -246,6 +246,7 @@ void NRDDeltaReflection::forward(RenderContext* pRenderContext, RenderData& rend
     mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormal"));
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, depthDerivativeTexture->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gPathType"));
 
 
     // DeltaReflection

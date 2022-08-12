@@ -8,6 +8,5 @@
 #include "Common/DescriptorTable.hlsli"
 #include "BSDF/Fresnel.hlsli"
 #include "BSDF/Microfacet.hlsli"
-
+#include "BSDF/BSDFLobes.hlsli"
 #endif
-

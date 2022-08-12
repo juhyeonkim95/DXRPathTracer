@@ -264,6 +264,9 @@
   <ItemGroup>
     <None Include="..\README.md" />
     <None Include="..\WorkProgress.md" />
+    <None Include="RenderPass\Core\BSDF\BSDFLobes.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="RenderPass\Core\BSDF\BSDFUtils.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
