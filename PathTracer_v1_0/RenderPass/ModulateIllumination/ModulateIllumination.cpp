@@ -8,6 +8,20 @@ ModulateIllumination::ModulateIllumination(ID3D12Device5Ptr mpDevice, uvec2 size
     this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/ModulateIllumination/ModulateIllumination.hlsl", mpDevice, 11, rtvFormats);
 
     mpParameterBuffer = createBuffer(mpDevice, sizeof(ModulateIlluminationParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+
+    enableDiffuseRadiance = true;
+    enableDiffuseReflectance = true;
+    enableSpecularRadiance = true;
+    enableSpecularReflectance = true;
+    enableEmission = true;
+
+    enableDeltaReflectionRadiance = true;
+    enableDeltaReflectionReflectance = true;
+    enableDeltaReflectionEmission = true;
+
+    enableDeltaTransmissionRadiance = true;
+    enableDeltaTransmissionReflectance = true;
+    enableDeltaTransmissionEmission = true;
 }
 
 void ModulateIllumination::createRenderTextures(
@@ -21,8 +35,19 @@ void ModulateIllumination::processGUI()
 {
     if (ImGui::CollapsingHeader("ModulateIllumination"))
     {
-        ImGui::Text("ModulateIllumination");
-        // ImGui::Checkbox("Blend with accumulated HDR", &mEnabled);
+        ImGui::Checkbox("DiffuseReflectance", &enableDiffuseReflectance);
+        ImGui::Checkbox("DiffuseRadiance", &enableDiffuseRadiance);
+        ImGui::Checkbox("SpecularReflectance", &enableSpecularReflectance);
+        ImGui::Checkbox("SpecularRadiance", &enableSpecularRadiance);
+        ImGui::Checkbox("Emission", &enableEmission);
+
+        ImGui::Checkbox("DeltaReflectionRadiance", &enableDeltaReflectionRadiance);
+        ImGui::Checkbox("DeltaReflectionReflectance", &enableDeltaReflectionReflectance);
+        ImGui::Checkbox("DeltaReflectionEmission", &enableDeltaReflectionEmission);
+
+        ImGui::Checkbox("DeltaTransmissionRadiance", &enableDeltaTransmissionRadiance);
+        ImGui::Checkbox("DeltaTransmissionReflectance", &enableDeltaTransmissionReflectance);
+        ImGui::Checkbox("DeltaTransmissionEmission", &enableDeltaTransmissionEmission);
     }
 }
 
@@ -40,6 +65,9 @@ void ModulateIllumination::forward(RenderContext* pRenderContext, RenderData& re
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(blendRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
     mpCmdList->OMSetRenderTargets(1, &blendRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
+
+    uploadParams();
+    mpCmdList->SetGraphicsRootConstantBufferView(0, this->mpParameterBuffer->GetGPUVirtualAddress());
 
     mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gDiffuseRadiance"));
     mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gSpecularRadiance"));
@@ -63,6 +91,19 @@ void ModulateIllumination::forward(RenderContext* pRenderContext, RenderData& re
 
 void ModulateIllumination::uploadParams()
 {
+    mParam.enableDiffuseReflectance = enableDiffuseReflectance;
+    mParam.enableDiffuseRadiance = enableDiffuseRadiance;
+    mParam.enableSpecularReflectance = enableSpecularReflectance;
+    mParam.enableSpecularRadiance = enableSpecularRadiance;
+    mParam.enableEmission = enableEmission;
+
+    mParam.enableDeltaReflectionRadiance = enableDeltaReflectionRadiance;
+    mParam.enableDeltaReflectionReflectance = enableDeltaReflectionReflectance;
+    mParam.enableDeltaReflectionEmission = enableDeltaReflectionEmission;
+    mParam.enableDeltaTransmissionRadiance = enableDeltaTransmissionRadiance;
+    mParam.enableDeltaTransmissionReflectance = enableDeltaTransmissionReflectance;
+    mParam.enableDeltaTransmissionEmission = enableDeltaTransmissionEmission;
+
     uint8_t* pData;
     d3d_call(mpParameterBuffer->Map(0, nullptr, (void**)&pData));
     memcpy(pData, &mParam, sizeof(ModulateIlluminationParameters));

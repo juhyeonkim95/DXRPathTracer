@@ -3,10 +3,21 @@
 
 struct ModulateIlluminationParameters
 {
-	float alpha;
-	int divide;
-	uint unused1;
-	uint unused2;
+	uint enableDiffuseRadiance;
+	uint enableDiffuseReflectance;
+	uint enableSpecularRadiance;
+	uint enableSpecularReflectance;
+	uint enableEmission;
+
+	uint enableDeltaReflectionRadiance;
+	uint enableDeltaReflectionReflectance;
+	uint enableDeltaReflectionEmission;
+
+	uint enableDeltaTransmissionRadiance;
+	uint enableDeltaTransmissionReflectance;
+	uint enableDeltaTransmissionEmission;
+
+	uint unused;
 };
 
 class ModulateIllumination : public PostProcessPass
@@ -26,6 +37,21 @@ public:
 private:
 	Shader* mpShader;
 	ID3D12ResourcePtr mpParameterBuffer = nullptr;
+
+	bool enableDiffuseRadiance;
+	bool enableDiffuseReflectance;
+	bool enableSpecularRadiance;
+	bool enableSpecularReflectance;
+	bool enableEmission;
+
+	bool enableDeltaReflectionRadiance;
+	bool enableDeltaReflectionReflectance;
+	bool enableDeltaReflectionEmission;
+
+	bool enableDeltaTransmissionRadiance;
+	bool enableDeltaTransmissionReflectance;
+	bool enableDeltaTransmissionEmission;
+
 
 	void uploadParams();
 };

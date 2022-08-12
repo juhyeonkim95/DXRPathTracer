@@ -18,6 +18,25 @@ struct VS_OUTPUT
     float2 texCoord: TEXCOORD;
 };
 
+cbuffer ConstantBuffer : register(b0)
+{
+	uint enableDiffuseRadiance;
+	uint enableDiffuseReflectance;
+	uint enableSpecularRadiance;
+	uint enableSpecularReflectance;
+	uint enableEmission;
+
+	uint enableDeltaReflectionRadiance;
+	uint enableDeltaReflectionReflectance;
+	uint enableDeltaReflectionEmission;
+
+	uint enableDeltaTransmissionRadiance;
+	uint enableDeltaTransmissionReflectance;
+	uint enableDeltaTransmissionEmission;
+
+	uint unused;
+};
+
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
     const int2 ipos = int2(input.pos.xy);
@@ -33,10 +52,54 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 deltaTransmissionReflectance = gDeltaTransmissionReflectance.Load(int3(ipos, 0)).rgb;
     float3 deltaReflectionEmission = gDeltaReflectionEmission.Load(int3(ipos, 0)).rgb;
     float3 deltaTransmissionEmission = gDeltaTransmissionEmission.Load(int3(ipos, 0)).rgb;
+    
+    float3 color = 0.0f;
+    if (enableDiffuseRadiance) {
+        float3 diffuse = diffuseRadiance;
+        if (enableDiffuseReflectance) {
+            diffuse *= diffuseReflectance;
+        }
+        color += diffuse;
+    }
 
-    float3 color = diffuseReflectance * diffuseRadiance + specularReflectance * specularRadiance + emission;
-    color += deltaReflectionRadiance * deltaReflectionReflectance + deltaReflectionEmission;
-    color += deltaTransmissionRadiance * deltaTransmissionReflectance + deltaTransmissionEmission;
+    if (enableSpecularRadiance) {
+        float3 specular = specularRadiance;
+        if (enableSpecularReflectance) {
+            specular *= specularReflectance;
+        }
+        color += specular;
+    }
+
+    if (enableEmission)
+    {
+        color += emission;
+    }
+
+    if (enableDeltaReflectionRadiance) {
+        float3 deltaReflection = deltaReflectionRadiance;
+        if (enableDeltaReflectionReflectance) {
+            deltaReflection *= deltaReflectionReflectance;
+        }
+        color += deltaReflection;
+    }
+
+    if (enableDeltaTransmissionRadiance) {
+        float3 deltaTransmission = deltaTransmissionRadiance;
+        if (enableDeltaTransmissionReflectance) {
+            deltaTransmission *= deltaTransmissionReflectance;
+        }
+        color += deltaTransmission;
+    }
+
+    if (enableDeltaReflectionEmission)
+    {
+        color += deltaReflectionEmission;
+    }
+
+    if (enableDeltaTransmissionEmission)
+    {
+        color += deltaTransmissionEmission;
+    }
 
     return float4(color, 1.0f);
 }
