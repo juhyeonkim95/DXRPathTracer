@@ -9,6 +9,8 @@ Texture2D gDeltaReflectionReflectance : register(t7);
 Texture2D gDeltaTransmissionReflectance : register(t8);
 Texture2D gDeltaReflectionEmission : register(t9);
 Texture2D gDeltaTransmissionEmission : register(t10);
+Texture2D gResidualRadiance : register(t11);
+
 
 SamplerState s1 : register(s0);
 
@@ -34,7 +36,7 @@ cbuffer ConstantBuffer : register(b0)
 	uint enableDeltaTransmissionReflectance;
 	uint enableDeltaTransmissionEmission;
 
-	uint unused;
+	uint enableResidualRadiance;
 };
 
 float4 main(VS_OUTPUT input) : SV_TARGET
@@ -53,6 +55,8 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 deltaReflectionEmission = gDeltaReflectionEmission.Load(int3(ipos, 0)).rgb;
     float3 deltaTransmissionEmission = gDeltaTransmissionEmission.Load(int3(ipos, 0)).rgb;
     
+    float3 residualRadiance = gResidualRadiance.Load(int3(ipos, 0)).rgb;
+
     float3 color = 0.0f;
     if (enableDiffuseRadiance) {
         float3 diffuse = diffuseRadiance;
@@ -99,6 +103,11 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     if (enableDeltaTransmissionEmission)
     {
         color += deltaTransmissionEmission;
+    }
+
+    if (enableResidualRadiance)
+    {
+        color += residualRadiance;
     }
 
     return float4(color, 1.0f);

@@ -26,23 +26,28 @@ struct PS_OUT
 
 PS_OUT main(VS_OUTPUT input) : SV_Target
 {
-    float2 uv = input.texCoord;
-    float2 prev_uv = motion_vectors.Sample(s1, uv).rg;
+    const int2 ipos = int2(input.pos.xy);
+
+    // float2 uv = input.texCoord;
+    // float2 prev_uv = motion_vectors.Sample(s1, uv).rg;
+    float2 prev_uv = motion_vectors.Load(int3(ipos, 0)).rg;
 
     prev_uv.x *= 2;
     float consistency = floor(prev_uv.x);
     prev_uv.x -= consistency;
 
     // float consistency = motion_vectors.Sample(s1, uv).a;
+    float3 col = current_color.Load(int3(ipos, 0)).rgb;
 
-    float3 col = current_color.Sample(s1, uv).rgb;
+    // float3 col = current_color.Sample(s1, uv).rgb;
     float3 col_prev = col_history.Sample(s1, prev_uv).rgb;
 
     float2 moment_prev = moments_history.Sample(s1, prev_uv).rg;
 
 
 
-    float historyLength = length_history.Sample(s1, uv).x;
+    // float historyLength = length_history.Sample(s1, uv).x;
+    float historyLength = length_history.Load(int3(ipos, 0)).x;
     // bool success = historyLength > 1.0f;
     bool success = consistency >= 1.0;
 

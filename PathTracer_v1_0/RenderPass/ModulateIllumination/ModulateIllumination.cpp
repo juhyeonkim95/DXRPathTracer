@@ -5,7 +5,7 @@ ModulateIllumination::ModulateIllumination(ID3D12Device5Ptr mpDevice, uvec2 size
 {
     // Create Shader
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
-    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/ModulateIllumination/ModulateIllumination.hlsl", mpDevice, 11, rtvFormats);
+    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/ModulateIllumination/ModulateIllumination.hlsl", mpDevice, 12, rtvFormats);
 
     mpParameterBuffer = createBuffer(mpDevice, sizeof(ModulateIlluminationParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
 
@@ -22,6 +22,8 @@ ModulateIllumination::ModulateIllumination(ID3D12Device5Ptr mpDevice, uvec2 size
     enableDeltaTransmissionRadiance = true;
     enableDeltaTransmissionReflectance = true;
     enableDeltaTransmissionEmission = true;
+
+    enableResidualRadiance = true;
 }
 
 void ModulateIllumination::createRenderTextures(
@@ -48,6 +50,8 @@ void ModulateIllumination::processGUI()
         ImGui::Checkbox("DeltaTransmissionRadiance", &enableDeltaTransmissionRadiance);
         ImGui::Checkbox("DeltaTransmissionReflectance", &enableDeltaTransmissionReflectance);
         ImGui::Checkbox("DeltaTransmissionEmission", &enableDeltaTransmissionEmission);
+
+        ImGui::Checkbox("ResidualRadiance", &enableResidualRadiance);
     }
 }
 
@@ -81,12 +85,10 @@ void ModulateIllumination::forward(RenderContext* pRenderContext, RenderData& re
     mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gDeltaTransmissionReflectance"));
     mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gDeltaReflectionEmission"));
     mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gDeltaTransmissionEmission"));
-
+    mpCmdList->SetGraphicsRootDescriptorTable(12, gpuHandles.at("gResidualRadiance"));
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(blendRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
     mpCmdList->DrawInstanced(6, 1, 0, 0);
-
-
 }
 
 void ModulateIllumination::uploadParams()
@@ -103,6 +105,8 @@ void ModulateIllumination::uploadParams()
     mParam.enableDeltaTransmissionRadiance = enableDeltaTransmissionRadiance;
     mParam.enableDeltaTransmissionReflectance = enableDeltaTransmissionReflectance;
     mParam.enableDeltaTransmissionEmission = enableDeltaTransmissionEmission;
+
+    mParam.enableResidualRadiance = enableResidualRadiance;
 
     uint8_t* pData;
     d3d_call(mpParameterBuffer->Map(0, nullptr, (void**)&pData));

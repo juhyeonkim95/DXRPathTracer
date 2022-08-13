@@ -29,7 +29,9 @@ RWTexture2D<float4> gDeltaTransmissionReflectance : register(u19);
 RWTexture2D<float4> gDeltaTransmissionEmission : register(u20);
 RWTexture2D<float4> gDeltaTransmissionRadiance : register(u21);
 
-RWTexture2D<uint> gPrimaryPathType : register(u22);
+RWTexture2D<float4> gResidualRadiance : register(u22);
+
+RWTexture2D<uint> gPrimaryPathType : register(u23);
 
 
 RaytracingAccelerationStructure gRtScene : register(t0);

@@ -17,7 +17,7 @@ struct ModulateIlluminationParameters
 	uint enableDeltaTransmissionReflectance;
 	uint enableDeltaTransmissionEmission;
 
-	uint unused;
+	uint enableResidualRadiance;
 };
 
 class ModulateIllumination : public PostProcessPass
@@ -52,6 +52,7 @@ private:
 	bool enableDeltaTransmissionReflectance;
 	bool enableDeltaTransmissionEmission;
 
+	bool enableResidualRadiance;
 
 	void uploadParams();
 };

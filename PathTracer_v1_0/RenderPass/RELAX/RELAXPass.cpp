@@ -16,9 +16,6 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXATrousWavelet.hlsl", mpDevice, 5, rtvFormats);
 
-    //rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, };
-    //this->reconstructionShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXReconstruction.hlsl", mpDevice, 7, rtvFormats);
-
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXFilterVariance.hlsl", mpDevice, 6, rtvFormats);
 
@@ -65,17 +62,6 @@ void RELAXPass::createRenderTextures(
     waveletDiffusePingPong2 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
     waveletSpecularPingPong1 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
     waveletSpecularPingPong2 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
-
-
-
-    /*for (int i = 0; i < maxWaveletCount; i++) {
-        RenderTexture* waveletDiffusei = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
-        RenderTexture* waveletSpeculari = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
-        this->waveletDiffuse.push_back(waveletDiffusei);
-        this->waveletSpecular.push_back(waveletSpeculari);
-    }*/
-
-    // this->reconstructionRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 }
 
 void RELAXPass::processGUI()

@@ -201,7 +201,7 @@ void RenderApplication::onFrameRender()
 
     D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
 
-    if (this->renderMode != 10 && renderMode != 0) {
+    if (this->renderMode != 10  && this->renderMode != 0) {
         switch (this->renderMode) {
         case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
         //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
@@ -209,8 +209,8 @@ void RenderApplication::onFrameRender()
 
         case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionRadiance"); break;
         case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionRadiance"); break;
-
-        case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
+        case 4: output = mpSrvUavHeap->getGPUHandleByName("gResidualRadiance"); break;
+        //case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
         //case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
         //case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
         case 5: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;

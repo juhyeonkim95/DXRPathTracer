@@ -99,10 +99,10 @@ namespace plastic
 			return;
 		}
 
-		bool sampleR = true;
-		bool sampleT = true;
+		bool sampleR = si.requestedLobe & BSDF_LOBE_DELTA_REFLECTION;
+		bool sampleT = si.requestedLobe & BSDF_LOBE_DIFFUSE_REFLECTION;
 
-		float3 diffuseReflectance = EvalDiffuseReflectance(mat, si);
+		float3 diffuseReflectance = si.diffuseReflectance;
 
 		float ior = mat.intIOR / mat.extIOR;
 		float eta = 1 / ior;

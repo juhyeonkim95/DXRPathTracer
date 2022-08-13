@@ -23,20 +23,41 @@ namespace dielectric
 		float cosThetaT;
 		const float F = fresnel::DielectricReflectance(eta, abs(si.wi.z), cosThetaT);
 
-		if (nextRand(seed) <= F)
+		bool sampleR = si.requestedLobe & BSDF_LOBE_DELTA_REFLECTION;
+		bool sampleT = si.requestedLobe & BSDF_LOBE_DELTA_TRANSMISSION;
+
+		float reflectionProbability = F;
+		if (sampleR && sampleT)
+			reflectionProbability = F;
+		else if (sampleR)
+			reflectionProbability = 1.0f;
+		else if (sampleT)
+			reflectionProbability = 0.0f;
+
+		// Total reflection
+		if (F == 1.0f)
+		{
+			reflectionProbability = 1.0f;
+		}
+
+		if (nextRand(seed) <= reflectionProbability)
 		{
 			// Reflect
 			bs.wo = float3(-si.wi.x, -si.wi.y, si.wi.z);
-			bs.pdf = F;
-			bs.weight = EvalSpecularReflectance(mat, si);
+			bs.pdf = reflectionProbability;
+			bs.weight = si.specularReflectance;
+			if (!sampleT)
+				bs.weight *= F;
 			bs.sampledLobe = BSDF_LOBE_DELTA_REFLECTION;
 		}
 		else
 		{
 			// Refract
 			bs.wo = float3(-si.wi.x * eta, -si.wi.y * eta, -sign(si.wi.z) * cosThetaT);
-			bs.pdf = 1 - F;
-			bs.weight = EvalSpecularTransmittance(mat, si) * eta * eta;
+			bs.pdf = 1 - reflectionProbability;
+			bs.weight = si.specularTransmittance * eta * eta;
+			if (!sampleR)
+				bs.weight *= (1-F);
 			bs.sampledLobe = BSDF_LOBE_DELTA_TRANSMISSION;
 		}
 	}

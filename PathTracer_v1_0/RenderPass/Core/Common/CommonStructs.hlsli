@@ -126,6 +126,7 @@ struct RayPayload
 
     float3 diffuseReflectance;
     float3 specularReflectance;
+    float3 specularTransmittance;
     float roughness;
 
     float3 direction;
@@ -147,9 +148,11 @@ struct RayPayload
     uint materialIndex;
     int lightIndex;
     float t;
-    float unused;
+    // float unused;
 
     uint sampledLobe;
+    uint requestedLobe;
+    uint primaryReflectionLobe;
 };
 
 struct ShadowPayload
@@ -178,6 +181,8 @@ struct PathTraceResult
     float3 deltaTransmissionReflectance;
     float3 deltaTransmissionEmission;
     float3 deltaTransmissionRadiance;
+
+    float3 residualRadiance;
 
     uint primaryPathType;
 

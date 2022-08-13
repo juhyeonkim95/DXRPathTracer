@@ -4,7 +4,7 @@ Texture2D gPositionMeshIDPrev : register(t0);
 Texture2D gNormalPrev : register(t1);
 Texture2D gPositionMeshID : register(t2);
 Texture2D gNormal : register(t3);
-Texture2D gHistoryLength : register(t4);
+Texture2D<float> gHistoryLength : register(t4);
 Texture2D gDepthDerivative : register(t5);
 
 SamplerState s1 : register(s0);
@@ -39,7 +39,7 @@ bool isReprojectionTapValid(in float3 currentWorldPos, in float3 previousWorldPo
 PS_OUT main(VS_OUTPUT input) : SV_TARGET
 {
     const int2 ipos = int2(input.pos.xy);
-
+    
     float3 position = gPositionMeshID.Load(int3(ipos, 0)).rgb;
 
     // Reprojection
@@ -66,6 +66,8 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     float disocclusionThreshold = gDisocclusionDepthThreshold * depth;
     consistency = consistency && isReprojectionTapValid(position, previousPosition, normal, disocclusionThreshold);
     
+    //consistency = consistency && length(position - previousPosition) < 0.01f;
+
     // (2) check normal
     consistency = consistency && (dot(normal, previousNormal) > sqrt(2) / 2.0);
 
