@@ -201,23 +201,37 @@ void RenderApplication::onFrameRender()
 
     D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
 
-    if (this->renderMode != 10  && this->renderMode != 0) {
+    if (this->renderMode != 10  && this->renderMode != 0 && this->renderMode != 1) {
+        //switch (this->renderMode) {
+        //case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
+        ////case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
+        ////case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
+
+        //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionRadiance"); break;
+        //case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionRadiance"); break;
+        //case 4: output = mpSrvUavHeap->getGPUHandleByName("gResidualRadiance"); break;
+        ////case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
+        ////case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
+        ////case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
+        //case 5: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;
+        //case 6: output = mpSrvUavHeap->getGPUHandleByName("gSpecularReflectance"); break;
+
+        //case 7: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionReflectance"); break;
+        //case 8: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionReflectance"); break;
+
+        //default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
+        //}
         switch (this->renderMode) {
         case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
-        //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
-        //case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
+            //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
+            //case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
 
-        case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionRadiance"); break;
-        case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionRadiance"); break;
-        case 4: output = mpSrvUavHeap->getGPUHandleByName("gResidualRadiance"); break;
-        //case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
-        //case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
-        //case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
-        case 5: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;
-        case 6: output = mpSrvUavHeap->getGPUHandleByName("gSpecularReflectance"); break;
-
-        case 7: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionReflectance"); break;
-        case 8: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionReflectance"); break;
+        case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionPositionMeshID"); break;
+        case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionNormal"); break;
+        case 4: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionPositionMeshID"); break;
+        case 5: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionNormal"); break;
+        case 6: output = mpSrvUavHeap->getGPUHandleByName("gPositionMeshID"); break;
+        case 7: output = mpSrvUavHeap->getGPUHandleByName("gNormal"); break;
 
         default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
         }
@@ -245,6 +259,7 @@ void RenderApplication::onFrameRender()
 
         modulatePass->forward(&renderContext, renderDataPathTracer);
         output = modulatePass->blendRenderTexture->getGPUSrvHandler();
+        // output = deltaPass->motionVectorRenderTexture->getGPUSrvHandler();
 
         //if (svgfPass->mEnabled) 
         //{
@@ -398,6 +413,7 @@ void RenderApplication::update()
     mat4 projection = perspective(radians(camera->fovy), (float)camera->width / (float)camera->height, 0.1f, 100.0f);
     mat4 view = lookAt(camera->position, camera->position + camera->forward, camera->up);
     mat4 projview = projection * view;
+    frameData.previousCameraPosition = vec4(camera->position, 1.0f);
     frameData.previousProjView = transpose(projview);
     frameData.renderMode = nextRenderMode;
 

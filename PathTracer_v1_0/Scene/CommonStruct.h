@@ -49,6 +49,8 @@ struct PerFrameData
     vec4 cameraPosition;
     mat4x4 envMapTransform;
     mat4x4 previousProjView;
+    vec4 previousCameraPosition;
+
     uint frameNumber;
     uint totalFrameNumber;
     uint lightNumber;

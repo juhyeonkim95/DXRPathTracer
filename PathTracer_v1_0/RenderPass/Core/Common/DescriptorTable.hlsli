@@ -33,6 +33,7 @@ RWTexture2D<float4> gDeltaReflectionPositionMeshID : register(u22);
 RWTexture2D<float4> gDeltaReflectionNormal : register(u23);
 RWTexture2D<float4> gDeltaTransmissionPositionMeshID : register(u24);
 RWTexture2D<float4> gDeltaTransmissionNormal : register(u25);
+
 RWTexture2D<float4> gResidualRadiance : register(u26);
 RWTexture2D<uint> gPrimaryPathType : register(u27);
 

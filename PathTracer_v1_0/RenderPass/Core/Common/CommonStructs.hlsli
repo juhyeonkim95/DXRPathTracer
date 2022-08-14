@@ -60,6 +60,7 @@ struct PerFrameData
 
     float4x4 envMapTransform;
     float4x4 previousProjView;
+    float4 previousCameraPosition;
 
     uint frameNumber;
     uint totalFrameNumber;
@@ -181,6 +182,14 @@ struct PathTraceResult
     float3 deltaTransmissionReflectance;
     float3 deltaTransmissionEmission;
     float3 deltaTransmissionRadiance;
+
+    float3 deltaReflectionPosition;
+    float3 deltaReflectionNormal;
+    uint deltaReflectionMeshID;
+
+    float3 deltaTransmissionPosition;
+    float3 deltaTransmissionNormal;
+    uint deltaTransmissionMeshID;
 
     float3 residualRadiance;
 

@@ -92,7 +92,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         if (enableDeltaTransmissionReflectance) {
             deltaTransmission *= deltaTransmissionReflectance;
         }
-        color += deltaTransmission;
+        //color += deltaTransmission;
     }
 
     if (enableDeltaReflectionEmission)
@@ -102,7 +102,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
     if (enableDeltaTransmissionEmission)
     {
-        color += deltaTransmissionEmission;
+        //color += deltaTransmissionEmission;
     }
 
     if (enableResidualRadiance)

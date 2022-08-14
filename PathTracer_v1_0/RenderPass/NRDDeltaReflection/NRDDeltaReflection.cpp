@@ -7,8 +7,8 @@ NRDDeltaReflection::NRDDeltaReflection(ID3D12Device5Ptr mpDevice, uvec2 size)
     : PostProcessPass(mpDevice, size)
 {
     // Create Shaders
-    std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32_FLOAT, DXGI_FORMAT_R32_FLOAT };
-    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/NRDDeltaReflection/NRDDeltaReflectionMotionVector.hlsl", mpDevice, 6, rtvFormats);
+    std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32_FLOAT };
+    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/NRDDeltaReflection/NRDDeltaReflectionMotionVector.hlsl", mpDevice, 9, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32_FLOAT };
     this->temporalAccumulationShader = new Shader(kQuadVertexShader, L"RenderPass/NRDDeltaReflection/NRDDeltaReflectionTemporalAccumulation.hlsl", mpDevice, 5, rtvFormats);
@@ -44,7 +44,8 @@ void NRDDeltaReflection::createRenderTextures(
     HeapData* srvHeap)
 {
     depthDerivativeTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32_FLOAT);
-    motionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R16G16_UNORM);
+    motionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+
     historyLengthRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
     historyLengthRenderTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
 
@@ -66,16 +67,6 @@ void NRDDeltaReflection::createRenderTextures(
     waveletDeltaTransmissionPingPong1 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
     waveletDeltaTransmissionPingPong2 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
-
-
-    /*for (int i = 0; i < maxWaveletCount; i++) {
-        RenderTexture* waveletDeltaReflectioni = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
-        RenderTexture* waveletDeltaTransmissioni = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
-        this->waveletDeltaReflection.push_back(waveletDeltaReflectioni);
-        this->waveletDeltaTransmission.push_back(waveletDeltaTransmissioni);
-    }*/
-
-    // this->reconstructionRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 }
 
 void NRDDeltaReflection::processGUI()
@@ -149,8 +140,13 @@ void NRDDeltaReflection::forward(RenderContext* pRenderContext, RenderData& rend
     mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormalPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gNormal"));
-    mpCmdList->SetGraphicsRootDescriptorTable(5, historyLengthRenderTexturePrev->getGPUSrvHandler());
-    mpCmdList->SetGraphicsRootDescriptorTable(6, depthDerivativeTexture->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gDeltaReflectionPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gDeltaReflectionPositionMeshIDPrev"));
+
+
+    mpCmdList->SetGraphicsRootDescriptorTable(7, historyLengthRenderTexturePrev->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(8, depthDerivativeTexture->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gPathType"));
 
     mpCmdList->SetGraphicsRootConstantBufferView(0, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
 
@@ -213,8 +209,8 @@ void NRDDeltaReflection::forward(RenderContext* pRenderContext, RenderData& rend
         mpCmdList->SetGraphicsRootDescriptorTable(1, temporalAccumulationTextureDeltaReflection->getGPUSrvHandler());
         // mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gOutputHDR"));
 
-        mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormal"));
-        mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
+        mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gDeltaReflectionNormal"));
+        mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gDeltaReflectionPositionMeshID"));
         mpCmdList->SetGraphicsRootDescriptorTable(4, temporalAccumulationTextureDeltaReflectionMoment->getGPUSrvHandler());
         mpCmdList->SetGraphicsRootDescriptorTable(5, historyLengthRenderTexture->getGPUSrvHandler());
         mpCmdList->SetGraphicsRootDescriptorTable(6, depthDerivativeTexture->getGPUSrvHandler());
@@ -243,8 +239,8 @@ void NRDDeltaReflection::forward(RenderContext* pRenderContext, RenderData& rend
     mpCmdList->SetPipelineState(waveletShader->getPipelineStateObject());
     mpCmdList->SetGraphicsRootSignature(waveletShader->getRootSignature()); // set the root signature
 
-    mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormal"));
-    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gDeltaReflectionNormal"));
+    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gDeltaReflectionPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, depthDerivativeTexture->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gPathType"));
 
