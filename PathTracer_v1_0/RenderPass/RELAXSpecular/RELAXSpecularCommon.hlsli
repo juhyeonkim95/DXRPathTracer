@@ -12,6 +12,10 @@ cbuffer ConstantBuffer : register(b0)
 	float sigmaL;
 	int stepSize;
 	uint targetPathType;
+	float roughnessMultiplier;
+	float unused1;
+	float unused2;
+	float unused3;
 };
 
 

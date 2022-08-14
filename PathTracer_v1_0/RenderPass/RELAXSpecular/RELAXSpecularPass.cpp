@@ -11,7 +11,7 @@ RELAXSpecularPass::RELAXSpecularPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint
     this->temporalAccumulationShader = new Shader(kQuadVertexShader, L"RenderPass/RELAXSpecular/RELAXSpecularTemporalAccumulation.hlsl", mpDevice, 7, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
-    this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/RELAXSpecular/RELAXSpecularATrousWavelet.hlsl", mpDevice, 5, rtvFormats);
+    this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/RELAXSpecular/RELAXSpecularATrousWavelet.hlsl", mpDevice, 8, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/RELAXSpecular/RELAXSpecularFilterVariance.hlsl", mpDevice, 7, rtvFormats);
@@ -25,6 +25,7 @@ RELAXSpecularPass::RELAXSpecularPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint
     param.sigmaP = 1.0f;
     param.sigmaN = 128.0f;
     param.sigmaL = 4.0f;
+    param.roughnessMultiplier = 5.0f;
     param.screenSize = ivec2(size.x, size.y);
     param.targetPathType = targetPathType;
     defaultParam = param;
@@ -59,6 +60,8 @@ void RELAXSpecularPass::processGUI()
         mDirty |= ImGui::SliderFloat("sigmaP", &param.sigmaP, 0.01f, 16.0f);
         mDirty |= ImGui::SliderFloat("sigmaN", &param.sigmaN, 0.01f, 256.0f);
         mDirty |= ImGui::SliderFloat("sigmaL", &param.sigmaL, 0.01f, 16.0f);
+        mDirty |= ImGui::SliderFloat("roughnessMultiplier", &param.roughnessMultiplier, 0.01f, 10.0f);
+
         mDirty |= ImGui::SliderInt("MaxAccumulatedFrame", &param.maxAccumulatedFrame, 1, 64);
         mDirty |= ImGui::SliderInt("waveletCount", &waveletCount, 0, maxWaveletCount);
         mDirty |= ImGui::SliderInt("Feedback Tap", &mFeedbackTap, 0, std::max(0, waveletCount));
@@ -150,6 +153,9 @@ void RELAXSpecularPass::forward(RenderContext* pRenderContext, RenderData& rende
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gDepthDerivative"));
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gPathType"));
+    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gDeltaReflectionNormal"));
+    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gDeltaReflectionPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gRoughness"));
 
 
     // (3) Wavelet

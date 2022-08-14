@@ -4,6 +4,9 @@ Texture2D gNormal : register(t1);
 Texture2D gPositionMeshID : register(t2);
 Texture2D gDepthDerivative : register(t3);
 Texture2D<uint> gPathType : register(t4);
+Texture2D gDeltaReflectionNormal : register(t5);
+Texture2D gDeltaReflectionPositionMeshID : register(t6);
+Texture2D<float> gRoughness : register(t7);
 
 SamplerState s1 : register(s0);
 
@@ -44,6 +47,12 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float pVariance = gColorVariance.Load(int3(ipos, 0)).a;
     float pLuminance = luma(pColor);
 
+    float3 pDeltaReflectionPosition = gDeltaReflectionPositionMeshID.Load(int3(ipos, 0)).rgb;
+    float3 pDeltaReflectionNormal= gDeltaReflectionNormal.Load(int3(ipos, 0)).rgb;
+    
+    float pRoughness = gRoughness.Load(int3(ipos, 0)).r;
+
+
     int step = stepSize;
 
 
@@ -59,7 +68,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float fwidthZ = max(abs(depthDerivative.x), abs(depthDerivative.y));
 
     float customSigmaL = (sigmaL * sqrt(var) + epsilon);
-    float customSigmaZ = sigmaZ * step * max(fwidthZ, 1e-8);
+    float customSigmaZ = sigmaZ * max(fwidthZ, 1e-8);
 
     float3 c = pColor;
     float v = pVariance;
@@ -86,9 +95,16 @@ float4 main(VS_OUTPUT input) : SV_TARGET
                 float qVariance = gColorVariance.Load(int3(ipos2, 0)).a;
                 float qLuminance = luma(qColor);
 
+                float3 qDeltaReflectionPosition = gDeltaReflectionPositionMeshID.Load(int3(ipos2, 0)).rgb;
+                float3 qDeltaReflectionNormal = gDeltaReflectionNormal.Load(int3(ipos2, 0)).rgb;
+
+
                 // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 // float w = calculateWeight(pDepth, qDepth, step * sigmaZ * abs(dot(depthDerivative, float2(offsetx, offsety))), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
-                float w = calculateWeightPosition(pPosition, qPosition, sigmaZ , pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                float wDelta = calculateWeightPosition(pDeltaReflectionPosition, qDeltaReflectionPosition, sigmaZ, pDeltaReflectionNormal, qDeltaReflectionNormal, pLuminance, qLuminance, customSigmaL);
+                
+                w = lerp(wDelta, w, clamp(pRoughness * roughnessMultiplier, 0, 1));
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 
