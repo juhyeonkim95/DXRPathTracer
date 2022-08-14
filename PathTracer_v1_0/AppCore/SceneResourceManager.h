@@ -5,6 +5,7 @@
 #include "HeapData.h"
 #include "SceneAccelerationStructure.h"
 
+
 class SceneResourceManager
 {
 public:
@@ -33,14 +34,12 @@ public:
     ID3D12ResourcePtr getCameraConstantBuffer() { return mpCameraConstantBuffer; };
     ID3D12ResourcePtr getLightConstantBuffer() { return mpLightParametersBuffer; };
 
-    D3D12_GPU_DESCRIPTOR_HANDLE getSRVStartHandle() { return mSrvUavHeap->getGPUHandleByName("AccelerationStructure"); };
+    D3D12_GPU_DESCRIPTOR_HANDLE getSRVStartHandle() { return mpSrvUavHeap->getGPUHandleByName("AccelerationStructure"); };
 
 private:
-    // AccelerationStructureBuffers createTopLevelAccelerationStructure(ID3D12GraphicsCommandList4Ptr mpCmdList);
-
     Scene* scene;
     ID3D12Device5Ptr mpDevice;
-    HeapData* mSrvUavHeap;
+    HeapData* mpSrvUavHeap;
 
     // SRVs - Acceleration Structure
     SceneAccelerationStructure* mpSceneAccelerationStructure;
@@ -57,6 +56,4 @@ private:
     // CBVs
     ID3D12ResourcePtr mpCameraConstantBuffer = nullptr;
     ID3D12ResourcePtr mpLightParametersBuffer = nullptr;
-
-    
 };

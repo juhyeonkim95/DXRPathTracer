@@ -4,6 +4,8 @@
 #include "../Common/CommonStructs.hlsli"
 #include "../Common/DescriptorTable.hlsli"
 
+// TODO : Remove this file!!
+
 float3 EvalDiffuseReflectance(in Material material, in RayPayload payload) {
 	return payload.diffuseReflectance;
 	//if (material.diffuseReflectanceTextureID) {

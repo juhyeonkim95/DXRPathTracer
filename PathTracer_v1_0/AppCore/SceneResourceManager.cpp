@@ -8,7 +8,7 @@ SceneResourceManager::SceneResourceManager(Scene* scene, ID3D12Device5Ptr pDevic
 {
     this->scene = scene;
     this->mpDevice = pDevice;
-    this->mSrvUavHeap = srvHeap;
+    this->mpSrvUavHeap = srvHeap;
     this->mpSceneAccelerationStructure = new SceneAccelerationStructure(scene);
 }
 
@@ -39,9 +39,9 @@ void SceneResourceManager::createSceneSRVs()
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.RaytracingAccelerationStructure.Location = getSceneAS()->getTopLevelAS()->GetGPUVirtualAddress();
-    mpDevice->CreateShaderResourceView(nullptr, &srvDesc, mSrvUavHeap->addDescriptorHandle("AccelerationStructure"));
+    mpDevice->CreateShaderResourceView(nullptr, &srvDesc, mpSrvUavHeap->addDescriptorHandle("AccelerationStructure"));
 
-    // 1. Material Data
+    // 1. Material Data (StructuredBuffer <Material>)
     {
         std::vector<Material> materialData;
         for (BSDF* bsdf : scene->bsdfs)
@@ -50,6 +50,7 @@ void SceneResourceManager::createSceneSRVs()
             material.materialType = bsdf->bsdfType;
             material.isDoubleSided = bsdf->isDoubleSided;
 
+            // TODO : ADD specular reflectance / transmittance texture?
             material.diffuseReflectance = bsdf->diffuseReflectance;
             material.diffuseReflectanceTextureID = bsdf->diffuseReflectanceTexturePath.length() > 0 ? 1 : 0;
             material.specularReflectance = bsdf->specularReflectance;
@@ -93,11 +94,10 @@ void SceneResourceManager::createSceneSRVs()
         srvDesc.Buffer.StructureByteStride = sizeof(materialData[0]);
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        mpDevice->CreateShaderResourceView(mpMaterialBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("MaterialData"));
-
+        mpDevice->CreateShaderResourceView(mpMaterialBuffer, &srvDesc, mpSrvUavHeap->addDescriptorHandle("MaterialData"));
     }
 
-    // 2. Geometry Data
+    // 2. Geometry Data (StructuredBuffer <GeometryInfo>)
     {
         uint32 indicesSize = 0;
         uint32 verticesSize = 0;
@@ -120,15 +120,13 @@ void SceneResourceManager::createSceneSRVs()
             geometryInfo.lightIndex = mesh.lightIndex;
             geometryInfo.indicesOffset = mesh.indicesOffset;
             geometryInfo.verticesOffset = mesh.verticesOffset;
-            //mat3 normalTransform = mat3(transpose(inverse(mesh.transform)));
-            //geometryInfo.normalTransform = transpose(normalTransform);
             geometryInfoData.push_back(geometryInfo);
         }
 
         mpGeometryInfoBuffer = createBuffer(mpDevice, sizeof(geometryInfoData[0]) * geometryInfoData.size(), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-        uint8_t* pData2;
-        d3d_call(mpGeometryInfoBuffer->Map(0, nullptr, (void**)&pData2));
-        memcpy(pData2, geometryInfoData.data(), sizeof(geometryInfoData[0]) * geometryInfoData.size());
+        uint8_t* pData;
+        d3d_call(mpGeometryInfoBuffer->Map(0, nullptr, (void**)&pData));
+        memcpy(pData, geometryInfoData.data(), sizeof(geometryInfoData[0]) * geometryInfoData.size());
         mpGeometryInfoBuffer->Unmap(0, nullptr);
 
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -139,10 +137,10 @@ void SceneResourceManager::createSceneSRVs()
         srvDesc.Buffer.StructureByteStride = sizeof(geometryInfoData[0]);
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        mpDevice->CreateShaderResourceView(mpGeometryInfoBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("GeometryData"));
+        mpDevice->CreateShaderResourceView(mpGeometryInfoBuffer, &srvDesc, mpSrvUavHeap->addDescriptorHandle("GeometryData"));
     }
 
-    // 3. Indices Data
+    // 3. Indices Data (StructuredBuffer <uint>)
     {
         std::vector<uint32> indicesData(scene->indicesNumber);
         uint32 counter = 0;
@@ -166,10 +164,10 @@ void SceneResourceManager::createSceneSRVs()
         srvDesc.Buffer.NumElements = indicesData.size();
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        mpDevice->CreateShaderResourceView(mpIndicesBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("IndicesData"));
+        mpDevice->CreateShaderResourceView(mpIndicesBuffer, &srvDesc, mpSrvUavHeap->addDescriptorHandle("IndicesData"));
     }
 
-    // 4. Vertices Data
+    // 4. Vertices Data (StructuredBuffer <MeshVertex>)
     {
         std::vector<MeshVertex> verticesData(scene->verticesNumber);
         uint32 counter = 0;
@@ -196,12 +194,13 @@ void SceneResourceManager::createSceneSRVs()
         srvDesc.Buffer.StructureByteStride = sizeof(verticesData[0]);
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        mpDevice->CreateShaderResourceView(mpVerticesBuffer, &srvDesc, mSrvUavHeap->addDescriptorHandle("VerticesData"));
+        mpDevice->CreateShaderResourceView(mpVerticesBuffer, &srvDesc, mpSrvUavHeap->addDescriptorHandle("VerticesData"));
     }
 }
 
 void SceneResourceManager::createSceneAccelerationStructure(ID3D12CommandQueuePtr mpCmdQueue, ID3D12CommandAllocatorPtr pCmdAllocator, ID3D12GraphicsCommandList4Ptr mpCmdList, ID3D12FencePtr mpFence, HANDLE mFenceEvent, uint64_t& mFenceValue)
 {
+    // Commit AS creation to SceneAccelerationStructure
     this->mpSceneAccelerationStructure->createSceneAccelerationStructure(mpDevice, mpCmdQueue, pCmdAllocator, mpCmdList, mpFence, mFenceEvent, mFenceValue);
 }
 
@@ -214,6 +213,11 @@ void SceneResourceManager::createSceneTextureResources(
     uint64_t &mFenceValue
 )
 {
+    // Create Textures used in the scene
+    // Allocate SRV to each texture.
+    // TODO : using TextureArray2D of Array of TextureArray
+    // IMPORTANT : if scene has a environment light, it always locate at the first position.
+
     mpTextureBuffers.resize(scene->textures.size());
     for (int i = 0; i < scene->textures.size(); i++)
     {
@@ -256,15 +260,14 @@ void SceneResourceManager::createSceneTextureResources(
         WaitForSingleObject(mFenceEvent, INFINITE);
         mpCmdList->Reset(pCmdAllocator, nullptr);
 
-        // 4. SRV Descriptor
-        // D3D12_CPU_DESCRIPTOR_HANDLE handle = m_pSRV->GetCPUDescriptorHandleForHeapStart();
+        // SRV Descriptor
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srvDesc.Format = texture->textureImage->GetMetadata().format;
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
         srvDesc.Texture2D.MipLevels = 1;
 
-        texture->descriptorHandleOffset = mSrvUavHeap->getLastIndex();
-        mpDevice->CreateShaderResourceView(mpTextureBuffers[i], &srvDesc, mSrvUavHeap->addDescriptorHandle(texture->name.c_str()));
+        texture->descriptorHandleOffset = mpSrvUavHeap->getLastIndex();
+        mpDevice->CreateShaderResourceView(mpTextureBuffers[i], &srvDesc, mpSrvUavHeap->addDescriptorHandle(texture->name.c_str()));
     }
 }

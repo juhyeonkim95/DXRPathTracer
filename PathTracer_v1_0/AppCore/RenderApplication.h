@@ -63,11 +63,9 @@ private:
     HeapData *mRtvHeap;
     HeapData* mpSrvUavHeap;
     SceneResourceManager* sceneResourceManager;
-    //RenderContext* mpRenderContext;
 
-    static const uint32_t kRtvHeapSize = 50;
-
-    // uint64_t mTlasSize = 0;
+    static const uint32_t kRtvHeapSize = 100;
+    static const uint32_t kSrvUavHeapSize = 200;
 
     Scene *scene;
 
@@ -75,8 +73,6 @@ private:
     IDirectInputDevice8A* mpKeyboard = 0;
     unsigned char mpKeyboardState[256];
     unsigned char mpKeyboardStatePrev[256];
-
-    //D3D12_CPU_DESCRIPTOR_HANDLE g_SceneMeshInfo;
 
     uint32_t mFrameNumber = 1;
     uint32_t mTotalFrameNumber = 0;
@@ -99,6 +95,7 @@ private:
     RELAXPass* specularFilterPass;
     RELAXPass* deltaReflectionFilterPass;
     RELAXPass* deltaTransmissionFilterPass;
+    RELAXPass* residualFilterPass;
 
     NRDDeltaReflectionMotionVector* deltaReflectionMotionVectorPass;
     NRDDeltaTransmissionMotionVector* deltaTransmissionMotionVectorPass;

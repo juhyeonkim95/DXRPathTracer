@@ -162,7 +162,6 @@
     <ClCompile Include="..\Framework\Externals\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="AppCore\ComputeShader.cpp" />
     <ClCompile Include="AppCore\SceneAccelerationStructure.cpp" />
     <ClCompile Include="DX12\DX12AccelerationStructureUtils.cpp" />
     <ClCompile Include="DX12\DX12StateSubobjects.cpp" />
@@ -214,7 +213,6 @@
     <ClInclude Include="..\Framework\Externals\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\Framework\Externals\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Framework\Externals\imgui\imstb_truetype.h" />
-    <ClInclude Include="AppCore\ComputeShader.h" />
     <ClInclude Include="AppCore\SceneAccelerationStructure.h" />
     <ClInclude Include="DX12\DX12AccelerationStructureUtils.h" />
     <ClInclude Include="DX12\DX12StateSubobjects.h" />

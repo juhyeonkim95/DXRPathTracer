@@ -412,7 +412,7 @@ void PathTraceDeltaReflectance(in RayDesc ray, inout uint seed, inout PathTraceR
         {
             pathResult.deltaReflectionReflectance = getMaterialReflectanceForDeltaPaths(material, payload);
             if (payload.done) {
-                pathResult.deltaReflectionEmission = payload.emission;
+                pathResult.deltaReflectionEmission = payload.attenuation * payload.emission;
             }
             pathResult.deltaReflectionPosition = payload.origin;
             pathResult.deltaReflectionNormal = payload.normal;
@@ -463,7 +463,7 @@ void PathTraceDeltaTransmission(in RayDesc ray, inout uint seed, inout PathTrace
         {
             pathResult.deltaTransmissionReflectance = getMaterialReflectanceForDeltaPaths(material, payload);
             if (payload.done) {
-                pathResult.deltaTransmissionEmission = payload.emission;
+                pathResult.deltaTransmissionEmission = payload.attenuation * payload.emission;
             }
             pathResult.deltaTransmissionPosition = payload.origin;
             pathResult.deltaTransmissionNormal = payload.normal;

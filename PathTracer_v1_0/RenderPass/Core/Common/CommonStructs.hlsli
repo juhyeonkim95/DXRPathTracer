@@ -149,7 +149,6 @@ struct RayPayload
     uint materialIndex;
     int lightIndex;
     float t;
-    // float unused;
 
     uint sampledLobe;
     uint requestedLobe;

@@ -19,16 +19,13 @@ namespace plastic
 		return probSpecular;
 	}
 
-	float Pdf(in Material mat, in RayPayload si, in float3 wo) {
+	float Pdf(in Material mat, in RayPayload si, in float3 wo, bool sampleR, bool sampleT) {
 		const float3 wi = si.wi;
 
 		if (wo.z < 0 || wi.z < 0)
 		{
 			return 0.0f;
 		}
-		bool sampleR = true;
-		bool sampleT = true;
-		
 		if (sampleR && sampleT) {
 			float3 diffuseReflectance = si.diffuseReflectance;
 
@@ -131,6 +128,7 @@ namespace plastic
 		}
 		else
 		{
+			// Refract
 			bs.wo = getCosHemisphereSampleLocal(seed);
 			float Fo = fresnel::DielectricReflectance(eta, bs.wo.z);
 

@@ -44,14 +44,6 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
 {
     const int2 ipos = int2(input.pos.xy);
 
-    // uint pPathType = gPathType.Load(int3(ipos, 0)).r;
-    //if (!(pPathType & BSDF_LOBE_DELTA)) {
-    //    PS_OUT output;
-    //    output.motionVector = float4(0,0,0, 1);
-    //    output.historyLength = 1;
-    //    return output;
-    //}
-
     float3 normal = gNormal.Load(int3(ipos, 0)).rgb;
     float depth = gNormal.Load(int3(ipos, 0)).w;
     float meshID = gPositionMeshID.Load(int3(ipos, 0)).w;

@@ -7,14 +7,13 @@
 
 namespace roughplastic
 {
-	float Pdf(in Material mat, in RayPayload si, in float3 wo) {
+	float Pdf(in Material mat, in RayPayload si, in float3 wo, bool sampleR, bool sampleT) {
 		const float3 wi = si.wi;
 		if (wi.z <= 0 || wo.z <= 0)
 		{
 			return 0;
 		}
-		bool sampleR = true;
-		bool sampleT = true;
+
 		if (!sampleR && !sampleT)
 			return 0;
 
@@ -43,8 +42,6 @@ namespace roughplastic
 		{
 			return float3(0, 0, 0);
 		}
-		//bool sampleR = true;
-		//bool sampleT = true;
 
 		if (!sampleR && !sampleT)
 			return float3(0, 0, 0);
@@ -120,6 +117,8 @@ namespace roughplastic
 		}
 		else
 		{
+			// Refract
+
 			bs.wo = getCosHemisphereSampleLocal(seed);
 			float Fo = fresnel::DielectricReflectance(eta, bs.wo.z);
 			float3 temp = (mat.nonlinear ? diffuseReflectance * diffuseFresnel : float3(diffuseFresnel, diffuseFresnel, diffuseFresnel));

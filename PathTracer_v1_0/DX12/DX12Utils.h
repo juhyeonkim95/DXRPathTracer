@@ -1,10 +1,7 @@
 #pragma once
 #include "Framework.h"
 
-
-/*
-* Helper Functions for initializing DX12
-*/
+// Other DX12 util functions
 
 IDXGISwapChain3Ptr createDxgiSwapChain(IDXGIFactory4Ptr pFactory, HWND hwnd, uint32_t width, uint32_t height, DXGI_FORMAT format, ID3D12CommandQueuePtr pCommandQueue);
 

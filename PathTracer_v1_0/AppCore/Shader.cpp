@@ -1,8 +1,8 @@
 #include "Shader.h"
 
-Shader::Shader(const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, ID3D12Device5Ptr mpDevice, int inputTextureNumber, std::vector<DXGI_FORMAT> &rtvFormats, int inputCBVNumber)
+Shader::Shader(const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, ID3D12Device5Ptr pDevice, int inputTextureNumber, std::vector<DXGI_FORMAT> &rtvFormats, int inputCBVNumber)
 {
-    this->mpDevice = mpDevice;
+    this->mpDevice = pDevice;
     this->createRootSignature(inputTextureNumber, inputCBVNumber);
     this->compileShaderFile(vertexShaderPath, pixelShaderPath, rtvFormats);
 }
@@ -82,7 +82,7 @@ void Shader::compileShaderFile(const wchar_t* vertexShaderPath, const wchar_t* p
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
     psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
-    psoDesc.pRootSignature = rootSignature; // the root signature that describes the input data this pso needs
+    psoDesc.pRootSignature = mpRootSignature; // the root signature that describes the input data this pso needs
     psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
     psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
@@ -100,7 +100,7 @@ void Shader::compileShaderFile(const wchar_t* vertexShaderPath, const wchar_t* p
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blend state.
     
     // create the pso
-    hr = mpDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStateObject));
+    hr = mpDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mpPipelineStateObject));
     if (FAILED(hr)) {
         throw std::invalid_argument("Shader Compile Failed!");
     }
@@ -200,5 +200,5 @@ void Shader::createRootSignature(int inputTextureNumber, int inputCBVNumber)
 
     ID3DBlobPtr signature;
     D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr);
-    mpDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+    mpDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&mpRootSignature));
 }

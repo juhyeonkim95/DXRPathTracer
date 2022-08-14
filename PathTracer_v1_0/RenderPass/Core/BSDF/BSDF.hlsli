@@ -46,8 +46,8 @@ namespace bsdf
 		case BSDF_TYPE_ROUGH_CONDUCTOR: return roughconductor::Pdf(material, payload, wo);
 		case BSDF_TYPE_DIELECTRIC: return dielectric::Pdf(material, payload, wo);
 		case BSDF_TYPE_ROUGH_DIELECTRIC: return roughdielectric::Pdf(material, payload, wo);
-		case BSDF_TYPE_PLASTIC: return plastic::Pdf(material, payload, wo);
-		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Pdf(material, payload, wo);
+		case BSDF_TYPE_PLASTIC: return plastic::Pdf(material, payload, wo, true, true);
+		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Pdf(material, payload, wo, true, true);
 		}
 		return diffuse::Pdf(material, payload, wo);
 	}
@@ -66,31 +66,27 @@ namespace bsdf
 	}
 
 	float3 EvalDiffuse(in Material material, in RayPayload payload, in float3 wo) {
+		// Eval Diffuse Component Only
 		switch (material.materialType) {
 		case BSDF_TYPE_DIFFUSE: return diffuse::Eval(material, payload, wo);
-		case BSDF_TYPE_CONDUCTOR: return float3(0,0,0);
-		case BSDF_TYPE_ROUGH_CONDUCTOR: return float3(0, 0, 0);
-		case BSDF_TYPE_DIELECTRIC: return float3(0, 0, 0);
-		case BSDF_TYPE_ROUGH_DIELECTRIC: return float3(0, 0, 0);
 		case BSDF_TYPE_PLASTIC: return plastic::Eval(material, payload, wo, false, true);
 		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Eval(material, payload, wo, false, true);
 		}
-		return diffuse::Eval(material, payload, wo);
+		return float3(0, 0, 0);
 	}
 
 	float3 EvalSpecular(in Material material, in RayPayload payload, in float3 wo) {
+		// Eval Specular (non-Delta) Component Only
 		switch (material.materialType) {
-		case BSDF_TYPE_DIFFUSE: return float3(0,0,0);
-		case BSDF_TYPE_CONDUCTOR: return conductor::Eval(material, payload, wo);
 		case BSDF_TYPE_ROUGH_CONDUCTOR: return roughconductor::Eval(material, payload, wo);
-		case BSDF_TYPE_DIELECTRIC: return dielectric::Eval(material, payload, wo);
 		case BSDF_TYPE_ROUGH_DIELECTRIC: return roughdielectric::Eval(material, payload, wo);
 		case BSDF_TYPE_PLASTIC: return plastic::Eval(material, payload, wo, true, false);
 		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Eval(material, payload, wo, true, false);
 		}
-		return diffuse::Eval(material, payload, wo);
+		return float3(0, 0, 0);
 	}
 
+	// TODO : Eval BSDF & PDF at the same time?
 	//float4 EvalAndPdf(in Material material, in RayPayload payload, in float3 wo) {
 	//	switch (material.materialType) {
 	//	case BSDF_TYPE_DIFFUSE: return diffuse::EvalAndPdf(material, payload, wo);

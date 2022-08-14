@@ -4,6 +4,8 @@
 
 static const float DiracAcceptanceThreshold = 1e-3;
 
+// TODO : Sampling at delta direction is valid?
+
 bool checkReflectionConstraint(in float3 wi, in float3 wo)
 {
     return false;

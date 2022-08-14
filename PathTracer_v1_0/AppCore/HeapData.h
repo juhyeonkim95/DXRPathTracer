@@ -14,19 +14,18 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandleByName(const char* name);
 	D3D12_CPU_DESCRIPTOR_HANDLE addDescriptorHandle(const char* name);
 	D3D12_CPU_DESCRIPTOR_HANDLE addDescriptorHandle();
-	ID3D12DescriptorHeapPtr getDescriptorHeap() { return pHeap; }
-	uint32_t getLastIndex() { return usedEntries; }
-	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> &getGPUHandleMap() { return gpuHandlesMap; };
+	ID3D12DescriptorHeapPtr getDescriptorHeap() { return mpHeap; }
+	uint32_t getLastIndex() { return mUsedEntries; }
+	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> &getGPUHandleMap() { return mGPUHandlesMap; };
 	D3D12_CPU_DESCRIPTOR_HANDLE getLastCPUHandle();
 	D3D12_GPU_DESCRIPTOR_HANDLE getLastGPUHandle();
 private:
-
-	ID3D12DescriptorHeapPtr pHeap;
-	uint32_t usedEntries = 0;
-
 	ID3D12Device5Ptr mpDevice;
-	D3D12_DESCRIPTOR_HEAP_TYPE type;
-	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandlesMap;
-	map<string, D3D12_CPU_DESCRIPTOR_HANDLE> cpuHandlesMap;
-	map<string, uint32_t> handlesOffsetMap;
+	ID3D12DescriptorHeapPtr mpHeap;
+	uint32_t mUsedEntries = 0;
+
+	D3D12_DESCRIPTOR_HEAP_TYPE mDescriptorType;
+	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> mGPUHandlesMap;
+	map<string, D3D12_CPU_DESCRIPTOR_HANDLE> mCPUHandlesMap;
+	map<string, uint32_t> mHandlesOffsetMap;
 };
