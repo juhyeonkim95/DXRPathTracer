@@ -200,6 +200,8 @@ struct PathTraceResult
     float3 indirectReflectance;
 
     uint pathType;
+
+    float roughness;
 };
 
 struct TextureParameter

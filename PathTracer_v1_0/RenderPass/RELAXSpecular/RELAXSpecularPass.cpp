@@ -1,28 +1,24 @@
-#include "RELAXPass.h"
+#include "RELAXSpecularPass.h"
 #include <map>
 #include "DX12Utils.h"
 #include "DX12BufferUtils.h"
 
-RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint targetPathType, std::string name)
+RELAXSpecularPass::RELAXSpecularPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint targetPathType, std::string name)
     : PostProcessPass(mpDevice, size)
 {
     this->name = name;
-    // Create Shaders
-    //std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32_FLOAT, DXGI_FORMAT_R32_FLOAT };
-    //this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXMotionVector.hlsl", mpDevice, 6, rtvFormats, 2);
-
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32_FLOAT };
-    this->temporalAccumulationShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXTemporalAccumulation.hlsl", mpDevice, 5, rtvFormats);
+    this->temporalAccumulationShader = new Shader(kQuadVertexShader, L"RenderPass/RELAXSpecular/RELAXSpecularTemporalAccumulation.hlsl", mpDevice, 7, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
-    this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXATrousWavelet.hlsl", mpDevice, 5, rtvFormats);
+    this->waveletShader = new Shader(kQuadVertexShader, L"RenderPass/RELAXSpecular/RELAXSpecularATrousWavelet.hlsl", mpDevice, 5, rtvFormats);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
-    this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXFilterVariance.hlsl", mpDevice, 7, rtvFormats);
+    this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/RELAXSpecular/RELAXSpecularFilterVariance.hlsl", mpDevice, 7, rtvFormats);
 
     for (int i = 0; i < maxWaveletCount; i++)
     {
-        mRELAXParameterBuffers.push_back(createBuffer(mpDevice, sizeof(RELAXParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps));
+        mRELAXSpecularParameterBuffers.push_back(createBuffer(mpDevice, sizeof(RELAXSpecularParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps));
     }
     
     param.maxAccumulatedFrame = 32;
@@ -34,7 +30,7 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint targetPathType,
     defaultParam = param;
 }
 
-void RELAXPass::createRenderTextures(
+void RELAXSpecularPass::createRenderTextures(
     HeapData* rtvHeap,
     HeapData* srvHeap)
 {
@@ -50,13 +46,13 @@ void RELAXPass::createRenderTextures(
     waveletPingPong2 = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 }
 
-void RELAXPass::processGUI()
+void RELAXSpecularPass::processGUI()
 {
 
     mDirty = false;
     if (ImGui::CollapsingHeader(this->name.c_str()))
     {
-        mDirty |= ImGui::Checkbox("enable RELAX", &mEnabled);
+        mDirty |= ImGui::Checkbox("enable RELAXSpecular", &mEnabled);
         mDirty |= ImGui::Checkbox("enableVarianceFilter", &mEnableVarianceFilter);
 
 
@@ -77,15 +73,15 @@ void RELAXPass::processGUI()
     }
 }
 
-void RELAXPass::uploadParams(uint32_t index)
+void RELAXSpecularPass::uploadParams(uint32_t index)
 {
     uint8_t* pData;
-    d3d_call(mRELAXParameterBuffers.at(index)->Map(0, nullptr, (void**)&pData));
-    memcpy(pData, &param, sizeof(RELAXParameters));
-    mRELAXParameterBuffers.at(index)->Unmap(0, nullptr);
+    d3d_call(mRELAXSpecularParameterBuffers.at(index)->Map(0, nullptr, (void**)&pData));
+    memcpy(pData, &param, sizeof(RELAXSpecularParameters));
+    mRELAXSpecularParameterBuffers.at(index)->Unmap(0, nullptr);
 }
 
-void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
+void RELAXSpecularPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 {
     ID3D12GraphicsCommandList4Ptr mpCmdList = pRenderContext->pCmdList;
     map<string, D3D12_GPU_DESCRIPTOR_HANDLE>& gpuHandles = renderData.gpuHandleDictionary;
@@ -107,8 +103,11 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gRadiance"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, temporalAccumulationTextureMomentPrev->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gHistoryLength"));
+    mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gDeltaReflectionMotionVector"));
+    mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gRoughness"));
+
     this->uploadParams(0);
-    mpCmdList->SetGraphicsRootConstantBufferView(0, mRELAXParameterBuffers[0]->GetGPUVirtualAddress());
+    mpCmdList->SetGraphicsRootConstantBufferView(0, mRELAXSpecularParameterBuffers[0]->GetGPUVirtualAddress());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
 
@@ -136,7 +135,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gPathType"));
 
         this->uploadParams(0);
-        mpCmdList->SetGraphicsRootConstantBufferView(0, mRELAXParameterBuffers.at(0)->GetGPUVirtualAddress());
+        mpCmdList->SetGraphicsRootConstantBufferView(0, mRELAXSpecularParameterBuffers.at(0)->GetGPUVirtualAddress());
 
         mpCmdList->DrawInstanced(6, 1, 0, 0);
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureVarianceFilter->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -169,7 +168,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         param.stepSize = 1 << i;
         uploadParams(i);
 
-        mpCmdList->SetGraphicsRootConstantBufferView(0, mRELAXParameterBuffers.at(i)->GetGPUVirtualAddress());
+        mpCmdList->SetGraphicsRootConstantBufferView(0, mRELAXSpecularParameterBuffers.at(i)->GetGPUVirtualAddress());
 
         mpCmdList->DrawInstanced(6, 1, 0, 0);
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPong1->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));

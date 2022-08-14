@@ -183,7 +183,7 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
 
     // UAV
     desc.range[1].BaseShaderRegister = 0;
-    desc.range[1].NumDescriptors = 28;
+    desc.range[1].NumDescriptors = 29;
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
@@ -371,6 +371,8 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     outputUAVBuffers["gDeltaTransmissionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormal", 1);
 
     outputUAVBuffers["gResidualRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gResidualRadiance", 1);
+
+    outputUAVBuffers["gRoughness"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R16_UNORM, "gRoughness", 1);
 
 
     outputUAVBuffers["gPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8_UINT, "gPathType", 1);

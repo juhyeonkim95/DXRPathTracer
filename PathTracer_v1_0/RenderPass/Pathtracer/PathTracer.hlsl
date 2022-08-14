@@ -315,6 +315,7 @@ void PrimaryPath(in RayDesc ray, inout PathTraceResult pathResult, inout RayPayl
 
     // Reflectance
     pathResult.reflectance = payload.diffuseReflectance;
+    pathResult.roughness = payload.roughness;
     pathResult.diffuseReflectance = payload.diffuseReflectance;
     pathResult.specularReflectance = payload.specularReflectance;
     pathResult.deltaReflectionReflectance = 0.0f;
@@ -376,7 +377,9 @@ void PrimaryPath(in RayDesc ray, inout PathTraceResult pathResult, inout RayPayl
 void PathTraceDeltaReflectance(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult, inout RayPayload payload)
 {
     Material material = g_materialinfo[payload.materialIndex];
-    if (!(bsdf::getReflectionLobe(material) & BSDF_LOBE_DELTA_REFLECTION))
+    uint materialLobe = bsdf::getReflectionLobe(material);
+    bool traceDeltaReflection = (materialLobe & BSDF_LOBE_DELTA_REFLECTION) || (materialLobe & BSDF_LOBE_GLOSSY_REFLECTION);
+    if (!traceDeltaReflection)
         return;
 
     // Only delta reflection
@@ -624,6 +627,8 @@ void rayGen()
     
 
     gPrimaryPathType[launchIndex.xy] = uint(pathResult.primaryPathType);
+
+    gRoughness[launchIndex.xy] = (pathResult.roughness);
 
 #endif
     if (g_frameData.frameNumber > 1 && gPathTracer.accumulateFrames) {

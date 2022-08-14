@@ -7,6 +7,7 @@
 #include <fstream>
 #include "SVGF/SVGFPass.h"
 #include "RELAX/RELAXPass.h"
+#include "RELAXSpecular/RELAXSpecularPass.h"
 #include "ModulateIllumination/ModulateIllumination.h"
 #include "ReSTIR/ReSTIR.h"
 #include "PathTracer/PathTracer.h"
@@ -95,7 +96,7 @@ private:
     DepthDerivativePass* depthDerivativePass;
 
     RELAXPass* diffuseFilterPass;
-    RELAXPass* specularFilterPass;
+    RELAXSpecularPass* specularFilterPass;
     RELAXPass* deltaReflectionFilterPass;
     RELAXPass* deltaTransmissionFilterPass;
     RELAXPass* residualFilterPass;

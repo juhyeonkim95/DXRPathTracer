@@ -213,6 +213,9 @@
     <ClCompile Include="RenderPass\DepthDerivative\DepthDerivativePass.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\RELAXSpecular\RELAXSpecularPass.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\RenderApplication.h">
@@ -387,6 +390,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\DepthDerivative\DepthDerivativePass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RELAXSpecular\RELAXSpecularPass.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
