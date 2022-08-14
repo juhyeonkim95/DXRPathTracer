@@ -12,10 +12,9 @@ cbuffer ConstantBuffer : register(b0)
 	float sigmaL;
 	int stepSize;
 	uint targetPathType;
+
+	float3 camaraPosition;
 	float roughnessMultiplier;
-	float unused1;
-	float unused2;
-	float unused3;
 };
 
 

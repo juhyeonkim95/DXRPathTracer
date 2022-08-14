@@ -12,10 +12,8 @@ struct RELAXSpecularParameters
 	int stepSize;
 	uint targetPathType;
 
+	float3 cameraPosition;
 	float roughnessMultiplier;
-	float unused1;
-	float unused2;
-	float unused3;
 };
 
 

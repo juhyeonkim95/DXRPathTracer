@@ -1,4 +1,6 @@
 #include "RELAXSpecularCommon.hlsli"
+#include "../Core/Common/CommonStructs.hlsli"
+
 Texture2D gColorVariance : register(t0);
 Texture2D gNormal : register(t1);
 Texture2D gPositionMeshID : register(t2);
@@ -16,6 +18,10 @@ static const float kernelWeights[3] = { 1.0, 2.0 / 3.0, 1.0 / 6.0 };
 static const float gaussKernel[9] = { 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 4.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0 };
 
 
+cbuffer PerFrameBuffer : register(b1)
+{
+    PerFrameData g_frameData;
+};
 
 bool eps_equal(float a, float b) {
     return round(a) == round(b);
@@ -74,6 +80,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float v = pVariance;
     float weights = 1.0f;
 
+    float3 pViewDir = normalize(g_frameData.cameraPosition - pPosition);
 
     for (int offsetx = -support; offsetx <= support; offsetx++) {
         for (int offsety = -support; offsety <= support; offsety++) {
@@ -98,13 +105,17 @@ float4 main(VS_OUTPUT input) : SV_TARGET
                 float3 qDeltaReflectionPosition = gDeltaReflectionPositionMeshID.Load(int3(ipos2, 0)).rgb;
                 float3 qDeltaReflectionNormal = gDeltaReflectionNormal.Load(int3(ipos2, 0)).rgb;
 
+                float cosDifference = g_frameData.cameraPosition ;
+                float3 qViewDir = normalize(g_frameData.cameraPosition - qPosition);
+                float cosFactor = pow(dot(pViewDir, qViewDir), 1 / (pRoughness + 0.01));
 
                 // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 // float w = calculateWeight(pDepth, qDepth, step * sigmaZ * abs(dot(depthDerivative, float2(offsetx, offsety))), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
-                float wDelta = calculateWeightPosition(pDeltaReflectionPosition, qDeltaReflectionPosition, sigmaZ, pDeltaReflectionNormal, qDeltaReflectionNormal, pLuminance, qLuminance, customSigmaL);
-                
-                w = lerp(wDelta, w, clamp(pRoughness * roughnessMultiplier, 0, 1));
+                //float wDelta = calculateWeightPosition(pDeltaReflectionPosition, qDeltaReflectionPosition, sigmaZ, pDeltaReflectionNormal, qDeltaReflectionNormal, 0, 0, customSigmaL);
+                //w *= lerp(wDelta, 1, clamp(pRoughness * roughnessMultiplier, 0, 1));
+                // w = lerp(wDelta, w, clamp(pRoughness* roughnessMultiplier, 0, 1));
+                w *= cosFactor;
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 

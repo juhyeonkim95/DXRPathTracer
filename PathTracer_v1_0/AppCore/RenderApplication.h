@@ -17,6 +17,7 @@
 #include "HeapData.h"
 #include "SceneResourceManager.h"
 #include "MotionVector/MotionVector.h"
+#include "MotionVectorSpecular/MotionVectorSpecular.h"
 #include "NRDDeltaReflectionMotionVector/NRDDeltaReflectionMotionVector.h"
 #include "NRDDeltaTransmissionMotionVector/NRDDeltaTransmissionMotionVector.h"
 #include "DepthDerivative/DepthDerivativePass.h"
@@ -104,6 +105,7 @@ private:
     NRDDeltaReflectionMotionVector* deltaReflectionMotionVectorPass;
     NRDDeltaTransmissionMotionVector* deltaTransmissionMotionVectorPass;
     MotionVector* motionVectorPass;
+    MotionVectorSpecular* motionVectorSpecularPass;
 
     ModulateIllumination* modulatePass;
 

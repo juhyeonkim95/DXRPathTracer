@@ -393,8 +393,9 @@ void PathTraceDeltaReflectance(in RayDesc ray, inout uint seed, inout PathTraceR
         // --------------------- BSDF sampling ------------------------
         // ------------------------------------------------------------
         bsdf::Sample(material, payload, seed, bs);
+        payload.direction = reflect(payload.direction, payload.normal);
 
-        payload.direction = bs.wo.x * payload.tangent + bs.wo.y * payload.bitangent + bs.wo.z * payload.normal;
+        // payload.direction = bs.wo.x * payload.tangent + bs.wo.y * payload.bitangent + bs.wo.z * payload.normal;
         //payload.attenuation = bs.weight;
         //payload.scatterPdf = bs.pdf;
         //payload.sampledLobe = bs.sampledLobe;
@@ -414,7 +415,7 @@ void PathTraceDeltaReflectance(in RayDesc ray, inout uint seed, inout PathTraceR
         if (nonDelta || (payload.depth >= 2) || payload.done)
         {
             pathResult.deltaReflectionReflectance = getMaterialReflectanceForDeltaPaths(material, payload);
-            if (payload.done) {
+            if (payload.done && (materialLobe & BSDF_LOBE_DELTA_REFLECTION)) {
                 pathResult.deltaReflectionEmission = payload.attenuation * payload.emission;
             }
             pathResult.deltaReflectionPosition = payload.origin;
@@ -534,7 +535,7 @@ void rayGen()
         uint materialReflectionLobe = bsdf::getReflectionLobe(material);
 
         
-        if (materialReflectionLobe & BSDF_LOBE_DELTA_REFLECTION) {
+        if (materialReflectionLobe & (BSDF_LOBE_DELTA_REFLECTION | BSDF_LOBE_GLOSSY_REFLECTION)) {
             RayPayload payload = payloadPrimary;
             PathTraceDeltaReflectance(ray, seed, pathResult, payload);
         }

@@ -171,6 +171,7 @@
     <ClCompile Include="RenderPass\DepthDerivative\DepthDerivativePass.cpp" />
     <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp" />
+    <ClCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.cpp" />
     <ClCompile Include="RenderPass\MotionVector\MotionVector.cpp" />
     <ClCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.cpp" />
     <ClCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.cpp" />
@@ -223,6 +224,7 @@
     <ClInclude Include="RenderPass\DepthDerivative\DepthDerivativePass.h" />
     <ClInclude Include="RenderPass\FXAA\FXAA.h" />
     <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h" />
+    <ClInclude Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.h" />
     <ClInclude Include="RenderPass\MotionVector\MotionVector.h" />
     <ClInclude Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.h" />
     <ClInclude Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.h" />
@@ -330,6 +332,9 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.hlsl">

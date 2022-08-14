@@ -216,6 +216,9 @@
     <ClCompile Include="RenderPass\RELAXSpecular\RELAXSpecularPass.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\RenderApplication.h">
@@ -395,6 +398,9 @@
     <ClInclude Include="RenderPass\RELAXSpecular\RELAXSpecularPass.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RenderPass\Core\Common\MathUtils.hlsli">
@@ -472,5 +478,6 @@
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl" />
     <FxCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.hlsl" />
     <FxCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.hlsl" />
+    <FxCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.hlsl" />
   </ItemGroup>
 </Project>
