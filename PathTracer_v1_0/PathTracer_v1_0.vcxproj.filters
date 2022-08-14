@@ -210,6 +210,9 @@
     <ClCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\DepthDerivative\DepthDerivativePass.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCore\RenderApplication.h">
@@ -383,6 +386,9 @@
     <ClInclude Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\DepthDerivative\DepthDerivativePass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RenderPass\Core\Common\MathUtils.hlsli">
@@ -454,7 +460,7 @@
       <Filter>RenderPass\ReSTIR</Filter>
     </FxCompile>
     <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl" />
-    <FxCompile Include="RenderPass\RELAX\RELAXDepthDerivative.hlsl" />
+    <FxCompile Include="RenderPass\DepthDerivative\DepthDerivative.hlsl" />
     <FxCompile Include="RenderPass\MotionVector\MotionVector.hlsl" />
     <FxCompile Include="RenderPass\RELAX\RELAXOFFICIAL.hlsl" />
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl" />

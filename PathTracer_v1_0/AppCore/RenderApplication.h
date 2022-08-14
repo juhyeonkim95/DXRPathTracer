@@ -18,6 +18,7 @@
 #include "MotionVector/MotionVector.h"
 #include "NRDDeltaReflectionMotionVector/NRDDeltaReflectionMotionVector.h"
 #include "NRDDeltaTransmissionMotionVector/NRDDeltaTransmissionMotionVector.h"
+#include "DepthDerivative/DepthDerivativePass.h"
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -90,6 +91,8 @@ private:
     PathTracer* pathTracer;
     ReSTIR* restirPass;
     SVGFPass* svgfPass;
+    
+    DepthDerivativePass* depthDerivativePass;
 
     RELAXPass* diffuseFilterPass;
     RELAXPass* specularFilterPass;

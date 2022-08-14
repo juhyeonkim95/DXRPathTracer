@@ -168,6 +168,7 @@
     <ClCompile Include="DX12\DX12DxilLibrary.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp" />
+    <ClCompile Include="RenderPass\DepthDerivative\DepthDerivativePass.cpp" />
     <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp" />
     <ClCompile Include="RenderPass\MotionVector\MotionVector.cpp" />
@@ -218,6 +219,7 @@
     <ClInclude Include="DX12\DX12StateSubobjects.h" />
     <ClInclude Include="External\stb_image_write.h" />
     <ClInclude Include="RenderPass\BlendPass\BlendPass.h" />
+    <ClInclude Include="RenderPass\DepthDerivative\DepthDerivativePass.h" />
     <ClInclude Include="RenderPass\FXAA\FXAA.h" />
     <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h" />
     <ClInclude Include="RenderPass\MotionVector\MotionVector.h" />
@@ -340,7 +342,7 @@
     <FxCompile Include="RenderPass\PathTracer\PathTracer.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="RenderPass\RELAX\RELAXDepthDerivative.hlsl">
+    <FxCompile Include="RenderPass\DepthDerivative\DepthDerivative.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="RenderPass\MotionVector\MotionVector.hlsl">

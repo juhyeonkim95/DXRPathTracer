@@ -18,12 +18,7 @@ class RELAXPass : public PostProcessPass
 {
 public:
 	RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint targetPathType, std::string name);
-	/*void forward(
-		ID3D12GraphicsCommandList4Ptr mpCmdList,
-		map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandles,
-		map<string, ID3D12ResourcePtr> resourceBuffers,
-		ID3D12ResourcePtr mpCameraConstantBuffer
-	);*/
+
 	void createRenderTextures(
 		HeapData* rtvHeap,
 		HeapData* srvHeap);
@@ -31,19 +26,9 @@ public:
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
 
-	//Shader* motionVectorShader;
 	Shader* temporalAccumulationShader;
 	Shader* varianceFilterShader;
 	Shader* waveletShader;
-	// Shader* reconstructionShader;
-
-	Shader* depthDerivativeShader;
-	RenderTexture* depthDerivativeTexture;
-
-	//RenderTexture* motionVectorRenderTexture;
-	//RenderTexture* historyLengthRenderTexture;
-	//RenderTexture* historyLengthRenderTexturePrev;
-
 	RenderTexture* temporalAccumulationTexture;
 	RenderTexture* temporalAccumulationTexturePrev;
 
@@ -65,11 +50,7 @@ public:
 	const int maxWaveletCount = 8;
 	int waveletCount = 3;
 	int mFeedbackTap = 0;
-
-	// RenderTexture* reconstructionRenderTexture;
-
 	vector<ID3D12ResourcePtr> mRELAXParameterBuffers;
-	//ID3D12ResourcePtr mMvParameterBuffer;
 
 	void uploadParams(uint32_t index);
 };

@@ -20,9 +20,6 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint targetPathType,
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->varianceFilterShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXFilterVariance.hlsl", mpDevice, 7, rtvFormats);
 
-    rtvFormats = { DXGI_FORMAT_R32G32_FLOAT };
-    this->depthDerivativeShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXDepthDerivative.hlsl", mpDevice, 1, rtvFormats);
-
     for (int i = 0; i < maxWaveletCount; i++)
     {
         mRELAXParameterBuffers.push_back(createBuffer(mpDevice, sizeof(RELAXParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps));
@@ -41,11 +38,6 @@ void RELAXPass::createRenderTextures(
     HeapData* rtvHeap,
     HeapData* srvHeap)
 {
-    depthDerivativeTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32_FLOAT);
-    //motionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R16G16_UNORM);
-    //historyLengthRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
-    //historyLengthRenderTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
-    
     temporalAccumulationTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
     temporalAccumulationTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
     temporalAccumulationTextureVarianceFilter = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -99,21 +91,8 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     map<string, D3D12_GPU_DESCRIPTOR_HANDLE>& gpuHandles = renderData.gpuHandleDictionary;
     this->setViewPort(mpCmdList);
 
-    // (0) prepare depth derivative
-    mpCmdList->SetPipelineState(depthDerivativeShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(depthDerivativeShader->getRootSignature()); // set the root signature
 
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthDerivativeTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-    mpCmdList->OMSetRenderTargets(1, &depthDerivativeTexture->mRtvDescriptorHandle, FALSE, nullptr);
-    ;
-    mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gNormal"));
-
-    mpCmdList->DrawInstanced(6, 1, 0, 0);
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthDerivativeTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-    // (2) Temporal Accumulation
-    // 
+    // (1) Temporal Accumulation
     mpCmdList->SetPipelineState(temporalAccumulationShader->getPipelineStateObject());
     mpCmdList->SetGraphicsRootSignature(temporalAccumulationShader->getRootSignature()); // set the root signature
 
@@ -153,7 +132,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
         mpCmdList->SetGraphicsRootDescriptorTable(4, temporalAccumulationTextureMoment->getGPUSrvHandler());
         mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gHistoryLegnth"));
-        mpCmdList->SetGraphicsRootDescriptorTable(6, depthDerivativeTexture->getGPUSrvHandler());
+        mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gDepthDerivative"));
         mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gPathType"));
 
         this->uploadParams(0);
@@ -170,7 +149,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormal"));
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, depthDerivativeTexture->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gDepthDerivative"));
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gPathType"));
 
 
