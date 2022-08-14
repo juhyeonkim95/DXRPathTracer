@@ -201,9 +201,6 @@
     <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass\RELAX\temp.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>

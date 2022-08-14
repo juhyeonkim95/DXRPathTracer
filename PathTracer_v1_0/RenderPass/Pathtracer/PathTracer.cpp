@@ -183,7 +183,7 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
 
     // UAV
     desc.range[1].BaseShaderRegister = 0;
-    desc.range[1].NumDescriptors = 24;
+    desc.range[1].NumDescriptors = 28;
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
@@ -364,6 +364,11 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     outputUAVBuffers["gDeltaTransmissionReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDeltaTransmissionReflectance", 1);
     outputUAVBuffers["gDeltaTransmissionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionEmission", 1);
     outputUAVBuffers["gDeltaTransmissionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionRadiance", 1);
+
+    outputUAVBuffers["gDeltaReflectionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPosition", 1);
+    outputUAVBuffers["gDeltaReflectionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaReflectionNormal", 1);
+    outputUAVBuffers["gDeltaTransmissionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionPosition", 1);
+    outputUAVBuffers["gDeltaTransmissionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormal", 1);
 
     outputUAVBuffers["gResidualRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gResidualRadiance", 1);
 

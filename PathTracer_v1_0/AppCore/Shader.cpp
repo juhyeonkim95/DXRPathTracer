@@ -1,9 +1,9 @@
 #include "Shader.h"
 
-Shader::Shader(const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, ID3D12Device5Ptr mpDevice, int inputTextureNumber, std::vector<DXGI_FORMAT> &rtvFormats)
+Shader::Shader(const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, ID3D12Device5Ptr mpDevice, int inputTextureNumber, std::vector<DXGI_FORMAT> &rtvFormats, int inputCBVNumber)
 {
     this->mpDevice = mpDevice;
-    this->createRootSignature(inputTextureNumber);
+    this->createRootSignature(inputTextureNumber, inputCBVNumber);
     this->compileShaderFile(vertexShaderPath, pixelShaderPath, rtvFormats);
 }
 
@@ -106,14 +106,19 @@ void Shader::compileShaderFile(const wchar_t* vertexShaderPath, const wchar_t* p
     }
 }
 
-void Shader::createRootSignature(int inputTextureNumber)
+void Shader::createRootSignature(int inputTextureNumber, int inputCBVNumber)
 {
     // create root signature
 
-   // create a root descriptor, which explains where to find the data for this root parameter
-    D3D12_ROOT_DESCRIPTOR rootCBVDescriptor;
-    rootCBVDescriptor.RegisterSpace = 0;
-    rootCBVDescriptor.ShaderRegister = 0;
+    // create a root descriptor, which explains where to find the data for this root parameter
+    std::vector<D3D12_ROOT_DESCRIPTOR> rootCBVDescriptors;
+    for (int i = 0; i < inputCBVNumber; i++)
+    {
+        D3D12_ROOT_DESCRIPTOR rootCBVDescriptor;
+        rootCBVDescriptor.RegisterSpace = 0;
+        rootCBVDescriptor.ShaderRegister = i;
+        rootCBVDescriptors.push_back(rootCBVDescriptor);
+    }
 
     // create a descriptor range (descriptor table) and fill it out
     // this is a range of descriptors inside a descriptor heap
@@ -137,20 +142,22 @@ void Shader::createRootSignature(int inputTextureNumber)
     }
 
     std::vector< D3D12_ROOT_PARAMETER> rootParameters;
-    rootParameters.resize(inputTextureNumber + 1);
+    rootParameters.resize(inputTextureNumber + inputCBVNumber);
 
     // create a root parameter for the root descriptor and fill it out
-    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // this is a constant buffer view root descriptor
-    rootParameters[0].Descriptor = rootCBVDescriptor; // this is the root descriptor for this root parameter
-    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // our pixel shader will be the only shader accessing this parameter for now
-
+    for (int i = 0; i < inputCBVNumber; i++)
+    {
+        rootParameters[i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // this is a constant buffer view root descriptor
+        rootParameters[i].Descriptor = rootCBVDescriptors.at(i); // this is the root descriptor for this root parameter
+        rootParameters[i].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // our pixel shader will be the only shader accessing this parameter for now
+    }
+    
     for (int i = 0; i < inputTextureNumber; i++) {
         // fill out the parameter for our descriptor table. Remember it's a good idea to sort parameters by frequency of change. Our constant
         // buffer will be changed multiple times per frame, while our descriptor table will not be changed at all (in this tutorial)
-        rootParameters[i + 1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE; // this is a descriptor table
-        rootParameters[i + 1].DescriptorTable = descriptorTables[i]; // this is our descriptor table for this root parameter
-        rootParameters[i + 1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // our pixel shader will be the only shader accessing this parameter for now
-
+        rootParameters[i + inputCBVNumber].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE; // this is a descriptor table
+        rootParameters[i + inputCBVNumber].DescriptorTable = descriptorTables[i]; // this is our descriptor table for this root parameter
+        rootParameters[i + inputCBVNumber].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // our pixel shader will be the only shader accessing this parameter for now
     }
 
     // create a static sampler

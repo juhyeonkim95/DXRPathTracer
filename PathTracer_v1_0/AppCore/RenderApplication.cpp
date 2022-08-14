@@ -409,7 +409,7 @@ void RenderApplication::update()
     lastTime = now;
 
     float elapsedTimeSec = elapsedTimeMicrosec * 1e-6;
-    float moveSpeed = 3.0f;
+    float moveSpeed = 1.5f;
     float rotationSpeed = 30.0f;
 
     if (mpKeyboardState[DIK_LSHIFT] & 0x80) {

@@ -107,7 +107,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
     if (enableResidualRadiance)
     {
-        color += residualRadiance;
+        // color += residualRadiance;
     }
 
     return float4(color, 1.0f);

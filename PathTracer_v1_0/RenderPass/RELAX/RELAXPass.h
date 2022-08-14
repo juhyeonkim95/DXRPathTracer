@@ -13,6 +13,15 @@ struct RELAXParameters
 	int stepSize;
 };
 
+struct MotionVectorParameters
+{
+	float normalThreshold;
+	float positionThreshold;
+	float depthThreshold;
+	float unused;
+};
+
+
 class RELAXPass : public PostProcessPass
 {
 public:
@@ -67,6 +76,8 @@ public:
 	// RELAX parameters
 	RELAXParameters param;
 	RELAXParameters defaultParam;
+	MotionVectorParameters mvParam;
+	MotionVectorParameters mvDefaultParam;
 
 	bool mEnabled = true;
 	bool mEnableVarianceFilter = true;
@@ -79,6 +90,7 @@ public:
 	// RenderTexture* reconstructionRenderTexture;
 
 	vector<ID3D12ResourcePtr> mRELAXParameterBuffers;
+	ID3D12ResourcePtr mMvParameterBuffer;
 
 	void uploadParams(uint32_t index);
 };

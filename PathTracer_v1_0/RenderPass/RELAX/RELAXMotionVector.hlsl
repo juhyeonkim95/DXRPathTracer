@@ -27,6 +27,14 @@ cbuffer ConstantBuffer : register(b0)
     PerFrameData g_frameData;
 };
 
+cbuffer MVParameters : register(b1)
+{
+    float gNormalThreshold;
+    float gPositionThreshold;
+    float gDisocclusionDepthThreshold;
+    float unused;
+};
+
 bool isReprojectionTapValid(in float3 currentWorldPos, in float3 previousWorldPos, in float3 currentNormal, float disocclusionThreshold)
 {
     // Check if plane distance is acceptable
@@ -62,14 +70,13 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     bool consistency = true;
 
     // (1) Check geometry consistency
-    float gDisocclusionDepthThreshold = 0.02f;
     float disocclusionThreshold = gDisocclusionDepthThreshold * depth;
     consistency = consistency && isReprojectionTapValid(position, previousPosition, normal, disocclusionThreshold);
     
-    //consistency = consistency && length(position - previousPosition) < 0.01f;
+    consistency = consistency && (length(position - previousPosition) < gPositionThreshold);
 
     // (2) check normal
-    consistency = consistency && (dot(normal, previousNormal) > sqrt(2) / 2.0);
+    consistency = consistency && (dot(normal, previousNormal) > gNormalThreshold);
 
     // (3) check material
     consistency = consistency && (meshID == previousMeshID);

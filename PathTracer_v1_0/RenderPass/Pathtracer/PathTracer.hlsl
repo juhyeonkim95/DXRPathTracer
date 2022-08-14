@@ -415,6 +415,10 @@ void PathTraceDeltaReflectance(in RayDesc ray, inout uint seed, inout PathTraceR
             if (payload.done) {
                 pathResult.deltaReflectionEmission = payload.emission;
             }
+            pathResult.deltaReflectionPosition = payload.origin;
+            pathResult.gDeltaReflectionNormal = payload.normal;
+            pathResult.gDeltaReflectionMeshID = payload.instanceIndex;
+
             break;
         }
     }
@@ -583,8 +587,8 @@ void rayGen()
 
     float3 directIllumination = directRadiance / max(reflectance, float3(0.001, 0.001, 0.001));
     float3 indirectIllumination = indirectRadiance / max(reflectance, float3(0.001, 0.001, 0.001));
-    float3 deltaReflectionIllumination = deltaReflectionRadiance;// / max(pathResult.deltaReflectionReflectance, float3(0.001, 0.001, 0.001));
-    float3 deltaTransmissionIllumination = deltaTransmissionRadiance;// / max(pathResult.deltaTransmissionReflectance, float3(0.001, 0.001, 0.001));
+    float3 deltaReflectionIllumination = deltaReflectionRadiance / max(pathResult.deltaReflectionReflectance, float3(0.001, 0.001, 0.001));
+    float3 deltaTransmissionIllumination = deltaTransmissionRadiance / max(pathResult.deltaTransmissionReflectance, float3(0.001, 0.001, 0.001));
 
     gDirectIllumination[launchIndex.xy] = float4(directIllumination, 1.0f);
     gIndirectIllumination[launchIndex.xy] = float4(indirectIllumination, 1.0f);

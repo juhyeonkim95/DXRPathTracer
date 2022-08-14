@@ -8,7 +8,7 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size)
 {
     // Create Shaders
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32_FLOAT, DXGI_FORMAT_R32_FLOAT };
-    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXMotionVector.hlsl", mpDevice, 6, rtvFormats);
+    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXMotionVector.hlsl", mpDevice, 6, rtvFormats, 2);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32_FLOAT };
     this->temporalAccumulationShader = new Shader(kQuadVertexShader, L"RenderPass/RELAX/RELAXTemporalAccumulation.hlsl", mpDevice, 5, rtvFormats);
@@ -26,6 +26,7 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     {
         mRELAXParameterBuffers.push_back(createBuffer(mpDevice, sizeof(RELAXParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps));
     }
+    mMvParameterBuffer = createBuffer(mpDevice, sizeof(MotionVectorParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
 
     param.diffuseMaxAccumulatedFrame = 32;
     param.specularMaxAccumulatedFrame = 32;
@@ -34,6 +35,11 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     param.sigmaL = 4.0f;
     param.screenSize = ivec2(size.x, size.y);
     defaultParam = param;
+
+    mvParam.positionThreshold = 0.1f;
+    mvParam.normalThreshold = 0.75f;
+    mvParam.depthThreshold = 0.02f;
+    mvDefaultParam = mvParam;
 }
 
 void RELAXPass::createRenderTextures(
@@ -73,6 +79,10 @@ void RELAXPass::processGUI()
         mDirty |= ImGui::Checkbox("enable RELAX", &mEnabled);
         mDirty |= ImGui::Checkbox("enableVarianceFilter", &mEnableVarianceFilter);
 
+        mDirty |= ImGui::SliderFloat("normalThreshold", &mvParam.normalThreshold, 0.01f, 1.0f);
+        mDirty |= ImGui::SliderFloat("positionThreshold", &mvParam.positionThreshold, 0.01f, 1.0f);
+        mDirty |= ImGui::SliderFloat("depthThreshold", &mvParam.depthThreshold, 0.001f, 0.05f);
+
         mDirty |= ImGui::SliderFloat("sigmaP", &param.sigmaP, 0.01f, 16.0f);
         mDirty |= ImGui::SliderFloat("sigmaN", &param.sigmaN, 0.01f, 256.0f);
         mDirty |= ImGui::SliderFloat("sigmaL", &param.sigmaL, 0.01f, 16.0f);
@@ -81,10 +91,10 @@ void RELAXPass::processGUI()
         mDirty |= ImGui::SliderInt("waveletCount", &waveletCount, 0, maxWaveletCount);
         mDirty |= ImGui::SliderInt("Feedback Tap", &mFeedbackTap, 0, std::max(0, waveletCount));
 
-
         if (ImGui::Button("Reset"))
         {
             param = defaultParam;
+            mvParam = mvDefaultParam;
             waveletCount = 3;
             mFeedbackTap = 0;
             mDirty = true;
@@ -132,14 +142,20 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     D3D12_CPU_DESCRIPTOR_HANDLE motionVectorRTV[2] = { motionVectorRenderTexture->mRtvDescriptorHandle, historyLengthRenderTexture->mRtvDescriptorHandle };
     mpCmdList->OMSetRenderTargets(2, motionVectorRTV, FALSE, nullptr);
 
-    mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gPositionMeshIDPrev"));
-    mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormalPrev"));
-    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gNormal"));
-    mpCmdList->SetGraphicsRootDescriptorTable(5, historyLengthRenderTexturePrev->getGPUSrvHandler());
-    mpCmdList->SetGraphicsRootDescriptorTable(6, depthDerivativeTexture->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gPositionMeshIDPrev"));
+    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gNormalPrev"));
+    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gNormal"));
+    mpCmdList->SetGraphicsRootDescriptorTable(6, historyLengthRenderTexturePrev->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(7, depthDerivativeTexture->getGPUSrvHandler());
 
     mpCmdList->SetGraphicsRootConstantBufferView(0, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
+
+    uint8_t* pData;
+    d3d_call(mMvParameterBuffer->Map(0, nullptr, (void**)&pData));
+    memcpy(pData, &mvParam, sizeof(RELAXParameters));
+    mMvParameterBuffer->Unmap(0, nullptr);
+    mpCmdList->SetGraphicsRootConstantBufferView(1, mMvParameterBuffer->GetGPUVirtualAddress());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));

@@ -173,7 +173,6 @@
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp" />
     <ClCompile Include="RenderPass\NRDDeltaReflection\NRDDeltaReflection.cpp" />
     <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp" />
-    <ClCompile Include="RenderPass\RELAX\temp.cpp" />
     <ClCompile Include="Scene\BSDF\Conductor.cpp" />
     <ClCompile Include="Scene\BSDF\Dielectric.cpp" />
     <ClCompile Include="Scene\BSDF\Diffuse.cpp" />
