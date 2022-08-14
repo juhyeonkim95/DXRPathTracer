@@ -204,7 +204,13 @@
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass\NRDDeltaReflection\NRDDeltaReflection.cpp">
+    <ClCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\MotionVector\MotionVector.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -371,7 +377,16 @@
     <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass\NRDDeltaReflection\NRDDeltaReflection.h">
+    <ClInclude Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\MotionVector\MotionVector.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\BSDF\BSDFLobes.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -446,10 +461,10 @@
     </FxCompile>
     <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl" />
     <FxCompile Include="RenderPass\RELAX\RELAXDepthDerivative.hlsl" />
-    <FxCompile Include="RenderPass\RELAX\RELAXMotionVector.hlsl" />
+    <FxCompile Include="RenderPass\MotionVector\MotionVector.hlsl" />
     <FxCompile Include="RenderPass\RELAX\RELAXOFFICIAL.hlsl" />
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl" />
-    <FxCompile Include="RenderPass\NRDDeltaReflection\NRDDeltaReflectionDepthDerivative.hlsl" />
-    <FxCompile Include="RenderPass\NRDDeltaReflection\NRDDeltaReflectionMotionVector.hlsl" />
+    <FxCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.hlsl" />
+    <FxCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.hlsl" />
   </ItemGroup>
 </Project>

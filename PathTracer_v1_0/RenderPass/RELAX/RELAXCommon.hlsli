@@ -7,11 +7,11 @@ cbuffer ConstantBuffer : register(b0)
 {
 	int2 screenSize;
 	int gMaxAccumulatedFrame;
-	int unused;
 	float sigmaZ;
 	float sigmaN;
 	float sigmaL;
 	int stepSize;
+	uint targetPathType;
 };
 
 

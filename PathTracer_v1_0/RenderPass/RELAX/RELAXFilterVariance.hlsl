@@ -5,6 +5,7 @@ Texture2D gPositionMeshID : register(t2);
 Texture2D gMoments : register(t3);
 Texture2D gHistoryLength : register(t4);
 Texture2D gDepthDerivative : register(t5);
+Texture2D<uint> gPathType : register(t6);
 
 SamplerState s1 : register(s0);
 
@@ -21,6 +22,11 @@ float4 main(VS_OUTPUT input) : SV_Target
     float h = gHistoryLength.Load(int3(ipos, 0)).r;
 
     if (h < 4.0) {
+        uint pPathType = gPathType.Load(int3(ipos, 0)).r;
+        if (!(pPathType & targetPathType)) {
+            return float4(0, 0, 0, 0);
+        }
+
         float3 pPosition = gPositionMeshID.Load(int3(ipos, 0)).rgb;
         float3 pNormal = gNormal.Load(int3(ipos, 0)).rgb;
         float pDepth = gNormal.Load(int3(ipos, 0)).w;
@@ -42,7 +48,10 @@ float4 main(VS_OUTPUT input) : SV_Target
                 const int2 ipos2 = ipos + int2(offsetx, offsety);
                 const bool outside = (ipos2.x < 0) || (ipos2.x >= screenSize.x) || (ipos2.y < 0) || (ipos2.y >= screenSize.y);
 
-                if (!outside)
+                uint qPathType = gPathType.Load(int3(ipos2, 0)).r;
+                const bool pathTypeValid = (qPathType & targetPathType);
+
+                if (!outside && pathTypeValid)
                 {
                     float3 qPosition = gPositionMeshID.Load(int3(ipos2, 0)).rgb;
                     float3 qNormal = gNormal.Load(int3(ipos2, 0)).rgb;

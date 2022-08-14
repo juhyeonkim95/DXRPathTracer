@@ -5,27 +5,19 @@
 struct RELAXParameters
 {
 	ivec2 screenSize;
-	int diffuseMaxAccumulatedFrame;
-	int specularMaxAccumulatedFrame;
+	int maxAccumulatedFrame;
 	float sigmaP;
 	float sigmaN;
 	float sigmaL;
 	int stepSize;
-};
-
-struct MotionVectorParameters
-{
-	float normalThreshold;
-	float positionThreshold;
-	float depthThreshold;
-	float unused;
+	uint targetPathType;
 };
 
 
 class RELAXPass : public PostProcessPass
 {
 public:
-	RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size);
+	RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint targetPathType, std::string name);
 	/*void forward(
 		ID3D12GraphicsCommandList4Ptr mpCmdList,
 		map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandles,
@@ -39,7 +31,7 @@ public:
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
 
-	Shader* motionVectorShader;
+	//Shader* motionVectorShader;
 	Shader* temporalAccumulationShader;
 	Shader* varianceFilterShader;
 	Shader* waveletShader;
@@ -48,37 +40,25 @@ public:
 	Shader* depthDerivativeShader;
 	RenderTexture* depthDerivativeTexture;
 
-	RenderTexture* motionVectorRenderTexture;
-	RenderTexture* historyLengthRenderTexture;
-	RenderTexture* historyLengthRenderTexturePrev;
+	//RenderTexture* motionVectorRenderTexture;
+	//RenderTexture* historyLengthRenderTexture;
+	//RenderTexture* historyLengthRenderTexturePrev;
 
-	RenderTexture* temporalAccumulationTextureDiffuse;
-	RenderTexture* temporalAccumulationTextureDiffusePrev;
+	RenderTexture* temporalAccumulationTexture;
+	RenderTexture* temporalAccumulationTexturePrev;
 
-	RenderTexture* temporalAccumulationTextureDiffuseMoment;
-	RenderTexture* temporalAccumulationTextureDiffuseMomentPrev;
+	RenderTexture* temporalAccumulationTextureMoment;
+	RenderTexture* temporalAccumulationTextureMomentPrev;
 
-	RenderTexture* temporalAccumulationTextureSpecular;
-	RenderTexture* temporalAccumulationTextureSpecularPrev;
+	RenderTexture* temporalAccumulationTextureVarianceFilter;
 
-	RenderTexture* temporalAccumulationTextureSpecularMoment;
-	RenderTexture* temporalAccumulationTextureSpecularMomentPrev;
-
-	RenderTexture* temporalAccumulationTextureDiffuseVarianceFilter;
-	RenderTexture* temporalAccumulationTextureSpecularVarianceFilter;
-
-	RenderTexture* waveletDiffusePingPong1;
-	RenderTexture* waveletDiffusePingPong2;
-	RenderTexture* waveletSpecularPingPong1;
-	RenderTexture* waveletSpecularPingPong2;
-
+	RenderTexture* waveletPingPong1;
+	RenderTexture* waveletPingPong2;
 
 	// RELAX parameters
 	RELAXParameters param;
 	RELAXParameters defaultParam;
-	MotionVectorParameters mvParam;
-	MotionVectorParameters mvDefaultParam;
-
+	
 	bool mEnabled = true;
 	bool mEnableVarianceFilter = true;
 
@@ -86,11 +66,10 @@ public:
 	int waveletCount = 3;
 	int mFeedbackTap = 0;
 
-
 	// RenderTexture* reconstructionRenderTexture;
 
 	vector<ID3D12ResourcePtr> mRELAXParameterBuffers;
-	ID3D12ResourcePtr mMvParameterBuffer;
+	//ID3D12ResourcePtr mMvParameterBuffer;
 
 	void uploadParams(uint32_t index);
 };

@@ -19,8 +19,10 @@ public:
 	map<string, D3D12_CPU_DESCRIPTOR_HANDLE> cpuHandleDictionary;
 	map<string, ID3D12ResourcePtr> resourceDictionary;
 
-	void addOutputs(map<string, ID3D12ResourcePtr> output) {
-		resourceDictionary.insert(output.begin(), output.end());
+	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> outputGPUHandleDictionary;
+
+	void addOutputs(map<string, D3D12_GPU_DESCRIPTOR_HANDLE> output) {
+		outputGPUHandleDictionary.insert(output.begin(), output.end());
 	};
 
 	void clear(){
@@ -40,6 +42,7 @@ public:
 	bool mDirty = false;
 	virtual void processGUI() = 0;
 	virtual void forward(RenderContext* pRenderContext, RenderData& renderData) = 0;
+	std::string name;
 
 protected:
 	ID3D12Device5Ptr mpDevice;

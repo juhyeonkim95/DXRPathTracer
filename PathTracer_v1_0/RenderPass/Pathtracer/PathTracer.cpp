@@ -475,7 +475,9 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
     resourceBarrier(pCmdList, outputUAVBuffers["gDeltaReflectionPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     resourceBarrier(pCmdList, outputUAVBuffers["gDeltaTransmissionPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-    renderData.addOutputs(this->outputUAVBuffers);
+
+    renderData.addOutputs(pSrvUavHeap->getGPUHandleMap());
+
 }
 
 

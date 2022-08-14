@@ -18,6 +18,7 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
+#include "BSDF/BSDFLobes.h"
 
 
 void RenderApplication::initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
@@ -130,11 +131,27 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     //svgfPass = new SVGFPass(mpDevice, mSwapChainSize);
     //svgfPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    relaxPass = new RELAXPass(mpDevice, mSwapChainSize);
-    relaxPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    deltaPass = new NRDDeltaReflection(mpDevice, mSwapChainSize);
-    deltaPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+    diffuseFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_DIFFUSE_REFLECTION, "Diffuse RELAX");
+    diffuseFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    specularFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_GLOSSY_REFLECTION, "Specular RELAX");
+    specularFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    deltaReflectionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_DELTA_REFLECTION, "Delta Reflection RELAX");
+    deltaReflectionFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    deltaTransmissionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_DELTA_TRANSMISSION, "Delta Transmission RELAX");
+    deltaTransmissionFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    motionVectorPass = new MotionVector(mpDevice, mSwapChainSize);
+    motionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    deltaReflectionMotionVectorPass = new NRDDeltaReflectionMotionVector(mpDevice, mSwapChainSize);
+    deltaReflectionMotionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+    deltaTransmissionMotionVectorPass = new NRDDeltaTransmissionMotionVector(mpDevice, mSwapChainSize);
+    deltaTransmissionMotionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
     modulatePass = new ModulateIllumination(mpDevice, mSwapChainSize);
     modulatePass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
@@ -194,92 +211,151 @@ void RenderApplication::onFrameRender()
     renderContext.restirParam = &restirPass->param;
 
     RenderData renderDataPathTracer;
-    renderDataPathTracer.gpuHandleDictionary = mpSrvUavHeap->getGPUHandleMap();
+    // renderDataPathTracer.gpuHandleDictionary = mpSrvUavHeap->getGPUHandleMap();
     this->pathTracer->forward(&renderContext, renderDataPathTracer);
         
     postProcessQuad->bind(mpCmdList);
 
     D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+    
 
     if (this->renderMode != 10  && this->renderMode != 0 && this->renderMode != 1) {
-        //switch (this->renderMode) {
-        //case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
-        ////case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
-        ////case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
-
-        //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionRadiance"); break;
-        //case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionRadiance"); break;
-        //case 4: output = mpSrvUavHeap->getGPUHandleByName("gResidualRadiance"); break;
-        ////case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
-        ////case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
-        ////case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
-        //case 5: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;
-        //case 6: output = mpSrvUavHeap->getGPUHandleByName("gSpecularReflectance"); break;
-
-        //case 7: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionReflectance"); break;
-        //case 8: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionReflectance"); break;
-
-        //default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
-        //}
         switch (this->renderMode) {
         case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
-            //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
-            //case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
+        //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
+        //case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
 
-        case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionPositionMeshID"); break;
-        case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionNormal"); break;
-        case 4: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionPositionMeshID"); break;
-        case 5: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionNormal"); break;
-        case 6: output = mpSrvUavHeap->getGPUHandleByName("gPositionMeshID"); break;
-        case 7: output = mpSrvUavHeap->getGPUHandleByName("gNormal"); break;
+        case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionRadiance"); break;
+        case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionRadiance"); break;
+        case 4: output = mpSrvUavHeap->getGPUHandleByName("gResidualRadiance"); break;
+        //case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
+        //case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
+        //case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
+        case 5: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;
+        case 6: output = mpSrvUavHeap->getGPUHandleByName("gSpecularReflectance"); break;
+
+        case 7: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionReflectance"); break;
+        case 8: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionReflectance"); break;
 
         default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
         }
+        //switch (this->renderMode) {
+        //case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
+        //    //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
+        //    //case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
+
+        //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionPositionMeshID"); break;
+        //case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionNormal"); break;
+        //case 4: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionPositionMeshID"); break;
+        //case 5: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionNormal"); break;
+        //case 6: output = mpSrvUavHeap->getGPUHandleByName("gPositionMeshID"); break;
+        //case 7: output = mpSrvUavHeap->getGPUHandleByName("gNormal"); break;
+
+        //default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
+        //}
     }
     else
     {
-        if (svgfPass && svgfPass->mEnabled)
-        {
-            svgfPass->forward(&renderContext, renderDataPathTracer);
-            output = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
-        }
-        else 
-        if (relaxPass && relaxPass->mEnabled)
-        {
-            relaxPass->forward(&renderContext, renderDataPathTracer);
-            
-            // output = relaxPass->reconstructionRenderTexture->getGPUSrvHandler();
-        }
-        if (deltaPass && deltaPass->mEnabled)
-        {
-            deltaPass->forward(&renderContext, renderDataPathTracer);
-
-            // output = relaxPass->reconstructionRenderTexture->getGPUSrvHandler();
-        }
-
-        modulatePass->forward(&renderContext, renderDataPathTracer);
-        output = modulatePass->blendRenderTexture->getGPUSrvHandler();
-        // output = deltaPass->motionVectorRenderTexture->getGPUSrvHandler();
-
-        //if (svgfPass->mEnabled) 
+        //if (svgfPass && svgfPass->mEnabled)
         //{
         //    svgfPass->forward(&renderContext, renderDataPathTracer);
         //    output = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
-        //    // output = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
-        //    // output = svgfPass->waveletDirect[svgfPass->waveletCount-1]->getGPUSrvHandler();
-
-        //    if (blendPass->mEnabled) 
-        //    {
-        //        RenderData renderDataBlend;
-        //        renderDataBlend.gpuHandleDictionary["src1"] = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
-        //        renderDataBlend.gpuHandleDictionary["src2"] = output;// mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
-        //        blendPass->setAlpha(mFrameNumber);
-
-        //        blendPass->forward(&renderContext, renderDataBlend);
-
-        //        output = blendPass->blendRenderTexture->getGPUSrvHandler();
-        //    }
         //}
+        RenderData motionVectorRenderData;
+
+        motionVectorRenderData.clear();
+        motionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
+        motionVectorRenderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalPrev");
+        motionVectorRenderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
+        motionVectorRenderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
+        motionVectorPass->forward(&renderContext, motionVectorRenderData);
+
+        RenderData deltaReflectionMotionVectorRenderData;
+        deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshIDPrev"];
+        deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gNormalPrev"];
+        deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshID"];
+        deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary["gNormal"];
+        deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshID"];
+        deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gDeltaReflectionPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshIDPrev"];
+        deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
+
+        deltaReflectionMotionVectorPass->forward(&renderContext, deltaReflectionMotionVectorRenderData);
+
+        RenderData deltaTransmissionMotionVectorRenderData;
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshIDPrev"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gNormalPrev"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshID"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary["gNormal"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshID"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshIDPrev"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
+
+        deltaTransmissionMotionVectorPass->forward(&renderContext, deltaTransmissionMotionVectorRenderData);
+
+
+        if (diffuseFilterPass->mEnabled) 
+        {
+            RenderData renderData;
+            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
+            renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
+            renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDiffuseRadiance");
+            renderData.gpuHandleDictionary["gMotionVector"] = motionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+            renderData.gpuHandleDictionary["gHistoryLegnth"] = motionVectorRenderData.outputGPUHandleDictionary.at("gHistoryLength");
+            renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
+
+            diffuseFilterPass->forward(&renderContext, renderData);
+            renderDataPathTracer.outputGPUHandleDictionary["gDiffuseRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
+        }
+
+        if (specularFilterPass->mEnabled)
+        {
+            RenderData renderData;
+            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
+            renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
+            renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gSpecularRadiance");
+            renderData.gpuHandleDictionary["gMotionVector"] = motionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+            renderData.gpuHandleDictionary["gHistoryLegnth"] = motionVectorRenderData.outputGPUHandleDictionary.at("gHistoryLength");
+            renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
+
+            specularFilterPass->forward(&renderContext, renderData);
+            renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
+        }
+
+        if (deltaReflectionFilterPass->mEnabled)
+        {
+            RenderData renderData;
+            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshID"];
+            renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionNormal"];
+            renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"];
+            renderData.gpuHandleDictionary["gMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary["gMotionVector"];
+            renderData.gpuHandleDictionary["gHistoryLegnth"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary["gHistoryLength"];
+            renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary["gPathType"];
+
+            deltaReflectionFilterPass->forward(&renderContext, renderData);
+            renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
+        }
+
+        if (deltaTransmissionFilterPass->mEnabled)
+        {
+            RenderData renderData;
+            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshID"];
+            renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionNormal"];
+            renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionRadiance"];
+            renderData.gpuHandleDictionary["gMotionVector"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary["gMotionVector"];
+            renderData.gpuHandleDictionary["gHistoryLegnth"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary["gHistoryLength"];
+            renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary["gPathType"];
+
+            deltaTransmissionFilterPass->forward(&renderContext, renderData);
+            renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
+        }
+
+        RenderData renderDataModulatePass;
+
+        renderDataModulatePass.gpuHandleDictionary = renderDataPathTracer.outputGPUHandleDictionary;
+
+        modulatePass->forward(&renderContext, renderDataModulatePass);
+        output = modulatePass->blendRenderTexture->getGPUSrvHandler();
+        
 
         if (fxaaPass->mEnabled)
         {
@@ -291,9 +367,6 @@ void RenderApplication::onFrameRender()
             output = fxaaPass->renderTexture->getGPUSrvHandler();
         }
     }
-
-    
-    
 
     RenderData renderDataTonemap;
     // renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
@@ -329,17 +402,23 @@ void RenderApplication::onFrameRender()
     restirPass->processGUI();
     if(svgfPass)
         svgfPass->processGUI();
-    if (relaxPass)
-        relaxPass->processGUI();
-    if (deltaPass)
-        deltaPass->processGUI();
+    
+    if (diffuseFilterPass)
+        diffuseFilterPass->processGUI();
+    if (specularFilterPass)
+        specularFilterPass->processGUI();
+    if (deltaReflectionFilterPass)
+        deltaReflectionFilterPass->processGUI();
+    if (deltaTransmissionFilterPass)
+        deltaTransmissionFilterPass->processGUI();
+
 
     modulatePass->processGUI();
     tonemapPass->processGUI();
     blendPass->processGUI();
     fxaaPass->processGUI();
 
-    mDirty = (pathTracer->mDirty) || (svgfPass && svgfPass->mDirty) || (relaxPass && relaxPass->mDirty) || (restirPass->mDirty);
+    mDirty = (pathTracer->mDirty) || (svgfPass && svgfPass->mDirty) || (diffuseFilterPass && diffuseFilterPass->mDirty) || (restirPass->mDirty);
 
     //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
     //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state

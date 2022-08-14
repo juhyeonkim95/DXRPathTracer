@@ -5,7 +5,6 @@ Texture2D gNormalPrev : register(t1);
 Texture2D gPositionMeshID : register(t2);
 Texture2D gNormal : register(t3);
 Texture2D<float> gHistoryLength : register(t4);
-Texture2D gDepthDerivative : register(t5);
 
 SamplerState s1 : register(s0);
 
@@ -90,12 +89,15 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     
     // (6) if camera not moved, consistenct
     consistency = consistency || !g_frameData.cameraChanged;
-
+    
     float historyLength = gHistoryLength.Sample(s1, prevPixel).r;
     historyLength = min(255.0f, (consistency ? (historyLength + 1.0f) : 1.0f));
 
     PS_OUT output;
     output.motionVector = float2((prevPixel.x + float(consistency)) * 0.5, prevPixel.y);
+    //output.motionVector = float4((prevPixel.x + float(consistency)) * 0.5, prevPixel.y, 0, 0);
+    //output.motionVector = float4(prevPixel.x , prevPixel.y, 0, 1);
+
     output.historyLength = historyLength;
 
     return output;

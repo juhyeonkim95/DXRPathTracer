@@ -15,7 +15,9 @@
 #include "FXAA/FXAA.h"
 #include "HeapData.h"
 #include "SceneResourceManager.h"
-#include "NRDDeltaReflection/NRDDeltaReflection.h"
+#include "MotionVector/MotionVector.h"
+#include "NRDDeltaReflectionMotionVector/NRDDeltaReflectionMotionVector.h"
+#include "NRDDeltaTransmissionMotionVector/NRDDeltaTransmissionMotionVector.h"
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -92,8 +94,15 @@ private:
     PathTracer* pathTracer;
     ReSTIR* restirPass;
     SVGFPass* svgfPass;
-    RELAXPass* relaxPass;
-    NRDDeltaReflection* deltaPass;
+
+    RELAXPass* diffuseFilterPass;
+    RELAXPass* specularFilterPass;
+    RELAXPass* deltaReflectionFilterPass;
+    RELAXPass* deltaTransmissionFilterPass;
+
+    NRDDeltaReflectionMotionVector* deltaReflectionMotionVectorPass;
+    NRDDeltaTransmissionMotionVector* deltaTransmissionMotionVectorPass;
+    MotionVector* motionVectorPass;
 
     ModulateIllumination* modulatePass;
 

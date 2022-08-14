@@ -41,12 +41,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
 
     // float3 col = current_color.Sample(s1, uv).rgb;
     float3 col_prev = col_history.Sample(s1, prev_uv).rgb;
-
     float2 moment_prev = moments_history.Sample(s1, prev_uv).rg;
-
-
-
-    // float historyLength = length_history.Sample(s1, uv).x;
     float historyLength = length_history.Load(int3(ipos, 0)).x;
     // bool success = historyLength > 1.0f;
     bool success = consistency >= 1.0;

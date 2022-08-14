@@ -5,11 +5,10 @@ Texture2D gPositionMeshIDPrev : register(t0);
 Texture2D gNormalPrev : register(t1);
 Texture2D gPositionMeshID : register(t2);
 Texture2D gNormal : register(t3);
-Texture2D gDeltaReflectionPositionMeshID : register(t4);
-Texture2D gDeltaReflectionPositionMeshIDPrev : register(t5);
+Texture2D gDeltaTransmissionPositionMeshID : register(t4);
+Texture2D gDeltaTransmissionPositionMeshIDPrev : register(t5);
 Texture2D gHistoryLength : register(t6);
-Texture2D gDepthDerivative : register(t7);
-Texture2D<uint> gPathType : register(t8);
+Texture2D<uint> gPathType : register(t7);
 
 
 SamplerState s1 : register(s0);
@@ -23,7 +22,7 @@ struct VS_OUTPUT
 
 struct PS_OUT
 {
-    float4 motionVector: SV_Target0;
+    float2 motionVector: SV_Target0;
     float historyLength : SV_Target1;
 };
 
@@ -45,50 +44,42 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
 {
     const int2 ipos = int2(input.pos.xy);
 
-    uint pPathType = gPathType.Load(int3(ipos, 0)).r;
-    if (!(pPathType & BSDF_LOBE_DELTA)) {
-        PS_OUT output;
-        output.motionVector = float4(0,0,0, 1);
-        output.historyLength = 1;
-        return output;
-    }
+    // uint pPathType = gPathType.Load(int3(ipos, 0)).r;
+    //if (!(pPathType & BSDF_LOBE_DELTA)) {
+    //    PS_OUT output;
+    //    output.motionVector = float4(0,0,0, 1);
+    //    output.historyLength = 1;
+    //    return output;
+    //}
 
     float3 normal = gNormal.Load(int3(ipos, 0)).rgb;
     float depth = gNormal.Load(int3(ipos, 0)).w;
     float meshID = gPositionMeshID.Load(int3(ipos, 0)).w;
 
     float3 position = gPositionMeshID.Load(int3(ipos, 0)).rgb;
-    float3 reflectedPosition = gDeltaReflectionPositionMeshID.Load(int3(ipos, 0)).rgb;
+    float3 deltaPosition = gDeltaTransmissionPositionMeshID.Load(int3(ipos, 0)).rgb;
 
-    float3 prevCameraPos = g_frameData.previousCameraPosition;
 
-    float3 v = prevCameraPos - position;
-    float3 vN = dot(v, normal) * normal;
-    float3 vNPerpen = v - vN;
-    float3 prevCameraPosReflected = position + vNPerpen - vN;
+    float3 expectPosition = position;
+    float3 deltaPositionFromEstimatedPixel;
+    float2 prevPixel;
+    for (int i = 0; i < 5; i++) {
+        // Reprojection
+        float4 projCoord = mul(float4(expectPosition, 1.0f), g_frameData.previousProjView);
+        projCoord /= projCoord.w;
+        prevPixel = float2(projCoord.x, -projCoord.y);
+        prevPixel = (prevPixel + 1) * 0.5;
 
-    float3 q1 = prevCameraPosReflected;
-    float3 q2 = reflectedPosition;
-    float3 p = position;
+        deltaPositionFromEstimatedPixel = gDeltaTransmissionPositionMeshIDPrev.Sample(s1, prevPixel).rgb;
+        
+        float3 estimationDifference = deltaPosition - deltaPositionFromEstimatedPixel;
 
-    float k = dot((p - q1), normal) / dot((q2 - q1), normal);
-    float3 p2 = q1 + k * (q2 - q1);
-    if (g_frameData.renderMode == 1) {
-        p2 = position;
+        if (length(estimationDifference) < 0.5f) {
+            break;
+        }
+
+        expectPosition += estimationDifference * 0.2f;
     }
-
-    // Reprojection
-    float4 projCoord = mul(float4(p2, 1.0f), g_frameData.previousProjView);
-    projCoord /= projCoord.w;
-    float2 prevPixel = float2(projCoord.x, -projCoord.y);
-    prevPixel = (prevPixel + 1) * 0.5;
-
-    float3 previousNormal = gNormalPrev.Sample(s1, prevPixel).rgb;
-    float previousDepth = gNormalPrev.Sample(s1, prevPixel).w;
-    float previousMeshID = gPositionMeshIDPrev.Sample(s1, prevPixel).w;
-    float3 previousPosition = gPositionMeshIDPrev.Sample(s1, prevPixel).rgb;
-
-    float3 reflectedPositionFromEstimatedPixel = gDeltaReflectionPositionMeshIDPrev.Sample(s1, prevPixel).rgb;
 
     bool consistency = true;
 
@@ -96,8 +87,9 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     // float gDisocclusionDepthThreshold = 0.02f;
     // float disocclusionThreshold = gDisocclusionDepthThreshold * depth;
     // consistency = consistency && isReprojectionTapValid(position, previousPosition, normal, disocclusionThreshold);
+    consistency = consistency && length(deltaPosition - deltaPositionFromEstimatedPixel) < 0.1f;
 
-    consistency = consistency && length(reflectedPosition - reflectedPositionFromEstimatedPixel) < 0.1f;
+    // consistency = consistency && length(position - previousPosition) < 0.1f;
 
     // (2) check normal
     // consistency = consistency && (dot(normal, previousNormal) > sqrt(2) / 2.0);
@@ -106,8 +98,8 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     // consistency = consistency && (meshID == previousMeshID);
 
     // (4) check outside
-    // bool outside = (prevPixel.x < 0) || (prevPixel.x > 1) || (prevPixel.y < 0) || (prevPixel.y > 1);
-    // consistency = consistency && !outside;
+    bool outside = (prevPixel.x < 0) || (prevPixel.x > 1) || (prevPixel.y < 0) || (prevPixel.y > 1);
+    consistency = consistency && !outside;
 
     // (5) check param changed
     consistency = consistency && !g_frameData.paramChanged;
@@ -120,7 +112,7 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
 
     PS_OUT output;
 
-    output.motionVector = float4((prevPixel.x + float(consistency)) * 0.5, prevPixel.y, 0, 0);
+    output.motionVector = float2((prevPixel.x + float(consistency)) * 0.5, prevPixel.y);
     // output.motionVector = float4(reflectedPositionFromEstimatedPixel, 1);
 
     output.historyLength = historyLength;
