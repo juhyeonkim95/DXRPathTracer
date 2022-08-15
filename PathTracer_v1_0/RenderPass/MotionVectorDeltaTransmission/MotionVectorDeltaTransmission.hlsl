@@ -19,11 +19,6 @@ struct VS_OUTPUT
     float2 texCoord: TEXCOORD;
 };
 
-struct PS_OUT
-{
-    float2 motionVector: SV_Target0;
-    float historyLength : SV_Target1;
-};
 
 cbuffer ConstantBuffer : register(b0)
 {
@@ -65,7 +60,7 @@ float2 main(VS_OUTPUT input) : SV_TARGET
         
         float3 estimationDifference = deltaPosition - deltaPositionFromEstimatedPixel;
 
-        if (length(estimationDifference) < 0.5f) {
+        if (length(estimationDifference) < 0.1f) {
             break;
         }
 

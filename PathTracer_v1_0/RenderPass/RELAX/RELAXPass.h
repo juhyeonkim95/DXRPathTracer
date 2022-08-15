@@ -2,6 +2,12 @@
 #include "PostProcessPass.h"
 #include "HeapData.h"
 
+enum RELAX_TYPE : unsigned int {
+	RELAX_DIFFUSE = 1 << 0,
+	RELAX_SPECULAR = 1 << 1,
+	RELAX_DIFFUSE_SPECULAR = 1 << 2
+};
+
 struct RELAXParameters
 {
 	// common
@@ -25,7 +31,7 @@ struct RELAXParameters
 class RELAXPass : public PostProcessPass
 {
 public:
-	RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, uint targetPathType, std::string name);
+	RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, RELAX_TYPE relaxType, uint targetPathType, std::string name);
 
 	void createRenderTextures(
 		HeapData* rtvHeap,
@@ -61,9 +67,10 @@ public:
 	bool mEnabled = true;
 	bool mEnableVarianceFilter = true;
 
-	const int maxWaveletCount = 8;
-	int waveletCount = 3;
-	int mFeedbackTap = 0;
+	static const int kMaxWaveletCount = 8;
+	int mWaveletCount;
+	int mFeedbackTap;
+	RELAX_TYPE relaxType;
 
 	void uploadParams(uint32_t index);
 };

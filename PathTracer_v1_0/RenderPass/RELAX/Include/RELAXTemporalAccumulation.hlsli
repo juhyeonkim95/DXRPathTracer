@@ -1,4 +1,4 @@
-#include "RELAXCommon.hlsli"
+#include "Include/RELAXCommon.hlsli"
 
 Texture2D gColorHistory : register(t0);
 Texture2D gCurrentColor : register(t1);
@@ -11,9 +11,11 @@ Texture2D gPositionMeshID : register(t5);
 Texture2D gPositionMeshIDPrev : register(t6);
 Texture2D gNormal : register(t7);
 Texture2D gNormalPrev : register(t8);
+Texture2D<float> gRoughness : register(t9);
 
 
 SamplerState s1 : register(s0);
+
 
 
 struct VS_OUTPUT
@@ -56,23 +58,32 @@ bool checkConsistency(in int2 ipos, in float2 prevPixel)
     // float disocclusionThreshold = gDisocclusionDepthThreshold * depth;
     // consistency = consistency && isReprojectionTapValid(position, previousPosition, normal, disocclusionThreshold);
     
-    consistency = consistency && (length(position - previousPosition) < 0.1f);
+    consistency = consistency && (length(position - previousPosition) < gPositionThreshold);
 
     // (2) check normal
-    // consistency = consistency && (dot(normal, previousNormal) > gNormalThreshold);
+    consistency = consistency && (dot(normal, previousNormal) > gNormalThreshold);
 
     // (3) check material
-    // consistency = consistency && (meshID == previousMeshID);
+    consistency = consistency && (meshID == previousMeshID);
 
     // (4) check outside
     bool outside = (prevPixel.x < 0) || (prevPixel.x > 1) || (prevPixel.y < 0) || (prevPixel.y > 1);
     consistency = consistency && !outside;
 
+#ifdef RELAX_SPECULAR
+    float roughness = gRoughness.Load(int3(ipos, 0)).r;
+    // Specular Lobe
+    float3 viewDir = normalize(g_frameData.cameraPosition - position);
+    float3 prevViewDir = normalize(g_frameData.previousCameraPosition - position);
+    float cosFactor = pow(dot(viewDir, prevViewDir), 1 / (roughness + 0.01));
+    consistency = consistency && (cosFactor > 0.8);
+#endif
+
     // (5) check param changed
-    // consistency = consistency && !g_frameData.paramChanged;
+    consistency = consistency && !g_frameData.paramChanged;
 
     // (6) if camera not moved, consistent
-    // consistency = consistency || !g_frameData.cameraChanged;
+    consistency = consistency || !g_frameData.cameraChanged;
 
     return consistency;
 }

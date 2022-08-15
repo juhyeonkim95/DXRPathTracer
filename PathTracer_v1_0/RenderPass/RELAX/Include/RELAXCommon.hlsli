@@ -1,5 +1,5 @@
 #include "../Core/BSDF/BSDFLobes.hlsli"
-
+#include "../Core/Common/CommonStructs.hlsli"
 
 static const float epsilon = 0.00001;
 
@@ -30,6 +30,10 @@ cbuffer ConstantBuffer : register(b0)
 	int stepSize;
 };
 
+cbuffer FrameConstantBuffer : register(b1)
+{
+	PerFrameData g_frameData;
+};
 
 float luma(float3 c) {
 	return c.x * 0.2126 + c.y * 0.7152 + c.z * 0.0722;

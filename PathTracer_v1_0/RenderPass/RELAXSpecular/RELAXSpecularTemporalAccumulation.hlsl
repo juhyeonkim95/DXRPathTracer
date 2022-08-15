@@ -42,9 +42,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
 
     prev_uv_delta.x *= 2;
     prev_uv_delta.x -= floor(prev_uv_delta.x);
-    
-    // prev_uv = prev_uv_delta;
-
+    prev_uv = prev_uv_delta;
     //float roughness = gRoughness.Load(int3(ipos, 0)).r;
 
     // prev_uv = lerp(prev_uv_delta, prev_uv, clamp(roughness * 9, 0, 1));

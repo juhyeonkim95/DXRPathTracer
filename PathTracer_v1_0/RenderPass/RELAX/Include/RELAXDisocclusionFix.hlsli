@@ -1,4 +1,4 @@
-#include "RELAXCommon.hlsli"
+#include "Include/RELAXCommon.hlsli"
 Texture2D gColorVariance : register(t0);
 Texture2D gNormal : register(t1);
 Texture2D gPositionMeshID : register(t2);

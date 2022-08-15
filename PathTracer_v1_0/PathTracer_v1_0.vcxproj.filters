@@ -482,5 +482,11 @@
     <FxCompile Include="RenderPass\MotionVector\MotionVector.hlsl" />
     <FxCompile Include="RenderPass\RELAX\RELAXOFFICIAL.hlsl" />
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl" />
+    <FxCompile Include="RenderPass\RELAX\RELAXDiffuseAtrousWavelet.hlsl" />
+    <FxCompile Include="RenderPass\RELAX\RELAXDiffuseTemporalAccumulation.hlsl" />
+    <FxCompile Include="RenderPass\RELAX\RELAXDiffuseDisocclusionFix.hlsl" />
+    <FxCompile Include="RenderPass\RELAX\RELAXSpecularAtrousWavelet.hlsl" />
+    <FxCompile Include="RenderPass\RELAX\RELAXSpecularDisocclusionFix.hlsl" />
+    <FxCompile Include="RenderPass\RELAX\RELAXSpecularTemporalAccumulation.hlsl" />
   </ItemGroup>
 </Project>

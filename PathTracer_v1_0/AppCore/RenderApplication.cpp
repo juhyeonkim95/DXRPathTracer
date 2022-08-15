@@ -134,19 +134,19 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     depthDerivativePass = new DepthDerivativePass(mpDevice, mSwapChainSize);
     depthDerivativePass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    diffuseFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_DIFFUSE_REFLECTION, "Diffuse RELAX");
+    diffuseFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DIFFUSE_REFLECTION, "Diffuse RELAX");
     diffuseFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    specularFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_GLOSSY_REFLECTION, "Specular RELAX");
+    specularFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_SPECULAR, BSDF_LOBE::BSDF_LOBE_GLOSSY_REFLECTION, "Specular RELAX");
     specularFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    deltaReflectionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_DELTA_REFLECTION, "Delta Reflection RELAX");
+    deltaReflectionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DELTA_REFLECTION, "Delta Reflection RELAX");
     deltaReflectionFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    deltaTransmissionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_DELTA_TRANSMISSION, "Delta Transmission RELAX");
+    deltaTransmissionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DELTA_TRANSMISSION, "Delta Transmission RELAX");
     deltaTransmissionFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
     
-    residualFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_TRANSMISSION, "Residual RELAX");
+    residualFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_TRANSMISSION, "Residual RELAX");
     residualFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
     //motionVectorPass = new MotionVector(mpDevice, mSwapChainSize);
@@ -325,10 +325,10 @@ void RenderApplication::onFrameRender()
             renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
             renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
 
-            //renderData.gpuHandleDictionary["gRoughness"] = renderDataPathTracer.outputGPUHandleDictionary.at("gRoughness");
-            //renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            //renderData.gpuHandleDictionary["gDeltaReflectionNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
-            //renderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
+            renderData.gpuHandleDictionary["gRoughness"] = renderDataPathTracer.outputGPUHandleDictionary.at("gRoughness");
+            // renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+            renderData.gpuHandleDictionary["gDeltaReflectionNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
+            renderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
 
             specularFilterPass->forward(&renderContext, renderData);
             renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];

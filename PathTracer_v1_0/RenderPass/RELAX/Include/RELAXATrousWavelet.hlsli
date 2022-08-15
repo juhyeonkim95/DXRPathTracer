@@ -1,9 +1,15 @@
-#include "RELAXCommon.hlsli"
+#include "Include/RELAXCommon.hlsli"
 Texture2D gColorVariance : register(t0);
 Texture2D gNormal : register(t1);
 Texture2D gPositionMeshID : register(t2);
 Texture2D gDepthDerivative : register(t3);
 Texture2D<uint> gPathType : register(t4);
+
+#ifdef RELAX_SPECULAR
+Texture2D gDeltaReflectionNormal : register(t5);
+Texture2D gDeltaReflectionPositionMeshID : register(t6);
+Texture2D<float> gRoughness : register(t7);
+#endif
 
 SamplerState s1 : register(s0);
 
@@ -65,6 +71,10 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float v = pVariance;
     float weights = 1.0f;
 
+#ifdef RELAX_SPECULAR
+    float pRoughness = gRoughness.Load(int3(ipos, 0)).r;
+    float3 pViewDir = normalize(g_frameData.cameraPosition - pPosition);
+#endif
 
     for (int offsetx = -support; offsetx <= support; offsetx++) {
         for (int offsety = -support; offsety <= support; offsety++) {
@@ -89,6 +99,12 @@ float4 main(VS_OUTPUT input) : SV_TARGET
                 // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 // float w = calculateWeight(pDepth, qDepth, step * sigmaZ * abs(dot(depthDerivative, float2(offsetx, offsety))), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 float w = calculateWeightPosition(pPosition, qPosition, sigmaZ , pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+
+#ifdef RELAX_SPECULAR
+                float3 qViewDir = normalize(g_frameData.cameraPosition - qPosition);
+                float cosFactor = pow(dot(pViewDir, qViewDir), 1 / (pRoughness + 0.01));
+                w *= cosFactor;
+#endif
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 
