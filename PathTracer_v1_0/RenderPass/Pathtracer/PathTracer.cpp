@@ -490,6 +490,7 @@ void PathTracer::copybackHelper(ID3D12GraphicsCommandList4Ptr pCmdList, std::str
     resourceBarrier(pCmdList, outputUAVBuffers[dst], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
     pCmdList->CopyResource(outputUAVBuffers[dst], outputUAVBuffers[src]);
     resourceBarrier(pCmdList, outputUAVBuffers[src], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    resourceBarrier(pCmdList, outputUAVBuffers[dst], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 }
 
 void PathTracer::copyback(ID3D12GraphicsCommandList4Ptr pCmdList)

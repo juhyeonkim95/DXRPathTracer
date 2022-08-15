@@ -546,7 +546,6 @@ void rayGen()
 
         float2 d = pixel + jitter * 1.f / dims * 2.f;
 
-
         ray.Origin = g_frameData.cameraPosition.xyz;
         ray.Direction = normalize(g_frameData.u.xyz * d.x - g_frameData.v.xyz * d.y + g_frameData.w.xyz);
         RayPayload payloadPrimary;
