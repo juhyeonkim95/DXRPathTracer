@@ -65,7 +65,7 @@ public:
 	vector<ID3D12ResourcePtr> mParamBuffers;
 	
 	bool mEnabled = true;
-	bool mEnableVarianceFilter = true;
+	bool mEnableVarianceFilter;
 
 	static const int kMaxWaveletCount = 8;
 	int mWaveletCount;

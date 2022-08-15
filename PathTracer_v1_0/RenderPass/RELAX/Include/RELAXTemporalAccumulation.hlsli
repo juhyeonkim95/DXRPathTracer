@@ -115,7 +115,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
 
 
     // compute first two moments of luminance
-    float luminance = luma(col);
+    float luminance = luma(color);
     float2 moments = float2(luminance, luminance * luminance);
 
     // temporal integration of the moments

@@ -54,6 +54,7 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, RELAX_TYPE relaxType
 
     mWaveletCount = 3;
     mFeedbackTap = 0;
+    mEnableVarianceFilter = true;
 
     mDefaultParam = mParam;
 }
