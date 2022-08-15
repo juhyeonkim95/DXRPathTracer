@@ -2,9 +2,9 @@
 #include "../Core/BSDF/BSDFLobes.hlsli"
 
 Texture2D gPositionMeshIDPrev : register(t0);
-Texture2D gNormalPrev : register(t1);
+Texture2D gNormalDepthPrev : register(t1);
 Texture2D gPositionMeshID : register(t2);
-Texture2D gNormal : register(t3);
+Texture2D gNormalDepth : register(t3);
 Texture2D gDeltaReflectionPositionMeshID : register(t4);
 Texture2D gDeltaReflectionPositionMeshIDPrev : register(t5);
 Texture2D<uint> gPathType : register(t6);
@@ -48,8 +48,8 @@ float2 main(VS_OUTPUT input) : SV_TARGET
     //    return float2(0,0);
     //}
 
-    float3 normal = gNormal.Load(int3(ipos, 0)).rgb;
-    float depth = gNormal.Load(int3(ipos, 0)).w;
+    float3 normal = gNormalDepth.Load(int3(ipos, 0)).rgb;
+    float depth = gNormalDepth.Load(int3(ipos, 0)).w;
     float meshID = gPositionMeshID.Load(int3(ipos, 0)).w;
 
     float3 position = gPositionMeshID.Load(int3(ipos, 0)).rgb;
@@ -80,8 +80,8 @@ float2 main(VS_OUTPUT input) : SV_TARGET
 
     return prevPixel;
 
-    //float3 previousNormal = gNormalPrev.Sample(s1, prevPixel).rgb;
-    //float previousDepth = gNormalPrev.Sample(s1, prevPixel).w;
+    //float3 previousNormal = gNormalDepthPrev.Sample(s1, prevPixel).rgb;
+    //float previousDepth = gNormalDepthPrev.Sample(s1, prevPixel).w;
     //float previousMeshID = gPositionMeshIDPrev.Sample(s1, prevPixel).w;
     //float3 previousPosition = gPositionMeshIDPrev.Sample(s1, prevPixel).rgb;
 
