@@ -502,5 +502,5 @@ void PathTracer::copyback(ID3D12GraphicsCommandList4Ptr pCmdList)
     copybackHelper(pCmdList, "gDeltaReflectionPositionMeshIDPrev", "gDeltaReflectionPositionMeshID");
     copybackHelper(pCmdList, "gDeltaReflectionNormalPrev", "gDeltaReflectionNormal");
     copybackHelper(pCmdList, "gDeltaTransmissionPositionMeshIDPrev", "gDeltaTransmissionPositionMeshID");
-    copybackHelper(pCmdList, "gDeltaTransmissionNormalPrev", "gDeltaReflectionNormal");
+    copybackHelper(pCmdList, "gDeltaTransmissionNormalPrev", "gDeltaTransmissionNormal");
 }

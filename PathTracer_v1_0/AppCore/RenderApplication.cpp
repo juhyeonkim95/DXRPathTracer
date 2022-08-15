@@ -290,8 +290,8 @@ void RenderApplication::onFrameRender()
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gNormalPrev"];
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshID"];
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary["gNormal"];
-        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionPositionMeshID"];
-        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionPositionMeshIDPrev"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshID");
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshIDPrev");
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
 
         deltaTransmissionMotionVectorPass->forward(&renderContext, deltaTransmissionMotionVectorRenderData);

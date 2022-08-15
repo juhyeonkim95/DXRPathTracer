@@ -41,8 +41,7 @@ void MotionVectorDeltaTransmission::forward(RenderContext* pRenderContext, Rende
 
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-    D3D12_CPU_DESCRIPTOR_HANDLE motionVectorRTV[1] = { motionVectorRenderTexture->mRtvDescriptorHandle };
-    mpCmdList->OMSetRenderTargets(1, motionVectorRTV, FALSE, nullptr);
+    mpCmdList->OMSetRenderTargets(1, &motionVectorRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
 
     mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gPositionMeshIDPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormalPrev"));
