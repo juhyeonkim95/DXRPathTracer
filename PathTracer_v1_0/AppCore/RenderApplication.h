@@ -7,7 +7,6 @@
 #include <fstream>
 #include "SVGF/SVGFPass.h"
 #include "RELAX/RELAXPass.h"
-#include "RELAXSpecular/RELAXSpecularPass.h"
 #include "ModulateIllumination/ModulateIllumination.h"
 #include "ReSTIR/ReSTIR.h"
 #include "PathTracer/PathTracer.h"
@@ -17,8 +16,6 @@
 #include "AntiAliasing/TAA/TAA.h"
 #include "HeapData.h"
 #include "SceneResourceManager.h"
-#include "MotionVector/MotionVector.h"
-#include "MotionVectorSpecular/MotionVectorSpecular.h"
 #include "MotionVectorDeltaReflection/MotionVectorDeltaReflection.h"
 #include "MotionVectorDeltaTransmission/MotionVectorDeltaTransmission.h"
 #include "DepthDerivative/DepthDerivativePass.h"

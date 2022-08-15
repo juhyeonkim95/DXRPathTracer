@@ -28,7 +28,7 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, RELAX_TYPE relaxType
     }
 
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32_FLOAT,  DXGI_FORMAT_R32_FLOAT };
-    this->temporalAccumulationShader = new Shader(kQuadVertexShader, temporalAccumulationShaderFile, mpDevice, 10, rtvFormats, 2);
+    this->temporalAccumulationShader = new Shader(kQuadVertexShader, temporalAccumulationShaderFile, mpDevice, 11, rtvFormats, 2);
 
     rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->waveletShader = new Shader(kQuadVertexShader, waveletShaderFile, mpDevice, 8, rtvFormats, 2);
@@ -52,8 +52,8 @@ RELAXPass::RELAXPass(ID3D12Device5Ptr mpDevice, uvec2 size, RELAX_TYPE relaxType
     mParam.depthThreshold = 0.02f;
     mParam.maxAccumulateFrame = 32;
 
-    mWaveletCount = 5;
-    mFeedbackTap = 1;
+    mWaveletCount = 3;
+    mFeedbackTap = 0;
 
     mDefaultParam = mParam;
 }
@@ -145,10 +145,11 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetGraphicsRootDescriptorTable(8, gpuHandles.at("gPositionMeshIDPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gNormal"));
     mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gNormalPrev"));
+    mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gPathType"));
 
     if (relaxType == RELAX_TYPE::RELAX_SPECULAR)
     {
-        mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gRoughness"));
+        mpCmdList->SetGraphicsRootDescriptorTable(12, gpuHandles.at("gRoughness"));
     }
 
     this->uploadParams(0);
