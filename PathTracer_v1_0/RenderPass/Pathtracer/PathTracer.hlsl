@@ -4,33 +4,38 @@
 #include "../ReSTIR/ReSTIRInitTemporal.hlsli"
 #include "PathTracerConstants.hlsli"
 
-void accumulateSpecificRadiance(uint primaryReflectionLobe, in float3 radiance, inout PathTraceResult pathResult)
-{
-    switch (primaryReflectionLobe)
-    {
-    case BSDF_LOBE_DIFFUSE_REFLECTION: pathResult.diffuseRadiance += radiance; break;
-    case BSDF_LOBE_GLOSSY_REFLECTION: pathResult.specularRadiance += radiance; break;
-    case BSDF_LOBE_DELTA_REFLECTION: pathResult.deltaReflectionRadiance += radiance; break;
-    case BSDF_LOBE_DELTA_TRANSMISSION: pathResult.deltaTransmissionRadiance += radiance; break;
-    default: break;
-    }
-}
-
-float3 getMaterialReflectanceForDeltaPaths(in Material mat, in RayPayload payload)
+float3 getMaterialReflectanceForDeltaPaths(in Material material, in RayPayload payload)
 {
     uint materialType = g_materialinfo[payload.materialIndex].materialType;
 
     switch (materialType) {
     case BSDF_TYPE_DIFFUSE:             return payload.diffuseReflectance;
-    case BSDF_TYPE_CONDUCTOR:           return payload.specularReflectance * fresnel::ConductorReflectance(mat.eta, mat.k, 1.0f);
-    case BSDF_TYPE_ROUGH_CONDUCTOR:     return payload.specularReflectance * fresnel::ConductorReflectance(mat.eta, mat.k, 1.0f);
+    case BSDF_TYPE_CONDUCTOR:           return payload.specularReflectance * fresnel::ConductorReflectance(material.eta, material.k, 1.0f);
+    case BSDF_TYPE_ROUGH_CONDUCTOR:     return payload.specularReflectance * fresnel::ConductorReflectance(material.eta, material.k, 1.0f);
     case BSDF_TYPE_DIELECTRIC:          return payload.specularReflectance * float3(1, 1, 1);
     case BSDF_TYPE_ROUGH_DIELECTRIC:    return payload.specularReflectance * float3(1, 1, 1);
-    case BSDF_TYPE_PLASTIC:             return payload.diffuseReflectance; break;
-    case BSDF_TYPE_ROUGH_PLASTIC:       return payload.diffuseReflectance; break;
-    default:                            return float3(1, 1, 1); break;
+    case BSDF_TYPE_PLASTIC:             return plastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
+    case BSDF_TYPE_ROUGH_PLASTIC:       return roughplastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
+    default:                            return float3(1, 1, 1);
     }
     return float3(1, 1, 1);
+}
+
+float3 getDiffuseReflectance(in Material material, in RayPayload payload)
+{
+    uint materialType = material.materialType;
+
+    switch (materialType) {
+    case BSDF_TYPE_DIFFUSE:             return payload.diffuseReflectance;
+    case BSDF_TYPE_CONDUCTOR:           return float3(0, 0, 0);
+    case BSDF_TYPE_ROUGH_CONDUCTOR:     return float3(0, 0, 0);
+    case BSDF_TYPE_DIELECTRIC:          return float3(0, 0, 0);
+    case BSDF_TYPE_ROUGH_DIELECTRIC:    return float3(0, 0, 0);
+    case BSDF_TYPE_PLASTIC:             return plastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
+    case BSDF_TYPE_ROUGH_PLASTIC:       return roughplastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
+    default:                            return payload.diffuseReflectance;
+    }
+    return payload.diffuseReflectance;
 }
 
 
@@ -89,10 +94,6 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
             }
             else if (depth == 2) {
                 pathResult.directRadiance += currentRadiance;
-            }
-            if (depth >= 2)
-            {
-                // accumulateSpecificRadiance(primaryReflectionLobe, currentRadiance, pathResult);
             }
             break;
         }
@@ -213,8 +214,6 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
                 const float3 L = weight * Li * f * throughput;
                 result += L;
                 resultExceptFirst += weight * Li * f * throughputExceptFirst;
-
-                // accumulateSpecificRadiance(primaryReflectionLobe, L, pathResult);
             }
         }
 
@@ -312,7 +311,6 @@ void PrimaryPath(in RayDesc ray, inout PathTraceResult pathResult, inout RayPayl
     payload.emission = float3(0, 0, 0);
     payload.attenuation = float3(1, 1, 1);
     payload.done = 0;
-    // payload.seed = seed;
     payload.primaryReflectionLobe = 0;
     payload.direction = ray.Direction;
     payload.normal = float3(0, 0, 0);
@@ -333,10 +331,7 @@ void PrimaryPath(in RayDesc ray, inout PathTraceResult pathResult, inout RayPayl
     pathResult.reflectance = payload.diffuseReflectance;
     pathResult.roughness = payload.roughness;
 
-    pathResult.diffuseReflectance = payload.diffuseReflectance;
-    if (material.materialType == BSDF_TYPE_ROUGH_PLASTIC) {
-        pathResult.diffuseReflectance = roughplastic::Eval(material, payload, float3(0,0,1), false, true) * M_PIf;
-    }
+    pathResult.diffuseReflectance = getDiffuseReflectance(material, payload);
     pathResult.specularReflectance = payload.specularReflectance;
     pathResult.deltaReflectionReflectance = 0.0f;
     pathResult.deltaTransmissionReflectance = 0.0f;
@@ -610,8 +605,8 @@ void rayGen()
     uint pathType = pathResult.pathType;
 
 #if DO_FILTERING
-    gOutputPositionGeomID[launchIndex.xy] = float4(position, currentMeshID);
-    gOutputNormal[launchIndex.xy] = float4(normal, depth);
+    gPositionMeshID[launchIndex.xy] = float4(position, currentMeshID);
+    gNormalDepth[launchIndex.xy] = float4(normal, depth);
 
     float minReflectance = float3(0.001, 0.001, 0.001);
 
@@ -649,9 +644,9 @@ void rayGen()
     gDeltaTransmissionReflectance[launchIndex.xy] = float4(pathResult.deltaTransmissionReflectance, 1.0f);
 
     gDeltaReflectionPositionMeshID[launchIndex.xy] = float4(pathResult.deltaReflectionPosition, pathResult.deltaReflectionMeshID);
-    gDeltaReflectionNormal[launchIndex.xy] = float4(pathResult.deltaReflectionNormal, 1.0f);
+    gDeltaReflectionNormal[launchIndex.xy] = float4(pathResult.deltaReflectionNormal, 0.0f);
     gDeltaTransmissionPositionMeshID[launchIndex.xy] = float4(pathResult.deltaTransmissionPosition, pathResult.deltaTransmissionMeshID);
-    gDeltaTransmissionNormal[launchIndex.xy] = float4(pathResult.deltaTransmissionNormal, 1.0f);
+    gDeltaTransmissionNormal[launchIndex.xy] = float4(pathResult.deltaTransmissionNormal, 0.0f);
     
 
     gPrimaryPathType[launchIndex.xy] = uint(pathResult.primaryPathType);

@@ -14,9 +14,6 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE mSrvDescriptorHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE mSrvDescriptorHandleGPU;
 
-	// ID3D12DescriptorHeapPtr mpSrvHeap;
-	// int mSrvDescriptorHandleOffset;
-
 	ID3D12Device5Ptr mpDevice;
 	ID3D12ResourcePtr mResource;
 
@@ -28,8 +25,8 @@ public:
 
 RenderTexture* createRenderTexture(
 	ID3D12Device5Ptr pDevice,
-	HeapData* rtvHeap,
-	HeapData* srvHeap,
+	HeapData* pRtvHeap,
+	HeapData* pSrvHeap,
 	uvec2 size,
 	DXGI_FORMAT format
 );

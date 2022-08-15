@@ -4,16 +4,16 @@
 #include "DX12BufferUtils.h"
 
 
-PathTracer::PathTracer(ID3D12Device5Ptr mpDevice, Scene* scene, uvec2 size)
+PathTracer::PathTracer(ID3D12Device5Ptr mpDevice, Scene* pScene, uvec2 size)
     :RenderPass(mpDevice, size)
 {
-    this->scene = scene;
+    this->mpScene = pScene;
 
-    param.maxDepthDiffuse = 4;
-    param.maxDepthSpecular = 4;
-    param.maxDepthTransmittance = 10;
-    param.accumulate = true;
-    defaultParam = param;
+    mParam.maxDepthDiffuse = 4;
+    mParam.maxDepthSpecular = 4;
+    mParam.maxDepthTransmittance = 10;
+    mParam.accumulate = true;
+    mDefaultParam = mParam;
 
     ID3DBlobPtr pDxilLib = compileLibrary(kShaderFile, L"", kShaderModel);
     const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kMissEnvShader, kClosestHitShader, kShadowMiss, kShadowChs };
@@ -132,13 +132,6 @@ RootSignatureDesc PathTracer::createHitRootDesc()
 
     desc.range.resize(1);
 
-    // SRV for gRtScene
-    //desc.range[0].BaseShaderRegister = 0;
-    //desc.range[0].NumDescriptors = 1;
-    //desc.range[0].RegisterSpace = 0;
-    //desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    //desc.range[0].OffsetInDescriptorsFromTableStart = 0;
-
     // SRV for texture
     desc.range[0].BaseShaderRegister = 6;
     desc.range[0].NumDescriptors = 1;
@@ -146,16 +139,11 @@ RootSignatureDesc PathTracer::createHitRootDesc()
     desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     desc.range[0].OffsetInDescriptorsFromTableStart = 0;
 
-
     desc.rootParams.resize(1);
 
     desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     desc.rootParams[0].DescriptorTable.NumDescriptorRanges = 1;
     desc.rootParams[0].DescriptorTable.pDescriptorRanges = &desc.range[0];
-
-    //desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    //desc.rootParams[1].DescriptorTable.NumDescriptorRanges = 1;
-    //desc.rootParams[1].DescriptorTable.pDescriptorRanges = &desc.range[1];
 
     desc.desc.NumParameters = 1;
     desc.desc.pParameters = desc.rootParams.data();
@@ -201,7 +189,7 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
     desc.rootParams[1].Descriptor.RegisterSpace = 0;
     desc.rootParams[1].Descriptor.ShaderRegister = 1;
 
-    // params
+    // mParams
     desc.rootParams[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     desc.rootParams[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     desc.rootParams[2].Descriptor.RegisterSpace = 0;
@@ -251,7 +239,7 @@ void PathTracer::createShaderTable(HeapData* pSrvUavHeap)
     mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     mShaderTableEntrySize += 8; // The ray-gen's descriptor table
     mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, mShaderTableEntrySize);
-    uint32_t nMeshes = this->scene->getMeshes().size();
+    uint32_t nMeshes = this->mpScene->getMeshes().size();
     uint32_t shaderTableSize = mShaderTableEntrySize * (3 + 2 * nMeshes);
 
     // For simplicity, we create the shader-table on the upload heap. You can also create it on the default heap
@@ -271,7 +259,7 @@ void PathTracer::createShaderTable(HeapData* pSrvUavHeap)
     *(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
 
     // Entry 1 - miss program
-    if (scene->envMapTexture) {
+    if (mpScene->envMapTexture) {
         memcpy(pData + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kMissEnvShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
     }
     else {
@@ -291,19 +279,16 @@ void PathTracer::createShaderTable(HeapData* pSrvUavHeap)
         uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;            // The location of the root-descriptor
         assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
 
-        Mesh& mesh = scene->meshes[i];
-        std::string meshRefID = scene->meshRefID[i];
-        int bsdfID = scene->materialIDDictionary[meshRefID];
-        BSDF* meshBSDF = scene->bsdfs[bsdfID];
+        Mesh& mesh = mpScene->meshes[i];
+        std::string meshRefID = mpScene->meshRefID[i];
+        int bsdfID = mpScene->materialIDDictionary[meshRefID];
+        BSDF* meshBSDF = mpScene->bsdfs[bsdfID];
 
         if (meshBSDF->diffuseReflectanceTexturePath.length() > 0) {
-            int textureID = scene->textureIDDictionary[meshBSDF->diffuseReflectanceTexturePath];
-            Texture* texture = scene->textures[textureID];
+            int textureID = mpScene->textureIDDictionary[meshBSDF->diffuseReflectanceTexturePath];
+            Texture* texture = mpScene->textures[textureID];
             *(uint64_t*)(pCbDesc) = pSrvUavHeap->getGPUHandle(texture->descriptorHandleOffset).ptr;
         }
-        //else {
-        //    *(uint64_t*)(pCbDesc) = mpTextureStartHandle.ptr;
-        //}
 
         // Closest hit for shadow ray
         uint8_t* pEntryShadow = pData + mShaderTableEntrySize * (2 * i + 4);
@@ -316,73 +301,61 @@ void PathTracer::createShaderTable(HeapData* pSrvUavHeap)
 
 void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
 {
-    // 1. Create the output resource. The dimensions and format should match the swap-chain
-    outputUAVBuffers["gOutput"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gOutput", 1);
-
-    // 7. HDR
-    outputUAVBuffers["gOutputHDR"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputHDR", 1);
+    // LDR / HDR
+    mUAVResourceDictionary["gOutput"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gOutput", 1);
+    mUAVResourceDictionary["gOutputHDR"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gOutputHDR", 1);
 
     // Direct & indirect
-    outputUAVBuffers["gDirectIllumination"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIllumination", 1);
-    outputUAVBuffers["gIndirectIllumination"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIllumination", 1);
+    mUAVResourceDictionary["gDirectIllumination"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDirectIllumination", 1);
+    mUAVResourceDictionary["gIndirectIllumination"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gIndirectIllumination", 1);
 
     // Diffuse & specular
-    outputUAVBuffers["gDiffuseRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDiffuseRadiance", 1);
-    outputUAVBuffers["gSpecularRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gSpecularRadiance", 1);
+    mUAVResourceDictionary["gDiffuseRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDiffuseRadiance", 1);
+    mUAVResourceDictionary["gSpecularRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gSpecularRadiance", 1);
 
-    outputUAVBuffers["gEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gEmission", 1);
+    mUAVResourceDictionary["gEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gEmission", 1);
 
-    // 10. Reflectance
-    outputUAVBuffers["gReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gReflectance", 1);
-    outputUAVBuffers["gDiffuseReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDiffuseReflectance", 1);
-    outputUAVBuffers["gSpecularReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gSpecularReflectance", 1);
-    // outputUAVBuffers["gIndirectReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gIndirectReflectance", 1);
-    
-    // outputUAVBuffers["gResidualRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gResidualRadiance", 1);
+    // Reflectance
+    mUAVResourceDictionary["gReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gReflectance", 1);
+    mUAVResourceDictionary["gDiffuseReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDiffuseReflectance", 1);
+    mUAVResourceDictionary["gSpecularReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gSpecularReflectance", 1);
 
+    // PositionID / NormalDepth
+    mUAVResourceDictionary["gPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
+    mUAVResourceDictionary["gNormalDepth"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalDepth", 1);
+    mUAVResourceDictionary["gPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev", 1);
+    mUAVResourceDictionary["gNormalDepthPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalDepthPrev", 1);
 
-    // 11. Position / ID
-    outputUAVBuffers["gPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
-
-    // 12. Normal
-    outputUAVBuffers["gNormalDepth"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalDepth", 1);
-
-    // 13, 14 Prev buffer
-    outputUAVBuffers["gPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev", 1);
-    outputUAVBuffers["gNormalDepthPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalDepthPrev", 1);
-
-    // 15 prev reserviors
-    outputUAVBuffers["gPrevReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
-    outputUAVBuffers["gCurrReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gCurrReserviors", 1, sizeof(Reservoir));
+    // Reservoirs for ReSTIR
+    mUAVResourceDictionary["gPrevReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
+    mUAVResourceDictionary["gCurrReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gCurrReserviors", 1, sizeof(Reservoir));
 
 
-    // Delta
-    outputUAVBuffers["gDeltaReflectionReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDeltaReflectionReflectance", 1);
-    outputUAVBuffers["gDeltaReflectionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionEmission", 1);
-    outputUAVBuffers["gDeltaReflectionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionRadiance", 1);
+    // Delta Reflection / Transmission
+    mUAVResourceDictionary["gDeltaReflectionReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDeltaReflectionReflectance", 1);
+    mUAVResourceDictionary["gDeltaReflectionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionEmission", 1);
+    mUAVResourceDictionary["gDeltaReflectionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionRadiance", 1);
 
-    outputUAVBuffers["gDeltaTransmissionReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDeltaTransmissionReflectance", 1);
-    outputUAVBuffers["gDeltaTransmissionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionEmission", 1);
-    outputUAVBuffers["gDeltaTransmissionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionRadiance", 1);
+    mUAVResourceDictionary["gDeltaTransmissionReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDeltaTransmissionReflectance", 1);
+    mUAVResourceDictionary["gDeltaTransmissionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionEmission", 1);
+    mUAVResourceDictionary["gDeltaTransmissionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionRadiance", 1);
 
-    outputUAVBuffers["gDeltaReflectionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPositionMeshID", 1);
-    outputUAVBuffers["gDeltaReflectionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaReflectionNormal", 1);
-    outputUAVBuffers["gDeltaTransmissionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionPositionMeshID", 1);
-    outputUAVBuffers["gDeltaTransmissionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormal", 1);
+    mUAVResourceDictionary["gDeltaReflectionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPositionMeshID", 1);
+    mUAVResourceDictionary["gDeltaReflectionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaReflectionNormal", 1);
+    mUAVResourceDictionary["gDeltaTransmissionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionPositionMeshID", 1);
+    mUAVResourceDictionary["gDeltaTransmissionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormal", 1);
 
-    outputUAVBuffers["gResidualRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gResidualRadiance", 1);
+    // Others
+    mUAVResourceDictionary["gResidualRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gResidualRadiance", 1);
+    mUAVResourceDictionary["gRoughness"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R16_UNORM, "gRoughness", 1);
+    mUAVResourceDictionary["gPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8_UINT, "gPathType", 1);
+    mUAVResourceDictionary["gMotionVector"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32_FLOAT, "gMotionVector", 1);
 
-    outputUAVBuffers["gRoughness"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R16_UNORM, "gRoughness", 1);
-
-
-    outputUAVBuffers["gPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8_UINT, "gPathType", 1);
-    outputUAVBuffers["gMotionVector"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32_FLOAT, "gMotionVector", 1);
-
-    outputUAVBuffers["gDeltaReflectionPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPositionMeshIDPrev", 1);
-    outputUAVBuffers["gDeltaTransmissionPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionPositionMeshIDPrev", 1);
-    outputUAVBuffers["gDeltaReflectionNormalPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaReflectionNormalPrev", 1);
-    outputUAVBuffers["gDeltaTransmissionNormalPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormalPrev", 1);
-
+    // not visible by shader
+    mUAVResourceDictionary["gDeltaReflectionPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPositionMeshIDPrev", 1);
+    mUAVResourceDictionary["gDeltaTransmissionPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionPositionMeshIDPrev", 1);
+    mUAVResourceDictionary["gDeltaReflectionNormalPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaReflectionNormalPrev", 1);
+    mUAVResourceDictionary["gDeltaTransmissionNormalPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormalPrev", 1);
 }
 
 void PathTracer::processGUI()
@@ -390,10 +363,10 @@ void PathTracer::processGUI()
     mDirty = false;
     if (ImGui::CollapsingHeader("PathTracer"))
     {
-        mDirty |= ImGui::SliderInt("Max Depth - diffuse", &param.maxDepthDiffuse, 1, 16);
-        mDirty |= ImGui::SliderInt("Max Depth - specular", &param.maxDepthSpecular, 1, 16);
-        mDirty |= ImGui::SliderInt("Max Depth - transmittance", &param.maxDepthTransmittance, 1, 16);
-        mDirty |= ImGui::Checkbox("Accumulate", &param.accumulate);
+        mDirty |= ImGui::SliderInt("Max Depth - diffuse", &mParam.maxDepthDiffuse, 1, 16);
+        mDirty |= ImGui::SliderInt("Max Depth - specular", &mParam.maxDepthSpecular, 1, 16);
+        mDirty |= ImGui::SliderInt("Max Depth - transmittance", &mParam.maxDepthTransmittance, 1, 16);
+        mDirty |= ImGui::Checkbox("Accumulate", &mParam.accumulate);
     }
 }
 
@@ -405,14 +378,11 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
     ReSTIRParameters *restirParam = pRenderContext->restirParam;
 
     // Prepare resource barrier
-    resourceBarrier(pCmdList, outputUAVBuffers["gOutputHDR"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, outputUAVBuffers["gIndirectIllumination"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, outputUAVBuffers["gNormalDepth"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaReflectionPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaTransmissionPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    for (auto it = mUAVResourceDictionary.begin(); it != mUAVResourceDictionary.end(); ++it)
+    {
+        resourceBarrier(pCmdList, it->second, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    }
+
 
     D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
     raytraceDesc.Width = size.x;
@@ -433,7 +403,7 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
     size_t hitOffset = 3 * mShaderTableEntrySize;
     raytraceDesc.HitGroupTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + hitOffset;
     raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-    raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * (2 * scene->getMeshes().size());
+    raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * (2 * mpScene->getMeshes().size());
 
     // Bind the root signature
     pCmdList->SetComputeRootSignature(mpGlobalRootSig);
@@ -449,7 +419,7 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
     int offset = 0;
     d3d_call(mpParamBuffer->Map(0, nullptr, (void**)&pData));
 
-    memcpy(pData, &this->param, sizeof(PathTracerParameters));
+    memcpy(pData, &this->mParam, sizeof(PathTracerParameters));
     offset += sizeof(PathTracerParameters);
 
     memcpy(pData + offset, restirParam, sizeof(ReSTIRParameters));
@@ -460,25 +430,20 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
 
 
     // SRVs
-    pCmdList->SetComputeRootDescriptorTable(3, pSceneResourceManager->getSRVStartHandle());//2 at createGlobalRootDesc
+    pCmdList->SetComputeRootDescriptorTable(3, pSceneResourceManager->getSRVStartHandle());//3 at createGlobalRootDesc
 
     // UAVs
-    pCmdList->SetComputeRootDescriptorTable(4, pSrvUavHeap->getGPUHandleByName("gOutput"));//3 at createGlobalRootDesc
+    pCmdList->SetComputeRootDescriptorTable(4, pSrvUavHeap->getGPUHandleByName("gOutput"));//4 at createGlobalRootDesc
 
     // Dispatch
     pCmdList->SetPipelineState1(mpPipelineState.GetInterfacePtr());
     pCmdList->DispatchRays(&raytraceDesc);
 
     // end resource barrier
-    resourceBarrier(pCmdList, outputUAVBuffers["gOutputHDR"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gIndirectIllumination"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gNormalDepth"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaReflectionPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaTransmissionPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
+    for (auto it = mUAVResourceDictionary.begin(); it != mUAVResourceDictionary.end(); ++it)
+    {
+        resourceBarrier(pCmdList, it->second, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    }
 
     renderData.addOutputs(pSrvUavHeap->getGPUHandleMap());
 
@@ -486,11 +451,11 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
 
 void PathTracer::copybackHelper(ID3D12GraphicsCommandList4Ptr pCmdList, std::string dst, std::string src)
 {
-    resourceBarrier(pCmdList, outputUAVBuffers[src], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers[dst], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    pCmdList->CopyResource(outputUAVBuffers[dst], outputUAVBuffers[src]);
-    resourceBarrier(pCmdList, outputUAVBuffers[src], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, outputUAVBuffers[dst], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    resourceBarrier(pCmdList, mUAVResourceDictionary[src], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    resourceBarrier(pCmdList, mUAVResourceDictionary[dst], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+    pCmdList->CopyResource(mUAVResourceDictionary[dst], mUAVResourceDictionary[src]);
+    resourceBarrier(pCmdList, mUAVResourceDictionary[src], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    resourceBarrier(pCmdList, mUAVResourceDictionary[dst], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 }
 
 void PathTracer::copyback(ID3D12GraphicsCommandList4Ptr pCmdList)

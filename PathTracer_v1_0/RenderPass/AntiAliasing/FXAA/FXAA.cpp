@@ -23,21 +23,23 @@ void FXAA::createRenderTextures(
     HeapData* rtvHeap,
     HeapData* srvHeap)
 {
-    renderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+    mpRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 }
 
 void FXAA::processGUI()
 {
+    mDirty = false;
     if (ImGui::CollapsingHeader("FXAA"))
     {
-        ImGui::Checkbox("Enable", &mEnabled);
+        mDirty |= ImGui::Checkbox("Enable", &mEnabled);
 
-        ImGui::SliderFloat("qualitySubPix", &mParam.qualitySubPix, 0.f, 1.0f);
-        ImGui::SliderFloat("qualityEdgeThreshold", &mParam.qualityEdgeThreshold, 0.f, 1.0f);
-        ImGui::SliderFloat("qualityEdgeThresholdMin", &mParam.qualityEdgeThresholdMin, 0.f, 1.0f);
+        mDirty |= ImGui::SliderFloat("qualitySubPix", &mParam.qualitySubPix, 0.f, 1.0f);
+        mDirty |= ImGui::SliderFloat("qualityEdgeThreshold", &mParam.qualityEdgeThreshold, 0.f, 1.0f);
+        mDirty |= ImGui::SliderFloat("qualityEdgeThresholdMin", &mParam.qualityEdgeThresholdMin, 0.f, 1.0f);
 
         if (ImGui::Button("Reset"))
         {
+            mDirty = true;
             mParam = mDefaultParam;
         }
     }
@@ -51,15 +53,19 @@ void FXAA::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetPipelineState(mpShader->getPipelineStateObject());
     mpCmdList->SetGraphicsRootSignature(mpShader->getRootSignature()); // set the root signature
 
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->OMSetRenderTargets(1, &renderTexture->mRtvDescriptorHandle, FALSE, nullptr);
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mpRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    mpCmdList->OMSetRenderTargets(1, &mpRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
    
-    mpCmdList->SetGraphicsRootDescriptorTable(1, renderData.gpuHandleDictionary.at("src"));
+    mpCmdList->SetGraphicsRootDescriptorTable(1, renderData.gpuHandleDictionary.at("gSrc"));
 
     this->uploadParams();
     mpCmdList->SetGraphicsRootConstantBufferView(0, mpParameterBuffer->GetGPUVirtualAddress());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mpRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+    renderData.outputGPUHandleDictionary["gOutput"] = mpRenderTexture->getGPUSrvHandler();
+
 }
 
 void FXAA::uploadParams()

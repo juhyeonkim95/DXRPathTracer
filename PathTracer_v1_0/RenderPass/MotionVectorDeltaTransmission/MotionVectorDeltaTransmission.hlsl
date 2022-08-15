@@ -25,18 +25,14 @@ cbuffer ConstantBuffer : register(b0)
     PerFrameData g_frameData;
 };
 
-bool isReprojectionTapValid(in float3 currentWorldPos, in float3 previousWorldPos, in float3 currentNormal, float disocclusionThreshold)
-{
-    // Check if plane distance is acceptable
-    float3 posDiff = currentWorldPos - previousWorldPos;
-    float maxPlaneDistance = abs(dot(posDiff, currentNormal));
-
-    return maxPlaneDistance < disocclusionThreshold;
-}
-
 float2 main(VS_OUTPUT input) : SV_TARGET
 {
     const int2 ipos = int2(input.pos.xy);
+    uint pathType = gPathType.Load(int3(ipos, 0)).r;
+
+    if (!(pathType & BSDF_LOBE_DELTA_REFLECTION)) {
+        return float2(0, 0);
+    }
 
     float3 normal = gNormalDepth.Load(int3(ipos, 0)).rgb;
     float depth = gNormalDepth.Load(int3(ipos, 0)).w;
@@ -67,42 +63,4 @@ float2 main(VS_OUTPUT input) : SV_TARGET
         expectPosition += estimationDifference * 0.2f;
     }
     return prevPixel;
-
-    ////bool consistency = true;
-
-    //// (1) Check geometry consistency
-    //// float gDisocclusionDepthThreshold = 0.02f;
-    //// float disocclusionThreshold = gDisocclusionDepthThreshold * depth;
-    //// consistency = consistency && isReprojectionTapValid(position, previousPosition, normal, disocclusionThreshold);
-    //consistency = consistency && length(deltaPosition - deltaPositionFromEstimatedPixel) < 0.1f;
-
-    //// consistency = consistency && length(position - previousPosition) < 0.1f;
-
-    //// (2) check normal
-    //// consistency = consistency && (dot(normal, previousNormal) > sqrt(2) / 2.0);
-
-    //// (3) check material
-    //// consistency = consistency && (meshID == previousMeshID);
-
-    //// (4) check outside
-    //bool outside = (prevPixel.x < 0) || (prevPixel.x > 1) || (prevPixel.y < 0) || (prevPixel.y > 1);
-    //consistency = consistency && !outside;
-
-    //// (5) check param changed
-    //consistency = consistency && !g_frameData.paramChanged;
-
-    //// (6) if camera not moved, consistenct
-    //consistency = consistency || !g_frameData.cameraChanged;
-
-    //float historyLength = gHistoryLength.Sample(s1, prevPixel).r;
-    //historyLength = min(255.0f, (consistency ? (historyLength + 1.0f) : 1.0f));
-
-    //PS_OUT output;
-
-    //output.motionVector = float2((prevPixel.x + float(consistency)) * 0.5, prevPixel.y);
-    //// output.motionVector = float4(reflectedPositionFromEstimatedPixel, 1);
-
-    //output.historyLength = historyLength;
-
-    //return output;
 }

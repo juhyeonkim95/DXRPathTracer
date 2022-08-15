@@ -21,15 +21,12 @@ public:
 		HeapData* srvHeap);
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
-
-	bool mEnabled;
-	RenderTexture* renderTexture;
-	FXAAParameters mParam;
-	FXAAParameters mDefaultParam;
-
 private:
 	Shader* mpShader;
 	ID3D12ResourcePtr mpParameterBuffer = nullptr;
+	RenderTexture* mpRenderTexture;
+	FXAAParameters mParam;
+	FXAAParameters mDefaultParam;
 
 	void uploadParams();
 };

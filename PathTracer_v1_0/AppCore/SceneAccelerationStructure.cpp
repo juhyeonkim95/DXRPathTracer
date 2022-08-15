@@ -14,11 +14,11 @@ void SceneAccelerationStructure::createSceneAccelerationStructure(
 )
 {
     // Currently assume 
-    mBottomLevelASwithTransform.resize(scene->getMeshes().size());
+    mBottomLevelASwithTransform.resize(mpScene->getMeshes().size());
 
     std::vector<AccelerationStructureBuffers> bottomLevelBuffers;
-    for (int i = 0; i < scene->getMeshes().size(); i++) {
-        Mesh& mesh = scene->getMeshes().at(i);
+    for (int i = 0; i < mpScene->getMeshes().size(); i++) {
+        Mesh& mesh = mpScene->getMeshes().at(i);
         mesh.createMeshBuffer(pDevice);
         AccelerationStructureBuffers bottomLevelBuffer = createBottomLevelASTriangleMesh(pDevice, pCmdList, mesh.getVerticesBuffer(), mesh.getVerticesNumber(), mesh.getIndicesBuffer(), mesh.getIndicesNumber());
         bottomLevelBuffers.push_back(bottomLevelBuffer);

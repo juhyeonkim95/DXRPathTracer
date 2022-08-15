@@ -11,10 +11,9 @@ public:
 		HeapData* srvHeap);
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
-	
-	bool mEnabled = false;
-	RenderTexture* depthDerivativeRenderTexture;
+
 private:
+	RenderTexture* mpRenderTexture;
 	Shader* mpShader;
 	void uploadParams();
 };

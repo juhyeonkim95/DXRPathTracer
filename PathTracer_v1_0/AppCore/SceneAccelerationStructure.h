@@ -5,7 +5,7 @@
 class SceneAccelerationStructure
 {
 public:
-    SceneAccelerationStructure(Scene* scene) { this->scene = scene; };
+    SceneAccelerationStructure(Scene* pScene) { this->mpScene = pScene; };
     void createSceneAccelerationStructure(
         ID3D12Device5Ptr pDevice,
         ID3D12CommandQueuePtr pCmdQueue,
@@ -20,5 +20,5 @@ private:
     ID3D12ResourcePtr mpTopLevelAS;
     vector<pair<ID3D12ResourcePtr, mat4>> mBottomLevelASwithTransform;
     uint64_t mTlasSize = 0;
-    Scene* scene;
+    Scene* mpScene;
 };

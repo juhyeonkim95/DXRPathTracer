@@ -3,7 +3,7 @@
 #include <map>
 using namespace std;
 
-
+// Descriptor heap data manager
 class HeapData
 {
 public:

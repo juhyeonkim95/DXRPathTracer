@@ -31,28 +31,27 @@ public:
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
 	void setAlpha(int frameNumber);
 
-	bool mEnabled = false;
-	RenderTexture* blendRenderTexture;
-	ModulateIlluminationParameters mParam;
 private:
+	RenderTexture* mpRenderTexture;
+	ModulateIlluminationParameters mParam;
+
 	Shader* mpShader;
 	ID3D12ResourcePtr mpParameterBuffer = nullptr;
 
-	bool enableDiffuseRadiance;
-	bool enableDiffuseReflectance;
-	bool enableSpecularRadiance;
-	bool enableSpecularReflectance;
-	bool enableEmission;
+	bool mEnableDiffuseRadiance;
+	bool mEnableDiffuseReflectance;
+	bool mEnableSpecularRadiance;
+	bool mEnableSpecularReflectance;
+	bool mEnableEmission;
 
-	bool enableDeltaReflectionRadiance;
-	bool enableDeltaReflectionReflectance;
-	bool enableDeltaReflectionEmission;
+	bool mEnableDeltaReflectionRadiance;
+	bool mEnableDeltaReflectionReflectance;
+	bool mEnableDeltaReflectionEmission;
 
-	bool enableDeltaTransmissionRadiance;
-	bool enableDeltaTransmissionReflectance;
-	bool enableDeltaTransmissionEmission;
-
-	bool enableResidualRadiance;
+	bool mEnableDeltaTransmissionRadiance;
+	bool mEnableDeltaTransmissionReflectance;
+	bool mEnableDeltaTransmissionEmission;
+	bool mEnableResidualRadiance;
 
 	void uploadParams();
 };

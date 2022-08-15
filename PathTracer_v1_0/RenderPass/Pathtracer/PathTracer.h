@@ -42,11 +42,11 @@ private:
 	RootSignatureDesc createHitRootDesc();
 	RootSignatureDesc createGlobalRootDesc();
 
-	Scene* scene;
+	Scene* mpScene;
 	D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;;
 
-	PathTracerParameters param;
-	PathTracerParameters defaultParam;
+	PathTracerParameters mParam;
+	PathTracerParameters mDefaultParam;
 
 	DxilLibrary mShader;
 	ID3D12StateObjectPtr mpPipelineState;
@@ -56,10 +56,10 @@ private:
 	uint32_t mShaderTableEntrySize = 0;
 
 	ID3D12ResourcePtr mpParamBuffer = nullptr;
-	map<string, ID3D12ResourcePtr> outputUAVBuffers;
+
+	map<string, ID3D12ResourcePtr> mUAVResourceDictionary;
 
 	const WCHAR* kShaderFile = L"RenderPass/Pathtracer/PathTracer.hlsl";
-	//const WCHAR* kShaderFile = L"RenderPass/Pathtracer/MinimalPathTracer.hlsl";
 
 	const WCHAR* kShaderModel = L"lib_6_3";
 

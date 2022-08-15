@@ -387,50 +387,37 @@ void RenderApplication::onFrameRender()
         renderDataModulatePass.gpuHandleDictionary = renderDataPathTracer.outputGPUHandleDictionary;
 
         modulatePass->forward(&renderContext, renderDataModulatePass);
-        output = modulatePass->blendRenderTexture->getGPUSrvHandler();
+        output = renderDataModulatePass.outputGPUHandleDictionary.at("gOutput");
         
 
-        if (fxaaPass->mEnabled)
+        if (fxaaPass->isEnabled())
         {
-            RenderData renderDataBlend;
-            renderDataBlend.gpuHandleDictionary["src"] = output;
+            RenderData renderData;
+            renderData.gpuHandleDictionary["gSrc"] = output;
 
-            fxaaPass->forward(&renderContext, renderDataBlend);
+            fxaaPass->forward(&renderContext, renderData);
 
-            output = fxaaPass->renderTexture->getGPUSrvHandler();
+            output = renderData.outputGPUHandleDictionary.at("gOutput");
         }
 
-        if (taaPass->mEnabled)
+        else if (taaPass->isEnabled())
         {
-            RenderData renderDataTAA;
-            renderDataTAA.gpuHandleDictionary["gTexColor"] = output;
-            renderDataTAA.gpuHandleDictionary["gTexMotionVec"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
-            // renderDataBlend.gpuHandleDictionary["gTexPrevColor"] = output;
+            RenderData renderData;
+            renderData.gpuHandleDictionary["gTexColor"] = output;
+            renderData.gpuHandleDictionary["gTexMotionVec"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
+            
+            taaPass->forward(&renderContext, renderData);
 
-            taaPass->forward(&renderContext, renderDataTAA);
-
-            output = renderDataTAA.outputGPUHandleDictionary.at("gFilteredTexColor");
+            output = renderData.outputGPUHandleDictionary.at("gOutput");
         }
     }
 
     RenderData renderDataTonemap;
-    // renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->temporalAccumulationTextureDirect->getGPUSrvHandler();
-    // renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->motionVectorRenderTexture->getGPUSrvHandler();
-    // renderDataTonemap.gpuHandleDictionary["src"] = svgfPass->waveletIndirectPingPong2->getGPUSrvHandler();
-
     renderDataTonemap.gpuHandleDictionary["src"] = output;
-    // renderDataTonemap.gpuHandleDictionary["src"] = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
-
-    // output; // mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
     renderDataTonemap.cpuHandleDictionary["dst"] = mFrameObjects[rtvIndex].rtvHandle;
     renderDataTonemap.resourceDictionary["dst"] = mFrameObjects[rtvIndex].pSwapChainBuffer;
 
     this->tonemapPass->forward(&renderContext, renderDataTonemap);
-
-    // resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    // mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, renderDataPathTracer.resourceDictionary.at("gOutput"));
-
-    //this->pathTracer->copyback(mpCmdList);
     pathTracer->copyback(mpCmdList);
 
 
@@ -465,19 +452,17 @@ void RenderApplication::onFrameRender()
     fxaaPass->processGUI();
     taaPass->processGUI();
 
-    mDirty = (pathTracer->mDirty) || (svgfPass && svgfPass->mDirty) || (diffuseFilterPass && diffuseFilterPass->mDirty) || (restirPass->mDirty);
+    mDirty = false;
+    mDirty |= pathTracer->isDirty();
+    mDirty |= diffuseFilterPass->isDirty();
+    mDirty |= specularFilterPass->isDirty();
+    mDirty |= deltaReflectionFilterPass->isDirty();
+    mDirty |= deltaTransmissionFilterPass->isDirty();
+    mDirty |= residualFilterPass->isDirty();
+    mDirty |= deltaReflectionMotionVectorPass->isDirty();
+    mDirty |= deltaTransmissionMotionVectorPass->isDirty();
 
-    //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-    //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-    //ImGui::Checkbox("Another Window", &show_another_window);
-    //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-    //ImGui::CollapsingHeader("Help");
-    //if (ImGui::CollapsingHeader("Window options"))
-    //{
-    //    ImGui::Text("USER GUIDE:");
-    //    ImGui::Text("USER GUIDE3:");
-    //}
+    mDirty |= restirPass->mDirty;
 
     ImGui::End();
 

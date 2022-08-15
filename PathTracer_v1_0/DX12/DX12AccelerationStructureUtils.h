@@ -12,4 +12,4 @@ struct AccelerationStructureBuffers
 };
 
 AccelerationStructureBuffers createBottomLevelASTriangleMesh(ID3D12Device5Ptr pDevice, ID3D12GraphicsCommandList4Ptr pCmdList, ID3D12ResourcePtr pVB, uint nVB, ID3D12ResourcePtr pIB, uint nIB);
-AccelerationStructureBuffers createTopLevelAS(ID3D12Device5Ptr mpDevice, ID3D12GraphicsCommandList4Ptr mpCmdList, vector<pair<ID3D12ResourcePtr, mat4>>& bottomLevelASwithTransform, uint64_t& tlasSize);
+AccelerationStructureBuffers createTopLevelAS(ID3D12Device5Ptr pDevice, ID3D12GraphicsCommandList4Ptr pCmdList, vector<pair<ID3D12ResourcePtr, mat4>>& bottomLevelASwithTransform, uint64_t& tlasSize);

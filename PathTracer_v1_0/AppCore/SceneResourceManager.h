@@ -37,7 +37,7 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE getSRVStartHandle() { return mpSrvUavHeap->getGPUHandleByName("AccelerationStructure"); };
 
 private:
-    Scene* scene;
+    Scene* mpScene;
     ID3D12Device5Ptr mpDevice;
     HeapData* mpSrvUavHeap;
 

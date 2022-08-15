@@ -15,11 +15,10 @@ RWTexture2D<float4> gReflectance : register(u7);
 RWTexture2D<float4> gDiffuseReflectance : register(u8);
 RWTexture2D<float4> gSpecularReflectance : register(u9);
 
-RWTexture2D<float4> gOutputPositionGeomID : register(u10);
-RWTexture2D<float4> gOutputNormal : register(u11);
-RWTexture2D<float4> gOutputPositionGeomIDPrev : register(u12);
-RWTexture2D<float4> gOutputNormalPrev : register(u13);
-
+RWTexture2D<float4> gPositionMeshID : register(u10);
+RWTexture2D<float4> gNormalDepth : register(u11);
+RWTexture2D<float4> gPositionMeshIDPrev : register(u12);
+RWTexture2D<float4> gNormalDepthPrev : register(u13);
 
 RWTexture2D<float4> gDeltaReflectionReflectance : register(u16);
 RWTexture2D<float4> gDeltaReflectionEmission : register(u17);

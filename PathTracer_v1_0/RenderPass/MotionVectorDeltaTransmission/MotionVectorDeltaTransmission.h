@@ -13,11 +13,7 @@ public:
 
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
-
-	Shader* motionVectorShader;
-
-	RenderTexture* motionVectorRenderTexture;
-
-	bool mDirty;
-	bool mEnabled;
+private:
+	Shader* mpMotionVectorShader;
+	RenderTexture* mpMotionVectorRenderTexture;
 };

@@ -121,11 +121,11 @@ Reservoir getLightSampleReSTIR(in RayPayload payload, in PathTraceResult pathRes
     uint prevPixelCoordY = uint((prevPixel.y * dims.y));// clamp(0, uint((prevPixel.y * dims.y)), dims.y - 1);
     uint2 prevPixelCoord = uint2(prevPixelCoordX, prevPixelCoordY);
 
-    float3 prevPosition = gOutputPositionGeomIDPrev[prevPixelCoord].rgb;
-    float3 prevNormal = gOutputNormalPrev[prevPixelCoord].rgb;
+    float3 prevPosition = gPositionMeshIDPrev[prevPixelCoord].rgb;
+    float3 prevNormal = gNormalDepthPrev[prevPixelCoord].rgb;
 
     // Temporal reuse only consistency holds.
-    bool consistency = (!g_frameData.cameraChanged) || (!g_frameData.paramChanged && (gOutputPositionGeomIDPrev[prevPixelCoord].a == pathResult.instanceIndex) && dot(prevNormal, pathResult.normal) > gReSTIR.normalThreshold);
+    bool consistency = (!g_frameData.cameraChanged) || (!g_frameData.paramChanged && (gPositionMeshIDPrev[prevPixelCoord].a == pathResult.instanceIndex) && dot(prevNormal, pathResult.normal) > gReSTIR.normalThreshold);
 
     uint linearIndex = launchIndex.x + launchIndex.y * launchDim.x;
 

@@ -1,7 +1,7 @@
 #include "RenderTexture.h"
 #include "d3dx12.h"
 
-
+// Code from https://github.com/microsoft/DirectXTK12/wiki/PostProcess
 void RenderTexture::createWithSize(size_t width, size_t height, DXGI_FORMAT format)
 {
 	auto const heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -44,18 +44,20 @@ D3D12_GPU_DESCRIPTOR_HANDLE RenderTexture::getGPUSrvHandler() {
 
 RenderTexture* createRenderTexture(
 	ID3D12Device5Ptr pDevice,
-    HeapData* rtvHeap,
-    HeapData* srvHeap,
+    HeapData* pRtvHeap,
+    HeapData* pSrvHeap,
 	uvec2 size,
 	DXGI_FORMAT format
 )
 {
+    assert(size.x > 0 && size.y > 0);
+
 	RenderTexture* renderTexture = new RenderTexture();
 
 	renderTexture->mpDevice = pDevice;
-    renderTexture->mSrvDescriptorHandleGPU = srvHeap->getLastGPUHandle();
-	renderTexture->mRtvDescriptorHandle = rtvHeap->addDescriptorHandle();
-	renderTexture->mSrvDescriptorHandle = srvHeap->addDescriptorHandle();
+    renderTexture->mSrvDescriptorHandleGPU = pSrvHeap->getLastGPUHandle();
+	renderTexture->mRtvDescriptorHandle = pRtvHeap->addDescriptorHandle();
+	renderTexture->mSrvDescriptorHandle = pSrvHeap->addDescriptorHandle();
 	renderTexture->createWithSize(size.x, size.y, format);
 
 	return renderTexture;

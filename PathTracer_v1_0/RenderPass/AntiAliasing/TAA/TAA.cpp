@@ -7,6 +7,7 @@ TAA::TAA(ID3D12Device5Ptr mpDevice, uvec2 size)
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
     this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/AntiAliasing/TAA/TAA.hlsl", mpDevice, 3, rtvFormats);
     mEnabled = false;
+
     mParam.gAlpha = 0.1f;
     mParam.gColorBoxSigma = 1.0f;
 
@@ -19,22 +20,25 @@ void TAA::createRenderTextures(
     HeapData* rtvHeap,
     HeapData* srvHeap)
 {
-    renderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
-    prevTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+    mpRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
+    mpPrevTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 }
 
 void TAA::processGUI()
 {
+    mDirty = false;
+
     if (ImGui::CollapsingHeader("TAA"))
     {
-        ImGui::Checkbox("Enable", &mEnabled);
+        mDirty |= ImGui::Checkbox("Enable", &mEnabled);
 
-        ImGui::SliderFloat("qualitySubPix", &mParam.gAlpha, 0.001f, 1.0f);
-        ImGui::SliderFloat("qualityEdgeThreshold", &mParam.gColorBoxSigma, 0.001f, 15.0f);
+        mDirty |= ImGui::SliderFloat("qualitySubPix", &mParam.gAlpha, 0.001f, 1.0f);
+        mDirty |= ImGui::SliderFloat("qualityEdgeThreshold", &mParam.gColorBoxSigma, 0.001f, 15.0f);
 
         if (ImGui::Button("Reset"))
         {
+            mDirty = false;
             mParam = mDefaultParam;
         }
     }
@@ -48,22 +52,23 @@ void TAA::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetPipelineState(mpShader->getPipelineStateObject());
     mpCmdList->SetGraphicsRootSignature(mpShader->getRootSignature()); // set the root signature
 
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    mpCmdList->OMSetRenderTargets(1, &renderTexture->mRtvDescriptorHandle, FALSE, nullptr);
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mpRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    mpCmdList->OMSetRenderTargets(1, &mpRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
    
     mpCmdList->SetGraphicsRootDescriptorTable(1, renderData.gpuHandleDictionary.at("gTexColor"));
     mpCmdList->SetGraphicsRootDescriptorTable(2, renderData.gpuHandleDictionary.at("gTexMotionVec"));
-    mpCmdList->SetGraphicsRootDescriptorTable(3, prevTexture->getGPUSrvHandler());
+    mpCmdList->SetGraphicsRootDescriptorTable(3, mpPrevTexture->getGPUSrvHandler());
 
 
     this->uploadParams();
     mpCmdList->SetGraphicsRootConstantBufferView(0, mpParameterBuffer->GetGPUVirtualAddress());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mpRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-    renderData.outputGPUHandleDictionary["gFilteredTexColor"] = renderTexture->getGPUSrvHandler();
+    renderData.outputGPUHandleDictionary["gOutput"] = mpRenderTexture->getGPUSrvHandler();
 
-    std::swap(renderTexture, prevTexture);
+    std::swap(mpRenderTexture, mpPrevTexture);
 }
 
 void TAA::uploadParams()

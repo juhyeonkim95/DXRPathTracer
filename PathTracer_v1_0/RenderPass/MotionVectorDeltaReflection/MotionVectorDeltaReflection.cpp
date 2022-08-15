@@ -8,14 +8,14 @@ MotionVectorDeltaReflection::MotionVectorDeltaReflection(ID3D12Device5Ptr mpDevi
 {
     // Create Shaders
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32_FLOAT };
-    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/MotionVectorDeltaReflection/MotionVectorDeltaReflection.hlsl", mpDevice, 7, rtvFormats);
+    this->mpMotionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/MotionVectorDeltaReflection/MotionVectorDeltaReflection.hlsl", mpDevice, 7, rtvFormats);
 }
 
 void MotionVectorDeltaReflection::createRenderTextures(
     HeapData* rtvHeap,
     HeapData* srvHeap)
 {
-    motionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32_FLOAT);
+    mpMotionVectorRenderTexture = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32G32_FLOAT);
 }
 
 void MotionVectorDeltaReflection::processGUI()
@@ -36,12 +36,12 @@ void MotionVectorDeltaReflection::forward(RenderContext* pRenderContext, RenderD
     this->setViewPort(mpCmdList);
 
     // (1) Render to motionVectorRenderTexture !!
-    mpCmdList->SetPipelineState(motionVectorShader->getPipelineStateObject());
-    mpCmdList->SetGraphicsRootSignature(motionVectorShader->getRootSignature()); // set the root signature
+    mpCmdList->SetPipelineState(mpMotionVectorShader->getPipelineStateObject());
+    mpCmdList->SetGraphicsRootSignature(mpMotionVectorShader->getRootSignature()); // set the root signature
 
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mpMotionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-    D3D12_CPU_DESCRIPTOR_HANDLE motionVectorRTV[1] = { motionVectorRenderTexture->mRtvDescriptorHandle };
+    D3D12_CPU_DESCRIPTOR_HANDLE motionVectorRTV[1] = { mpMotionVectorRenderTexture->mRtvDescriptorHandle };
     mpCmdList->OMSetRenderTargets(1, motionVectorRTV, FALSE, nullptr);
 
     mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gPositionMeshIDPrev"));
@@ -55,9 +55,9 @@ void MotionVectorDeltaReflection::forward(RenderContext* pRenderContext, RenderD
     mpCmdList->SetGraphicsRootConstantBufferView(0, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
-    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(motionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mpMotionVectorRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-    renderData.outputGPUHandleDictionary["gMotionVector"] = motionVectorRenderTexture->getGPUSrvHandler();
+    renderData.outputGPUHandleDictionary["gMotionVector"] = mpMotionVectorRenderTexture->getGPUSrvHandler();
 
     return;
 }

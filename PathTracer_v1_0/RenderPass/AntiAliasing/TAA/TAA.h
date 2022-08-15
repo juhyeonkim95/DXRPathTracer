@@ -19,16 +19,15 @@ public:
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
 
-	bool mEnabled;
-	RenderTexture* renderTexture;
-	RenderTexture* prevTexture;
-
-	TAAParameters mParam;
-	TAAParameters mDefaultParam;
-
 private:
 	Shader* mpShader;
 	ID3D12ResourcePtr mpParameterBuffer = nullptr;
+
+	RenderTexture* mpRenderTexture;
+	RenderTexture* mpPrevTexture;
+
+	TAAParameters mParam;
+	TAAParameters mDefaultParam;
 
 	void uploadParams();
 };

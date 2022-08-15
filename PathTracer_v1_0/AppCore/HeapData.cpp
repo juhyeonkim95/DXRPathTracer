@@ -56,6 +56,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE HeapData::addDescriptorHandle(const char* name) {
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE HeapData::addDescriptorHandle() {
+	// add anonymously
 	string name = "anonymous_" + std::to_string(mUsedEntries);
 	return this->addDescriptorHandle(name.c_str());
 }

@@ -4,12 +4,12 @@
 #include "d3dx12.h"
 #include "DX12Utils.h"
 
-SceneResourceManager::SceneResourceManager(Scene* scene, ID3D12Device5Ptr pDevice, HeapData* srvHeap)
+SceneResourceManager::SceneResourceManager(Scene* pScene, ID3D12Device5Ptr pDevice, HeapData* srvHeap)
 {
-    this->scene = scene;
+    this->mpScene = pScene;
     this->mpDevice = pDevice;
     this->mpSrvUavHeap = srvHeap;
-    this->mpSceneAccelerationStructure = new SceneAccelerationStructure(scene);
+    this->mpSceneAccelerationStructure = new SceneAccelerationStructure(pScene);
 }
 
 void SceneResourceManager::createSceneCBVs()
@@ -17,7 +17,7 @@ void SceneResourceManager::createSceneCBVs()
     mpLightParametersBuffer = createBuffer(mpDevice, sizeof(LightParameter) * 20, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
     uint8_t* pData;
     d3d_call(mpLightParametersBuffer->Map(0, nullptr, (void**)&pData));
-    memcpy(pData, scene->lights.data(), sizeof(LightParameter) * scene->lights.size());
+    memcpy(pData, mpScene->lights.data(), sizeof(LightParameter) * mpScene->lights.size());
     mpLightParametersBuffer->Unmap(0, nullptr);
 
     mpCameraConstantBuffer = createBuffer(mpDevice, sizeof(PerFrameData), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
@@ -44,7 +44,7 @@ void SceneResourceManager::createSceneSRVs()
     // 1. Material Data (StructuredBuffer <Material>)
     {
         std::vector<Material> materialData;
-        for (BSDF* bsdf : scene->bsdfs)
+        for (BSDF* bsdf : mpScene->bsdfs)
         {
             Material material;
             material.materialType = bsdf->bsdfType;
@@ -101,22 +101,22 @@ void SceneResourceManager::createSceneSRVs()
     {
         uint32 indicesSize = 0;
         uint32 verticesSize = 0;
-        for (Mesh& mesh : scene->getMeshes()) {
+        for (Mesh& mesh : mpScene->getMeshes()) {
             mesh.indicesOffset = indicesSize;
             mesh.verticesOffset = verticesSize;
             indicesSize += mesh.indicesNumber;
             verticesSize += mesh.verticesNumber;
         }
-        scene->indicesNumber = indicesSize;
-        scene->verticesNumber = verticesSize;
+        mpScene->indicesNumber = indicesSize;
+        mpScene->verticesNumber = verticesSize;
 
         std::vector<GeometryInfo> geometryInfoData;
-        assert(scene->meshRefID.size() == scene->meshes.size());
+        assert(mpScene->meshRefID.size() == mpScene->meshes.size());
 
-        for (int i = 0; i < scene->meshRefID.size(); i++) {
+        for (int i = 0; i < mpScene->meshRefID.size(); i++) {
             GeometryInfo geometryInfo;
-            Mesh& mesh = scene->getMeshes()[i];
-            geometryInfo.materialIndex = scene->materialIDDictionary[scene->meshRefID[i]];
+            Mesh& mesh = mpScene->getMeshes()[i];
+            geometryInfo.materialIndex = mpScene->materialIDDictionary[mpScene->meshRefID[i]];
             geometryInfo.lightIndex = mesh.lightIndex;
             geometryInfo.indicesOffset = mesh.indicesOffset;
             geometryInfo.verticesOffset = mesh.verticesOffset;
@@ -142,9 +142,9 @@ void SceneResourceManager::createSceneSRVs()
 
     // 3. Indices Data (StructuredBuffer <uint>)
     {
-        std::vector<uint32> indicesData(scene->indicesNumber);
+        std::vector<uint32> indicesData(mpScene->indicesNumber);
         uint32 counter = 0;
-        for (Mesh& mesh : scene->getMeshes()) {
+        for (Mesh& mesh : mpScene->getMeshes()) {
             for (int i = 0; i < mesh.indicesNumber; i++) {
                 indicesData[counter] = (mesh.indices[i]);
                 counter++;
@@ -169,9 +169,9 @@ void SceneResourceManager::createSceneSRVs()
 
     // 4. Vertices Data (StructuredBuffer <MeshVertex>)
     {
-        std::vector<MeshVertex> verticesData(scene->verticesNumber);
+        std::vector<MeshVertex> verticesData(mpScene->verticesNumber);
         uint32 counter = 0;
-        for (Mesh& mesh : scene->getMeshes()) {
+        for (Mesh& mesh : mpScene->getMeshes()) {
             for (int i = 0; i < mesh.verticesNumber; i++) {
                 verticesData[counter].position = mesh.vertices[i];
                 verticesData[counter].normal = mesh.normals[i];
@@ -213,15 +213,15 @@ void SceneResourceManager::createSceneTextureResources(
     uint64_t &mFenceValue
 )
 {
-    // Create Textures used in the scene
+    // Create Textures used in the mpScene
     // Allocate SRV to each texture.
     // TODO : using TextureArray2D of Array of TextureArray
-    // IMPORTANT : if scene has a environment light, it always locate at the first position.
+    // IMPORTANT : if mpScene has a environment light, it always locate at the first position.
 
-    mpTextureBuffers.resize(scene->textures.size());
-    for (int i = 0; i < scene->textures.size(); i++)
+    mpTextureBuffers.resize(mpScene->textures.size());
+    for (int i = 0; i < mpScene->textures.size(); i++)
     {
-        Texture* texture = scene->textures[i];
+        Texture* texture = mpScene->textures[i];
         CreateTexture(mpDevice, texture->textureImage->GetMetadata(), &mpTextureBuffers[i]);
         std::vector<D3D12_SUBRESOURCE_DATA> vecSubresources;
 
