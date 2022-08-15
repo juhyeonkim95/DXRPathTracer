@@ -664,7 +664,7 @@ void rayGen()
     projCoord /= projCoord.w;
     float2 prevPixel = float2(projCoord.x, -projCoord.y);
     prevPixel = (prevPixel + 1) * 0.5;
-    
+
     gMotionVector[launchIndex.xy] = prevPixel;
 
 #endif

@@ -121,11 +121,12 @@ float4 main(VS_OUTPUT input) : SV_TARGET0
     float3 colorMax = colorAvg + gColorBoxSigma * sigma;
 
     // Find the longest motion vector
-    float2 motion = gTexMotionVec.Load(int3(ipos, 0)).xy;
+    float2 motion = gTexMotionVec.Load(int3(ipos, 0)).xy - texC;
+   
     [unroll]
     for (int a = 0; a < 8; a++)
     {
-        float2 m = gTexMotionVec.Load(int3(ipos + offset[a], 0)).rg;
+        float2 m = gTexMotionVec.Load(int3(ipos + offset[a], 0)).rg - texC;
         motion = dot(m, m) > dot(motion, motion) ? m : motion;
     }
 
