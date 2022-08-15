@@ -144,8 +144,8 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(8, gpuHandles.at("gPositionMeshIDPrev"));
-    mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gNormal"));
-    mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gNormalPrev"));
+    mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gNormalDepth"));
+    mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gNormalDepthPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gPathType"));
 
     if (relaxType == RELAX_TYPE::RELAX_SPECULAR)
@@ -174,7 +174,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         mpCmdList->OMSetRenderTargets(1, &temporalAccumulationTextureVarianceFilter->mRtvDescriptorHandle, FALSE, nullptr);
 
         mpCmdList->SetGraphicsRootDescriptorTable(2, temporalAccumulationTexture->getGPUSrvHandler());
-        mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gNormal"));
+        mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gNormalDepth"));
         mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gPositionMeshID"));
         mpCmdList->SetGraphicsRootDescriptorTable(5, temporalAccumulationTextureMoment->getGPUSrvHandler());
         mpCmdList->SetGraphicsRootDescriptorTable(6, historyLengthRenderTexture->getGPUSrvHandler());
@@ -195,7 +195,7 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetGraphicsRootSignature(waveletShader->getRootSignature()); // set the root signature
 
     mpCmdList->SetGraphicsRootConstantBufferView(1, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
-    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gNormal"));
+    mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gNormalDepth"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gDepthDerivative"));
     mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gPathType"));

@@ -45,9 +45,9 @@ void MotionVectorDeltaReflection::forward(RenderContext* pRenderContext, RenderD
     mpCmdList->OMSetRenderTargets(1, motionVectorRTV, FALSE, nullptr);
 
     mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gPositionMeshIDPrev"));
-    mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormalPrev"));
+    mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormalDepthPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gNormal"));
+    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gNormalDepth"));
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gDeltaReflectionPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gDeltaReflectionPositionMeshIDPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gPathType"));

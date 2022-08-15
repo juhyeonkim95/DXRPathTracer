@@ -2,9 +2,9 @@
 #include "../Core/BSDF/BSDFLobes.hlsli"
 
 Texture2D gPositionMeshIDPrev : register(t0);
-Texture2D gNormalPrev : register(t1);
+Texture2D gNormalDepthPrev : register(t1);
 Texture2D gPositionMeshID : register(t2);
-Texture2D gNormal : register(t3);
+Texture2D gNormalDepth : register(t3);
 Texture2D gDeltaTransmissionPositionMeshID : register(t4);
 Texture2D gDeltaTransmissionPositionMeshIDPrev : register(t5);
 Texture2D<uint> gPathType : register(t6);
@@ -38,8 +38,8 @@ float2 main(VS_OUTPUT input) : SV_TARGET
 {
     const int2 ipos = int2(input.pos.xy);
 
-    float3 normal = gNormal.Load(int3(ipos, 0)).rgb;
-    float depth = gNormal.Load(int3(ipos, 0)).w;
+    float3 normal = gNormalDepth.Load(int3(ipos, 0)).rgb;
+    float depth = gNormalDepth.Load(int3(ipos, 0)).w;
     float meshID = gPositionMeshID.Load(int3(ipos, 0)).w;
 
     float3 position = gPositionMeshID.Load(int3(ipos, 0)).rgb;

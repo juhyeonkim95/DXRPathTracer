@@ -9,8 +9,8 @@ Texture2D<float2> gMotionVector : register(t4);
 
 Texture2D gPositionMeshID : register(t5);
 Texture2D gPositionMeshIDPrev : register(t6);
-Texture2D gNormal : register(t7);
-Texture2D gNormalPrev : register(t8);
+Texture2D gNormalDepth : register(t7);
+Texture2D gNormalDepthPrev : register(t8);
 Texture2D<uint> gPathType : register(t9);
 Texture2D<float> gRoughness : register(t10);
 
@@ -45,24 +45,24 @@ bool checkConsistency(in int2 ipos, in float2 prevPixel)
 {
     float3 position = gPositionMeshID.Load(int3(ipos, 0)).rgb;
     float meshID = gPositionMeshID.Load(int3(ipos, 0)).w;
-    float3 normal = gNormal.Load(int3(ipos, 0)).rgb;
-    float depth = gNormal.Load(int3(ipos, 0)).w;
+    float3 normal = gNormalDepth.Load(int3(ipos, 0)).rgb;
+    float depth = gNormalDepth.Load(int3(ipos, 0)).w;
 
     float3 previousPosition = gPositionMeshIDPrev.Sample(s1, prevPixel).rgb;
     float previousMeshID = gPositionMeshIDPrev.Sample(s1, prevPixel).w;
-    float3 previousNormal = gNormalPrev.Sample(s1, prevPixel).rgb;
-    float previousDepth = gNormalPrev.Sample(s1, prevPixel).w;
+    float3 previousNormal = gNormalDepthPrev.Sample(s1, prevPixel).rgb;
+    float previousDepth = gNormalDepthPrev.Sample(s1, prevPixel).w;
 
     bool consistency = true;
 
     // (1) Check geometry consistency
-    // float disocclusionThreshold = gDisocclusionDepthThreshold * depth;
-    // consistency = consistency && isReprojectionTapValid(position, previousPosition, normal, disocclusionThreshold);
+    float disocclusionThreshold = gDisocclusionDepthThreshold * depth;
+    consistency = consistency && (depth == 0 || isReprojectionTapValid(position, previousPosition, normal, disocclusionThreshold));
     
     consistency = consistency && (length(position - previousPosition) < gPositionThreshold);
 
     // (2) check normal
-    consistency = consistency && (dot(normal, previousNormal) > gNormalThreshold);
+    consistency = consistency && (dot(normal, previousNormal) > gNormalDepthThreshold);
 
     // (3) check material
     consistency = consistency && (meshID == previousMeshID);

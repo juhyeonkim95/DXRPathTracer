@@ -44,9 +44,9 @@ void MotionVectorDeltaTransmission::forward(RenderContext* pRenderContext, Rende
     mpCmdList->OMSetRenderTargets(1, &motionVectorRenderTexture->mRtvDescriptorHandle, FALSE, nullptr);
 
     mpCmdList->SetGraphicsRootDescriptorTable(1, gpuHandles.at("gPositionMeshIDPrev"));
-    mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormalPrev"));
+    mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormalDepthPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
-    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gNormal"));
+    mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gNormalDepth"));
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gDeltaTransmissionPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gDeltaTransmissionPositionMeshIDPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gPathType"));

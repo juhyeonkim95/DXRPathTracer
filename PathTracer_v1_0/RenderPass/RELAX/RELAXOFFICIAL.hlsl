@@ -294,7 +294,7 @@ void Preload(uint2 sharedPos, int2 globalPos)
 {
     globalPos = clamp(globalPos, 0, gRectSize - 1.0);
 
-    float4 normalRoughness = NRD_FrontEnd_UnpackNormalAndRoughness(gNormalRoughness[globalPos + gRectOrigin]);
+    float4 normalRoughness = NRD_FrontEnd_UnpackNormalAndRoughness(gNormalDepthRoughness[globalPos + gRectOrigin]);
     sharedNormalRoughness[sharedPos.y][sharedPos.x] = normalRoughness;
 }
 
@@ -342,7 +342,7 @@ NRD_EXPORT void NRD_CS_MAIN(uint2 pixelPos : SV_DispatchThreadId, uint2 threadPo
     // Combining logic is valid even if non-combined denoisers are used
     // since undefined masks are zeroes in those cases
     float currentMaterialID;
-    NRD_FrontEnd_UnpackNormalAndRoughness(gNormalRoughness[gRectOrigin + pixelPos], currentMaterialID);
+    NRD_FrontEnd_UnpackNormalAndRoughness(gNormalDepthRoughness[gRectOrigin + pixelPos], currentMaterialID);
     currentMaterialID = floor(currentMaterialID * 3.0 + 0.5) / 255.0; // IMPORTANT: properly repack 2-bits to 8-bits
 
     // Getting current frame worldspace position and view vector for current pixel

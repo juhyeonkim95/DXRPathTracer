@@ -1,9 +1,9 @@
 #include "../Core/Common/CommonStructs.hlsli"
 
 Texture2D gPositionMeshIDPrev : register(t0);
-Texture2D gNormalPrev : register(t1);
+Texture2D gNormalDepthPrev : register(t1);
 Texture2D gPositionMeshID : register(t2);
-Texture2D gNormal : register(t3);
+Texture2D gNormalDepth : register(t3);
 Texture2D gHistoryLength : register(t4);
 Texture2D gDepthDerivative : register(t5);
 
@@ -50,11 +50,11 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
 
     bool consistency = true;
 
-    float3 previousNormal = gNormalPrev.Sample(s1, prevPixel).rgb;
-    float3 normal = gNormal.Load(int3(ipos, 0)).rgb;
+    float3 previousNormal = gNormalDepthPrev.Sample(s1, prevPixel).rgb;
+    float3 normal = gNormalDepth.Load(int3(ipos, 0)).rgb;
 
-    float previousDepth = gNormalPrev.Sample(s1, prevPixel).w;
-    float depth = gNormal.Load(int3(ipos, 0)).w;
+    float previousDepth = gNormalDepthPrev.Sample(s1, prevPixel).w;
+    float depth = gNormalDepth.Load(int3(ipos, 0)).w;
 
     float previousMeshID = gPositionMeshIDPrev.Sample(s1, prevPixel).w;
     float meshID = gPositionMeshID.Load(int3(ipos, 0)).w;

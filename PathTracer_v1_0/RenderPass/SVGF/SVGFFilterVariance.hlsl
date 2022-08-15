@@ -1,6 +1,6 @@
 #include "SVGFCommon.hlsli"
 Texture2D gColorVariance : register(t0);
-Texture2D gNormal : register(t1);
+Texture2D gNormalDepth : register(t1);
 Texture2D gPositionMeshID : register(t2);
 Texture2D gMoments : register(t3);
 Texture2D gHistoryLength : register(t4);
@@ -22,8 +22,8 @@ float4 main(VS_OUTPUT input) : SV_Target
 
     if (h < 4.0) {
         float3 pPosition = gPositionMeshID.Load(int3(ipos, 0)).rgb;
-        float3 pNormal = gNormal.Load(int3(ipos, 0)).rgb;
-        float pDepth = gNormal.Load(int3(ipos, 0)).w;
+        float3 pNormal = gNormalDepth.Load(int3(ipos, 0)).rgb;
+        float pDepth = gNormalDepth.Load(int3(ipos, 0)).w;
 
         float3 pColor = gColorVariance.Load(int3(ipos, 0)).rgb;
         float pLuminance = luma(pColor);
@@ -45,8 +45,8 @@ float4 main(VS_OUTPUT input) : SV_Target
                 if (!outside) 
                 {
                     float3 qPosition = gPositionMeshID.Load(int3(ipos2, 0)).rgb;
-                    float3 qNormal = gNormal.Load(int3(ipos2, 0)).rgb;
-                    float qDepth = gNormal.Load(int3(ipos2, 0)).w;
+                    float3 qNormal = gNormalDepth.Load(int3(ipos2, 0)).rgb;
+                    float qDepth = gNormalDepth.Load(int3(ipos2, 0)).w;
                     float3 qColor = gColorVariance.Load(int3(ipos2, 0)).rgb;
                     float2 qMoments = gMoments.Load(int3(ipos2, 0)).rg;
 
