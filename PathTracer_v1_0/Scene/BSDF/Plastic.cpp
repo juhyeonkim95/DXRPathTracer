@@ -1,7 +1,7 @@
 #include "Plastic.h"
 #include "loader_utils.h"
 #include "Externals/GLM/glm/gtx/string_cast.hpp"
-
+#include "Fresnel.h"
 
 Plastic::Plastic(XMLElement* e)
 {
@@ -32,6 +32,8 @@ Plastic::Plastic(XMLElement* e)
 	this->extIOR = getFloatByName(e, "extIOR", 1.000277f);
 	this->specularReflectance = getVec3ByName(e, "specularReflectance", vec3(1, 1, 1));
 	this->nonlinear = getBoolByName(e, "nonlinear", false);
+
+	this->diffuseFresnel = fresnel::DiffuseFresnel(this->intIOR / this->extIOR);
 }
 
 std::string Plastic::toString()

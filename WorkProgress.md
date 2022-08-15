@@ -172,3 +172,11 @@ About x1.5 speed up!
 - Divided radiance into diffuse, specular, delta reflection, delta transmission components (What's next?).
 
 ![20220811_renderpass](assets/20220811_renderpass.jpg)
+
+
+## 20220812
+- Still implementing RELAX
+
+## 20220813, 14, 15
+- Implement delta reflection / refraction motion vector calculation
+- RELAX diffuse / specular version implement

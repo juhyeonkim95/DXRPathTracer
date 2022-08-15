@@ -24,6 +24,9 @@ struct Material
 
     uint nonlinear;
     uint unused;
+
+    vec3 conductorReflectance;
+    float diffuseFresnel;
 };
 
 struct GeometryInfo

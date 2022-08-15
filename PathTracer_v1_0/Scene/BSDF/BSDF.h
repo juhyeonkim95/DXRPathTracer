@@ -28,6 +28,9 @@ public:
 	vec3 specularTransmittance;
 	uint32 specularTransmittanceTextureID;
 
+	vec3 conductorReflectance;
+	float diffuseFresnel;
+
 	std::string diffuseReflectanceTexturePath;
 	std::string refID;
 	

@@ -22,6 +22,27 @@ namespace roughconductor
 		return pdf;
 	}
 
+	float3 EvalDemodulated(in Material mat, in RayPayload si, in float3 wo) {
+		const float3 wi = si.wi;
+		if (wi.z <= 0.0f || wo.z <= 0.0f) {
+			return float3(0, 0, 0);
+		}
+		float roughness = si.roughness;
+		float3 specularReflectance = si.specularReflectance;
+
+		uint dist = mat.microfacetDistribution;
+		float alpha = microfacet::roughnessToAlpha(dist, roughness);
+
+		float3 hr = normalize(wo + wi);
+		float cosThetaM = dot(wi, hr);
+		float3 F = fresnel::ConductorReflectance(float3(0,0,0), float3(1, 1, 1), cosThetaM);
+		float G = microfacet::G(dist, alpha, wi, wo, hr);
+		float D = microfacet::D(dist, alpha, hr);
+		float fr = (G * D * 0.25f) / wi.z;
+
+		return specularReflectance * F * fr;
+	}
+
 	float3 Eval(in Material mat, in RayPayload si, in float3 wo) {
 		const float3 wi = si.wi;
 		if (wi.z <= 0.0f || wo.z <= 0.0f) {

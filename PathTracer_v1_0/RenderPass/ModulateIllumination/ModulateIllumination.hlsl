@@ -65,6 +65,10 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         }
         color += diffuse;
     }
+    if (!enableDiffuseRadiance && enableDiffuseReflectance)
+    {
+        color = diffuseReflectance;
+    }
 
     if (enableSpecularRadiance) {
         float3 specular = specularRadiance;
@@ -72,6 +76,10 @@ float4 main(VS_OUTPUT input) : SV_TARGET
             specular *= specularReflectance;
         }
         color += specular;
+    }
+    if (!enableSpecularRadiance && enableSpecularReflectance)
+    {
+        color = specularReflectance;
     }
 
     if (enableEmission)
@@ -86,6 +94,10 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         }
         color += deltaReflection;
     }
+    if (!enableDeltaReflectionRadiance && enableDeltaReflectionReflectance)
+    {
+        color = deltaReflectionReflectance;
+    }
 
     if (enableDeltaTransmissionRadiance) {
         float3 deltaTransmission = deltaTransmissionRadiance;
@@ -93,6 +105,10 @@ float4 main(VS_OUTPUT input) : SV_TARGET
             deltaTransmission *= deltaTransmissionReflectance;
         }
         color += deltaTransmission;
+    }
+    if (!enableDeltaTransmissionRadiance && enableDeltaTransmissionReflectance)
+    {
+        color = deltaTransmissionReflectance;
     }
 
     if (enableDeltaReflectionEmission)

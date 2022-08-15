@@ -39,6 +39,39 @@ void ModulateIllumination::processGUI()
 {
     if (ImGui::CollapsingHeader("ModulateIllumination"))
     {
+        if (ImGui::Button("Disable All"))
+        {
+            mEnableDiffuseReflectance = false;
+            mEnableDiffuseRadiance = false;
+            mEnableSpecularReflectance = false;
+            mEnableSpecularRadiance = false;
+            mEnableEmission = false;
+
+            mEnableDeltaReflectionRadiance = false;
+            mEnableDeltaReflectionReflectance = false;
+            mEnableDeltaReflectionEmission = false;
+            mEnableDeltaTransmissionRadiance = false;
+            mEnableDeltaTransmissionReflectance = false;
+            mEnableDeltaTransmissionEmission = false;
+            mEnableResidualRadiance = false;
+        }
+        if (ImGui::Button("Enable All"))
+        {
+            mEnableDiffuseReflectance = true;
+            mEnableDiffuseRadiance = true;
+            mEnableSpecularReflectance = true;
+            mEnableSpecularRadiance = true;
+            mEnableEmission = true;
+
+            mEnableDeltaReflectionRadiance = true;
+            mEnableDeltaReflectionReflectance = true;
+            mEnableDeltaReflectionEmission = true;
+            mEnableDeltaTransmissionRadiance = true;
+            mEnableDeltaTransmissionReflectance = true;
+            mEnableDeltaTransmissionEmission = true;
+            mEnableResidualRadiance = true;
+        }
+
         ImGui::Checkbox("DiffuseReflectance", &mEnableDiffuseReflectance);
         ImGui::Checkbox("DiffuseRadiance", &mEnableDiffuseRadiance);
         ImGui::Checkbox("SpecularReflectance", &mEnableSpecularReflectance);

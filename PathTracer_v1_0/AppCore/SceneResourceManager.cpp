@@ -57,6 +57,9 @@ void SceneResourceManager::createSceneSRVs()
             //material.specularReflectanceTextureID = bsdf->diffuseReflectanceTexturePath.length() > 0 ? 1 : 0;
             material.specularTransmittance = bsdf->specularTransmittance;
             //material.specularReflectanceTextureID = bsdf->diffuseReflectanceTexturePath.length() > 0 ? 1 : 0;
+            
+            material.conductorReflectance = bsdf->conductorReflectance;
+            material.diffuseFresnel = bsdf->diffuseFresnel;
 
             material.eta = bsdf->eta;
             material.k = bsdf->k;

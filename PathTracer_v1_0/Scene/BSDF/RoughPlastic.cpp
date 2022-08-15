@@ -1,6 +1,7 @@
 #include "RoughPlastic.h"
 #include "loader_utils.h"
 #include "Externals/GLM/glm/gtx/string_cast.hpp"
+#include "Fresnel.h"
 
 
 RoughPlastic::RoughPlastic(XMLElement* e)
@@ -34,6 +35,7 @@ RoughPlastic::RoughPlastic(XMLElement* e)
 	this->microfacetDistribution = getValueByNameDefault(e, "distribution", "beckmann");
 	this->alpha = getFloatByName(e, "alpha", 0.1f);
 	this->nonlinear = getBoolByName(e, "nonlinear", false);
+	this->diffuseFresnel = fresnel::DiffuseFresnel(this->intIOR / this->extIOR);
 }
 
 std::string RoughPlastic::toString()

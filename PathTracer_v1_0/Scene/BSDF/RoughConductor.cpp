@@ -1,7 +1,7 @@
 #include "RoughConductor.h"
 #include "loader_utils.h"
 #include "Externals/GLM/glm/gtx/string_cast.hpp"
-
+#include "Fresnel.h"
 
 RoughConductor::RoughConductor(XMLElement* e)
 {
@@ -11,6 +11,7 @@ RoughConductor::RoughConductor(XMLElement* e)
 	this->specularReflectance = getVec3ByName(e, "specularReflectance", vec3(1, 1, 1));
 	this->microfacetDistribution = getValueByNameDefault(e, "distribution", "beckmann");
 	this->alpha = getFloatByName(e, "alpha", 0.1f);
+	this->conductorReflectance = fresnel::ConductorReflectance(this->eta, this->k, 1.0f);
 }
 
 std::string RoughConductor::toString()

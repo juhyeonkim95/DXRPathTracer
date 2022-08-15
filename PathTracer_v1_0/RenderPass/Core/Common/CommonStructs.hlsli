@@ -24,6 +24,9 @@ struct Material
 
     uint nonlinear;
     uint unused;
+
+    float3 conductorReflectance;
+    float diffuseFresnel;
 };
 
 
@@ -202,8 +205,6 @@ struct PathTraceResult
     float3 diffuseReflectance;
     float3 specularReflectance;
     float3 indirectReflectance;
-
-    uint pathType;
 
     float roughness;
 };

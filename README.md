@@ -73,6 +73,12 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 - [x] Temporal Reuse
 - [ ] Spatial Reuse
 
+### (Week 7, 8) Advanced denoising
+- [x] Delta reflection motion vector
+- [x] Delta transmission motion vector
+- [x] RELAX diffuse version
+- [x] RELAX specular version
+
 ## Usage
 (WIP)
 

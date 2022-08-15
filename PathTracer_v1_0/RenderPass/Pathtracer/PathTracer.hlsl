@@ -4,39 +4,7 @@
 #include "../ReSTIR/ReSTIRInitTemporal.hlsli"
 #include "PathTracerConstants.hlsli"
 
-float3 getMaterialReflectanceForDeltaPaths(in Material material, in RayPayload payload)
-{
-    uint materialType = g_materialinfo[payload.materialIndex].materialType;
 
-    switch (materialType) {
-    case BSDF_TYPE_DIFFUSE:             return payload.diffuseReflectance;
-    case BSDF_TYPE_CONDUCTOR:           return payload.specularReflectance * fresnel::ConductorReflectance(material.eta, material.k, 1.0f);
-    case BSDF_TYPE_ROUGH_CONDUCTOR:     return payload.specularReflectance * fresnel::ConductorReflectance(material.eta, material.k, 1.0f);
-    case BSDF_TYPE_DIELECTRIC:          return payload.specularReflectance * float3(1, 1, 1);
-    case BSDF_TYPE_ROUGH_DIELECTRIC:    return payload.specularReflectance * float3(1, 1, 1);
-    case BSDF_TYPE_PLASTIC:             return plastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
-    case BSDF_TYPE_ROUGH_PLASTIC:       return roughplastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
-    default:                            return float3(1, 1, 1);
-    }
-    return float3(1, 1, 1);
-}
-
-float3 getDiffuseReflectance(in Material material, in RayPayload payload)
-{
-    uint materialType = material.materialType;
-
-    switch (materialType) {
-    case BSDF_TYPE_DIFFUSE:             return payload.diffuseReflectance;
-    case BSDF_TYPE_CONDUCTOR:           return float3(0, 0, 0);
-    case BSDF_TYPE_ROUGH_CONDUCTOR:     return float3(0, 0, 0);
-    case BSDF_TYPE_DIELECTRIC:          return float3(0, 0, 0);
-    case BSDF_TYPE_ROUGH_DIELECTRIC:    return float3(0, 0, 0);
-    case BSDF_TYPE_PLASTIC:             return plastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
-    case BSDF_TYPE_ROUGH_PLASTIC:       return roughplastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
-    default:                            return payload.diffuseReflectance;
-    }
-    return payload.diffuseReflectance;
-}
 
 
 void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult, inout RayPayload payload, bool accumulateResult)
@@ -287,6 +255,7 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
         else if (primaryReflectionLobe == BSDF_LOBE_GLOSSY_REFLECTION)
         {
             pathResult.specularRadiance += result;
+            pathResult.specularIllumination += resultExceptFirst;
         }
         else if (primaryReflectionLobe == BSDF_LOBE_DELTA_REFLECTION)
         {
@@ -330,11 +299,13 @@ void PrimaryPath(in RayDesc ray, inout PathTraceResult pathResult, inout RayPayl
     // Reflectance
     pathResult.reflectance = payload.diffuseReflectance;
     pathResult.roughness = payload.roughness;
-
-    pathResult.diffuseReflectance = getDiffuseReflectance(material, payload);
-    pathResult.specularReflectance = payload.specularReflectance;
+    pathResult.reflectance = bsdf::getApproximatedReflectance(material, payload);
+    pathResult.diffuseReflectance = bsdf::getApproximatedDiffuseReflectance(material, payload);
+    pathResult.specularReflectance = bsdf::getApproximatedSpecularReflectance(material, payload);
     pathResult.deltaReflectionReflectance = 0.0f;
     pathResult.deltaTransmissionReflectance = 0.0f;
+
+    pathResult.primaryPathType = bsdf::getReflectionLobe(material);
 
     pathResult.deltaReflectionPosition = 0;
     pathResult.deltaReflectionNormal = 0;
@@ -376,19 +347,7 @@ void PrimaryPath(in RayDesc ray, inout PathTraceResult pathResult, inout RayPayl
     case BSDF_TYPE_ROUGH_PLASTIC:       maxDepth = gPathTracer.maxDepthDiffuse; break;
     default:                            maxDepth = gPathTracer.maxDepth; break;
     }
-    pathResult.pathType = materialType;
 
-    switch (materialType) {
-    case BSDF_TYPE_DIFFUSE:             pathResult.reflectance = payload.diffuseReflectance; break;
-    case BSDF_TYPE_CONDUCTOR:           pathResult.reflectance = payload.specularReflectance; break;
-    case BSDF_TYPE_ROUGH_CONDUCTOR:     pathResult.reflectance = payload.specularReflectance; break;
-    case BSDF_TYPE_DIELECTRIC:          pathResult.reflectance = payload.specularReflectance; break;
-    case BSDF_TYPE_ROUGH_DIELECTRIC:    pathResult.reflectance = payload.specularReflectance; break;
-    case BSDF_TYPE_PLASTIC:             pathResult.reflectance = payload.diffuseReflectance; break;
-    case BSDF_TYPE_ROUGH_PLASTIC:       pathResult.reflectance = payload.diffuseReflectance; break;
-    default:                            pathResult.reflectance = payload.diffuseReflectance; break;
-    }
-    pathResult.primaryPathType = bsdf::getReflectionLobe(material);
 }
 
 void PathTraceDeltaReflectance(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult, inout RayPayload payload)
@@ -431,7 +390,7 @@ void PathTraceDeltaReflectance(in RayDesc ray, inout uint seed, inout PathTraceR
         // TODO : 2 or full?
         if (nonDelta || (payload.depth >= 2) || payload.done)
         {
-            pathResult.deltaReflectionReflectance = getMaterialReflectanceForDeltaPaths(material, payload);
+            pathResult.deltaReflectionReflectance = bsdf::getApproximatedReflectance(material, payload);
             if (payload.done && (materialLobe & BSDF_LOBE_DELTA_REFLECTION)) {
                 pathResult.deltaReflectionEmission = payload.attenuation*payload.emission;
             }
@@ -482,7 +441,7 @@ void PathTraceDeltaTransmission(in RayDesc ray, inout uint seed, inout PathTrace
 
         if (nonDelta || (payload.depth >= gPathTracer.maxDepthTransmittance) || payload.done)
         {
-            pathResult.deltaTransmissionReflectance = getMaterialReflectanceForDeltaPaths(material, payload);
+            pathResult.deltaTransmissionReflectance = bsdf::getApproximatedReflectance(material, payload);
             if (payload.done) {
                 pathResult.deltaTransmissionEmission = payload.attenuation * payload.emission;
             }
@@ -546,7 +505,6 @@ void rayGen()
         RayPayload payloadPrimary;
 
         PrimaryPath(ray, pathResult, payloadPrimary);
-
         Material material = g_materialinfo[payloadPrimary.materialIndex];
         uint materialReflectionLobe = bsdf::getReflectionLobe(material);
 
@@ -562,9 +520,6 @@ void rayGen()
 
         PathTrace(ray, seed, pathResult, payloadPrimary, true);
 
-        // payload = payloadPrimary;
-        // PathTraceDeltaReflectance(ray, seed, pathResult, payloadPrimary);
-        
 
         radiance += pathResult.radiance;
         directRadiance += pathResult.directRadiance;
@@ -602,9 +557,8 @@ void rayGen()
 
     float3 indirectRadiance = radiance - emission - directRadiance;
     uint currentMeshID = pathResult.instanceIndex;
-    uint pathType = pathResult.pathType;
 
-#if DO_FILTERING
+#if OUTPUT_ADDITIONAL_PROPERTIES
     gPositionMeshID[launchIndex.xy] = float4(position, currentMeshID);
     gNormalDepth[launchIndex.xy] = float4(normal, depth);
 

@@ -26,6 +26,57 @@ enum BSDF_TYPE : uint
 
 namespace bsdf
 {
+	float3 getApproximatedReflectance(in Material material, in RayPayload payload)
+	{
+		uint materialType = g_materialinfo[payload.materialIndex].materialType;
+
+		switch (materialType) {
+		case BSDF_TYPE_DIFFUSE:             return payload.diffuseReflectance;
+		case BSDF_TYPE_CONDUCTOR:           return payload.specularReflectance * material.conductorReflectance;
+		case BSDF_TYPE_ROUGH_CONDUCTOR:     return payload.specularReflectance * material.conductorReflectance;
+		case BSDF_TYPE_DIELECTRIC:          return payload.specularReflectance * float3(1, 1, 1);
+		case BSDF_TYPE_ROUGH_DIELECTRIC:    return payload.specularReflectance * float3(1, 1, 1);
+		case BSDF_TYPE_PLASTIC:             return plastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
+		case BSDF_TYPE_ROUGH_PLASTIC:       return roughplastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
+		default:                            return payload.diffuseReflectance;
+		}
+		return payload.diffuseReflectance;
+	}
+
+	float3 getApproximatedDiffuseReflectance(in Material material, in RayPayload payload)
+	{
+		uint materialType = material.materialType;
+
+		switch (materialType) {
+		case BSDF_TYPE_DIFFUSE:             return payload.diffuseReflectance;
+		case BSDF_TYPE_CONDUCTOR:           return float3(0, 0, 0);
+		case BSDF_TYPE_ROUGH_CONDUCTOR:     return float3(0, 0, 0);
+		case BSDF_TYPE_DIELECTRIC:          return float3(0, 0, 0);
+		case BSDF_TYPE_ROUGH_DIELECTRIC:    return float3(0, 0, 0);
+		case BSDF_TYPE_PLASTIC:             return plastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
+		case BSDF_TYPE_ROUGH_PLASTIC:       return roughplastic::Eval(material, payload, float3(0, 0, 1), false, true) * M_PIf;
+		default:                            return payload.diffuseReflectance;
+		}
+		return payload.diffuseReflectance;
+	}
+
+	float3 getApproximatedSpecularReflectance(in Material material, in RayPayload payload)
+	{
+		uint materialType = material.materialType;
+
+		switch (materialType) {
+		case BSDF_TYPE_DIFFUSE:             return float3(0, 0, 0);
+		case BSDF_TYPE_CONDUCTOR:           return payload.specularReflectance * material.conductorReflectance;
+		case BSDF_TYPE_ROUGH_CONDUCTOR:     return payload.specularReflectance * material.conductorReflectance;
+		case BSDF_TYPE_DIELECTRIC:          return payload.specularReflectance;
+		case BSDF_TYPE_ROUGH_DIELECTRIC:    return payload.specularReflectance;
+		case BSDF_TYPE_PLASTIC:             return payload.specularReflectance;
+		case BSDF_TYPE_ROUGH_PLASTIC:       return payload.specularReflectance;
+		default:                            return payload.specularReflectance;
+		}
+		return payload.specularReflectance;
+	}
+
 	uint getReflectionLobe(in Material material) {
 		switch (material.materialType) {
 		case BSDF_TYPE_DIFFUSE:					return BSDF_LOBE_DIFFUSE_REFLECTION;
@@ -81,6 +132,15 @@ namespace bsdf
 		case BSDF_TYPE_ROUGH_CONDUCTOR: return roughconductor::Eval(material, payload, wo);
 		case BSDF_TYPE_ROUGH_DIELECTRIC: return roughdielectric::Eval(material, payload, wo);
 		case BSDF_TYPE_PLASTIC: return plastic::Eval(material, payload, wo, true, false);
+		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Eval(material, payload, wo, true, false);
+		}
+		return float3(0, 0, 0);
+	}
+
+	float3 EvalSpecularDemodulated(in Material material, in RayPayload payload, in float3 wo) {
+		// Eval Specular (non-Delta) Component Only
+		switch (material.materialType) {
+		case BSDF_TYPE_ROUGH_CONDUCTOR: return roughconductor::EvalDemodulated(material, payload, wo);
 		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::Eval(material, payload, wo, true, false);
 		}
 		return float3(0, 0, 0);

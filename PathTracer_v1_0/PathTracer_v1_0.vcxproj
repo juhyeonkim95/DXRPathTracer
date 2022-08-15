@@ -183,6 +183,7 @@
     <ClCompile Include="AppCore\HeapData.cpp" />
     <ClCompile Include="RenderPass\PathTracer\PathTracer.cpp" />
     <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp" />
+    <ClCompile Include="Scene\BSDF\Fresnel.cpp" />
     <ClCompile Include="Utils\light_utils.cpp" />
     <ClCompile Include="Utils\loader_utils.cpp" />
     <ClCompile Include="Scene\Shape\Mesh.cpp" />
@@ -234,6 +235,7 @@
     <ClInclude Include="DX12\DX12BufferUtils.h" />
     <ClInclude Include="DX12\DX12Utils.h" />
     <ClInclude Include="DX12\DX12DxilLibrary.h" />
+    <ClInclude Include="Scene\BSDF\Fresnel.h" />
     <ClInclude Include="Scene\Emitter\Emitter.h" />
     <ClInclude Include="AppCore\HeapData.h" />
     <ClInclude Include="ImGuiManager.h" />

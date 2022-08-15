@@ -1,7 +1,7 @@
 #include "Conductor.h"
 #include "loader_utils.h"
 #include "Externals/GLM/glm/gtx/string_cast.hpp"
-
+#include "Fresnel.h"
 
 Conductor::Conductor(XMLElement* e)
 {
@@ -9,6 +9,7 @@ Conductor::Conductor(XMLElement* e)
 	this->eta = getVec3ByName(e, "eta", vec3(0, 0, 0));
 	this->k = getVec3ByName(e, "k", vec3(1, 1, 1));
 	this->specularReflectance = getVec3ByName(e, "specularReflectance", vec3(1, 1, 1));
+	this->conductorReflectance = fresnel::ConductorReflectance(this->eta, this->k, 1.0f);
 }
 
 std::string Conductor::toString()
