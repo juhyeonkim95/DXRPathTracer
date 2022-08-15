@@ -2,7 +2,7 @@
 #include "PostProcessPass.h"
 #include "HeapData.h"
 
-struct NRDDeltaTransmissionMotionVectorParameters
+struct MotionVectorDeltaTransmissionParameters
 {
 	ivec2 screenSize;
 	int diffuseMaxAccumulatedFrame;
@@ -13,10 +13,10 @@ struct NRDDeltaTransmissionMotionVectorParameters
 	int stepSize;
 };
 
-class NRDDeltaTransmissionMotionVector : public PostProcessPass
+class MotionVectorDeltaTransmission : public PostProcessPass
 {
 public:
-	NRDDeltaTransmissionMotionVector(ID3D12Device5Ptr mpDevice, uvec2 size);
+	MotionVectorDeltaTransmission(ID3D12Device5Ptr mpDevice, uvec2 size);
 
 	void createRenderTextures(
 		HeapData* rtvHeap,

@@ -156,10 +156,10 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     motionVectorSpecularPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
 
-    deltaReflectionMotionVectorPass = new NRDDeltaReflectionMotionVector(mpDevice, mSwapChainSize);
+    deltaReflectionMotionVectorPass = new MotionVectorDeltaReflection(mpDevice, mSwapChainSize);
     deltaReflectionMotionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    deltaTransmissionMotionVectorPass = new NRDDeltaTransmissionMotionVector(mpDevice, mSwapChainSize);
+    deltaTransmissionMotionVectorPass = new MotionVectorDeltaTransmission(mpDevice, mSwapChainSize);
     deltaTransmissionMotionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
     modulatePass = new ModulateIllumination(mpDevice, mSwapChainSize);

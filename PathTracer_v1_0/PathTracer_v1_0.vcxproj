@@ -173,8 +173,8 @@
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp" />
     <ClCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.cpp" />
     <ClCompile Include="RenderPass\MotionVector\MotionVector.cpp" />
-    <ClCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.cpp" />
-    <ClCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.cpp" />
+    <ClCompile Include="RenderPass\MotionVectorDeltaReflection\MotionVectorDeltaReflection.cpp" />
+    <ClCompile Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.cpp" />
     <ClCompile Include="RenderPass\RELAXSpecular\RELAXSpecularPass.cpp" />
     <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp" />
     <ClCompile Include="Scene\BSDF\Conductor.cpp" />
@@ -226,8 +226,8 @@
     <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h" />
     <ClInclude Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.h" />
     <ClInclude Include="RenderPass\MotionVector\MotionVector.h" />
-    <ClInclude Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.h" />
-    <ClInclude Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.h" />
+    <ClInclude Include="RenderPass\MotionVectorDeltaReflection\MotionVectorDeltaReflection.h" />
+    <ClInclude Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.h" />
     <ClInclude Include="RenderPass\RELAXSpecular\RELAXSpecularPass.h" />
     <ClInclude Include="RenderPass\RELAX\RELAXPass.h" />
     <ClInclude Include="Scene\BSDF\BSDF.h" />
@@ -332,15 +332,6 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </FxCompile>
-    <FxCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </FxCompile>
-    <FxCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </FxCompile>
-    <FxCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">

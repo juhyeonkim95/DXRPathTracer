@@ -18,8 +18,8 @@
 #include "SceneResourceManager.h"
 #include "MotionVector/MotionVector.h"
 #include "MotionVectorSpecular/MotionVectorSpecular.h"
-#include "NRDDeltaReflectionMotionVector/NRDDeltaReflectionMotionVector.h"
-#include "NRDDeltaTransmissionMotionVector/NRDDeltaTransmissionMotionVector.h"
+#include "MotionVectorDeltaReflection/MotionVectorDeltaReflection.h"
+#include "MotionVectorDeltaTransmission/MotionVectorDeltaTransmission.h"
 #include "DepthDerivative/DepthDerivativePass.h"
 
 #pragma comment(lib, "dinput8.lib")
@@ -102,8 +102,8 @@ private:
     RELAXPass* deltaTransmissionFilterPass;
     RELAXPass* residualFilterPass;
 
-    NRDDeltaReflectionMotionVector* deltaReflectionMotionVectorPass;
-    NRDDeltaTransmissionMotionVector* deltaTransmissionMotionVectorPass;
+    MotionVectorDeltaReflection* deltaReflectionMotionVectorPass;
+    MotionVectorDeltaTransmission* deltaTransmissionMotionVectorPass;
     MotionVector* motionVectorPass;
     MotionVectorSpecular* motionVectorSpecularPass;
 

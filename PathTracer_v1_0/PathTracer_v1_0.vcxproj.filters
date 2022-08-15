@@ -201,19 +201,19 @@
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="RenderPass\MotionVector\MotionVector.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\DepthDerivative\DepthDerivativePass.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\RELAXSpecular\RELAXSpecularPass.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\MotionVectorDeltaReflection\MotionVectorDeltaReflection.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.cpp">
@@ -380,22 +380,22 @@
     <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="RenderPass\MotionVector\MotionVector.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Scene\BSDF\BSDFLobes.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="RenderPass\DepthDerivative\DepthDerivativePass.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\RELAXSpecular\RELAXSpecularPass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\MotionVectorDeltaReflection\MotionVectorDeltaReflection.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.h">
@@ -476,8 +476,5 @@
     <FxCompile Include="RenderPass\MotionVector\MotionVector.hlsl" />
     <FxCompile Include="RenderPass\RELAX\RELAXOFFICIAL.hlsl" />
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl" />
-    <FxCompile Include="RenderPass\NRDDeltaReflectionMotionVector\NRDDeltaReflectionMotionVector.hlsl" />
-    <FxCompile Include="RenderPass\NRDDeltaTransmissionMotionVector\NRDDeltaTransmissionMotionVector.hlsl" />
-    <FxCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.hlsl" />
   </ItemGroup>
 </Project>

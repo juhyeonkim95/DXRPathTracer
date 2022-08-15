@@ -1,17 +1,17 @@
-#include "NRDDeltaReflectionMotionVector.h"
+#include "MotionVectorDeltaTransmission.h"
 #include <map>
 #include "DX12Utils.h"
 #include "DX12BufferUtils.h"
 
-NRDDeltaReflectionMotionVector::NRDDeltaReflectionMotionVector(ID3D12Device5Ptr mpDevice, uvec2 size)
+MotionVectorDeltaTransmission::MotionVectorDeltaTransmission(ID3D12Device5Ptr mpDevice, uvec2 size)
     : PostProcessPass(mpDevice, size)
 {
     // Create Shaders
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R16G16_UNORM, DXGI_FORMAT_R32_FLOAT };
-    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/NRDDeltaReflectionMotionVector/NRDDeltaReflectionMotionVector.hlsl", mpDevice, 8, rtvFormats);
+    this->motionVectorShader = new Shader(kQuadVertexShader, L"RenderPass/MotionVectorDeltaTransmission/MotionVectorDeltaTransmission.hlsl", mpDevice, 8, rtvFormats);
 }
 
-void NRDDeltaReflectionMotionVector::createRenderTextures(
+void MotionVectorDeltaTransmission::createRenderTextures(
     HeapData* rtvHeap,
     HeapData* srvHeap)
 {
@@ -21,18 +21,18 @@ void NRDDeltaReflectionMotionVector::createRenderTextures(
     historyLengthRenderTexturePrev = createRenderTexture(mpDevice, rtvHeap, srvHeap, size, DXGI_FORMAT_R32_FLOAT);
 }
 
-void NRDDeltaReflectionMotionVector::processGUI()
+void MotionVectorDeltaTransmission::processGUI()
 {
 
     mDirty = false;
-    if (ImGui::CollapsingHeader("NRDDeltaReflectionMotionVector"))
+    if (ImGui::CollapsingHeader("MotionVectorDeltaTransmission"))
     {
-        mDirty |= ImGui::Checkbox("enable NRDDeltaReflectionMotionVector", &mEnabled);
+        mDirty |= ImGui::Checkbox("enable MotionVectorDeltaTransmission", &mEnabled);
     }
 }
 
 
-void NRDDeltaReflectionMotionVector::forward(RenderContext* pRenderContext, RenderData& renderData)
+void MotionVectorDeltaTransmission::forward(RenderContext* pRenderContext, RenderData& renderData)
 {
     ID3D12GraphicsCommandList4Ptr mpCmdList = pRenderContext->pCmdList;
     map<string, D3D12_GPU_DESCRIPTOR_HANDLE>& gpuHandles = renderData.gpuHandleDictionary;
@@ -52,8 +52,8 @@ void NRDDeltaReflectionMotionVector::forward(RenderContext* pRenderContext, Rend
     mpCmdList->SetGraphicsRootDescriptorTable(2, gpuHandles.at("gNormalPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(3, gpuHandles.at("gPositionMeshID"));
     mpCmdList->SetGraphicsRootDescriptorTable(4, gpuHandles.at("gNormal"));
-    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gDeltaReflectionPositionMeshID"));
-    mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gDeltaReflectionPositionMeshIDPrev"));
+    mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gDeltaTransmissionPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gDeltaTransmissionPositionMeshIDPrev"));
     mpCmdList->SetGraphicsRootDescriptorTable(7, historyLengthRenderTexturePrev->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(8, gpuHandles.at("gPathType"));
 
