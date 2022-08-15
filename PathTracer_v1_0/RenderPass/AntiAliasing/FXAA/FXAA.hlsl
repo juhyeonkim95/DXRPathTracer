@@ -25,7 +25,7 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-#include "../Core/Common/ColorHelpers.hlsli"
+#include "../../Core/Common/ColorHelpers.hlsli"
 
 // #define FXAA_PC 1
 // #define FXAA_HLSL_5 1

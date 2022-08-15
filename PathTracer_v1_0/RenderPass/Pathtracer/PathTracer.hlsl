@@ -334,6 +334,9 @@ void PrimaryPath(in RayDesc ray, inout PathTraceResult pathResult, inout RayPayl
     pathResult.roughness = payload.roughness;
 
     pathResult.diffuseReflectance = payload.diffuseReflectance;
+    if (material.materialType == BSDF_TYPE_ROUGH_PLASTIC) {
+        pathResult.diffuseReflectance = roughplastic::Eval(material, payload, float3(0,0,1), false, true) * M_PIf;
+    }
     pathResult.specularReflectance = payload.specularReflectance;
     pathResult.deltaReflectionReflectance = 0.0f;
     pathResult.deltaTransmissionReflectance = 0.0f;
@@ -655,6 +658,14 @@ void rayGen()
     gPrimaryPathType[launchIndex.xy] = uint(pathResult.primaryPathType);
 
     gRoughness[launchIndex.xy] = (pathResult.roughness);
+
+    // Reprojection
+    float4 projCoord = mul(float4(position, 1.0f), g_frameData.previousProjView);
+    projCoord /= projCoord.w;
+    float2 prevPixel = float2(projCoord.x, -projCoord.y);
+    prevPixel = (prevPixel + 1) * 0.5;
+    
+    gMotionVector[launchIndex.xy] = prevPixel;
 
 #endif
     if (g_frameData.frameNumber > 1 && gPathTracer.accumulateFrames) {

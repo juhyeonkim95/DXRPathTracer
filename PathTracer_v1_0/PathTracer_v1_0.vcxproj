@@ -169,7 +169,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp" />
     <ClCompile Include="RenderPass\DepthDerivative\DepthDerivativePass.cpp" />
-    <ClCompile Include="RenderPass\FXAA\FXAA.cpp" />
+    <ClCompile Include="RenderPass\AntiAliasing\FXAA\FXAA.cpp" />
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp" />
     <ClCompile Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.cpp" />
     <ClCompile Include="RenderPass\MotionVector\MotionVector.cpp" />
@@ -177,6 +177,7 @@
     <ClCompile Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.cpp" />
     <ClCompile Include="RenderPass\RELAXSpecular\RELAXSpecularPass.cpp" />
     <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp" />
+    <ClCompile Include="RenderPass\AntiAliasing\TAA\TAA.cpp" />
     <ClCompile Include="Scene\BSDF\Conductor.cpp" />
     <ClCompile Include="Scene\BSDF\Dielectric.cpp" />
     <ClCompile Include="Scene\BSDF\Diffuse.cpp" />
@@ -222,7 +223,7 @@
     <ClInclude Include="External\stb_image_write.h" />
     <ClInclude Include="RenderPass\BlendPass\BlendPass.h" />
     <ClInclude Include="RenderPass\DepthDerivative\DepthDerivativePass.h" />
-    <ClInclude Include="RenderPass\FXAA\FXAA.h" />
+    <ClInclude Include="RenderPass\AntiAliasing\FXAA\FXAA.h" />
     <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h" />
     <ClInclude Include="RenderPass\MotionVectorSpecular\MotionVectorSpecular.h" />
     <ClInclude Include="RenderPass\MotionVector\MotionVector.h" />
@@ -230,6 +231,7 @@
     <ClInclude Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.h" />
     <ClInclude Include="RenderPass\RELAXSpecular\RELAXSpecularPass.h" />
     <ClInclude Include="RenderPass\RELAX\RELAXPass.h" />
+    <ClInclude Include="RenderPass\AntiAliasing\TAA\TAA.h" />
     <ClInclude Include="Scene\BSDF\BSDF.h" />
     <ClInclude Include="Scene\BSDF\BSDFLobes.h" />
     <ClInclude Include="Scene\BSDF\Conductor.h" />

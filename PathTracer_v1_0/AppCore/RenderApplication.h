@@ -13,7 +13,8 @@
 #include "PathTracer/PathTracer.h"
 #include "BlendPass/BlendPass.h"
 #include "Tonemap/ToneMapper.h"
-#include "FXAA/FXAA.h"
+#include "AntiAliasing/FXAA/FXAA.h"
+#include "AntiAliasing/TAA/TAA.h"
 #include "HeapData.h"
 #include "SceneResourceManager.h"
 #include "MotionVector/MotionVector.h"
@@ -114,6 +115,7 @@ private:
 
     BlendPass* blendPass;
     FXAA* fxaaPass;
+    TAA* taaPass;
 
     ToneMapper* tonemapPass;
     bool mDirty = true;

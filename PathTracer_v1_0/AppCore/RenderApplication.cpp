@@ -171,6 +171,10 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     fxaaPass = new FXAA(mpDevice, mSwapChainSize);
     fxaaPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
+    taaPass = new TAA(mpDevice, mSwapChainSize);
+    taaPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+
+
     tonemapPass = new ToneMapper(mpDevice, mSwapChainSize);
 
     postProcessQuad = new PostProcessQuad(mpDevice, mpCmdList, mpCmdQueue, mpFence, mFenceValue);
@@ -311,15 +315,13 @@ void RenderApplication::onFrameRender()
         motionVectorSpecularPass->forward(&renderContext, motionVectorSpecularRenderData);
 
 
-
-
         RenderData deltaTransmissionMotionVectorRenderData;
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshIDPrev"];
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gNormalPrev"];
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshID"];
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary["gNormal"];
-        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshID"];
-        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshIDPrev"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionPositionMeshID"];
+        deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gDeltaTransmissionPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionPositionMeshIDPrev"];
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
 
         deltaTransmissionMotionVectorPass->forward(&renderContext, deltaTransmissionMotionVectorRenderData);
@@ -421,6 +423,18 @@ void RenderApplication::onFrameRender()
 
             output = fxaaPass->renderTexture->getGPUSrvHandler();
         }
+
+        if (taaPass->mEnabled)
+        {
+            RenderData renderDataTAA;
+            renderDataTAA.gpuHandleDictionary["gTexColor"] = output;
+            renderDataTAA.gpuHandleDictionary["gTexMotionVec"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
+            // renderDataBlend.gpuHandleDictionary["gTexPrevColor"] = output;
+
+            taaPass->forward(&renderContext, renderDataTAA);
+
+            output = renderDataTAA.outputGPUHandleDictionary.at("gFilteredTexColor");
+        }
     }
 
     RenderData renderDataTonemap;
@@ -473,6 +487,7 @@ void RenderApplication::onFrameRender()
     tonemapPass->processGUI();
     blendPass->processGUI();
     fxaaPass->processGUI();
+    taaPass->processGUI();
 
     mDirty = (pathTracer->mDirty) || (svgfPass && svgfPass->mDirty) || (diffuseFilterPass && diffuseFilterPass->mDirty) || (restirPass->mDirty);
 

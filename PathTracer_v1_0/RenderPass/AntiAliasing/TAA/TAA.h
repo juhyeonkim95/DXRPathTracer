@@ -1,31 +1,30 @@
 #pragma once
 #include "PostProcessPass.h"
 
-struct FXAAParameters
+struct TAAParameters
 {
-	vec2 rcpTexDim;
-	float qualitySubPix;
-	float qualityEdgeThreshold;
-	float qualityEdgeThresholdMin;
-	int earlyOut;
-	int unused1;
-	int unused2;
+	float gAlpha;
+	float gColorBoxSigma;
+	float unused1;
+	float unused2;
 };
 
-class FXAA : public PostProcessPass
+class TAA : public PostProcessPass
 {
 public:
-	FXAA(ID3D12Device5Ptr mpDevice, uvec2 size);
+	TAA(ID3D12Device5Ptr mpDevice, uvec2 size);
 	void createRenderTextures(
 		HeapData* rtvHeap,
 		HeapData* srvHeap);
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
 
-	bool mEnabled = false;
+	bool mEnabled;
 	RenderTexture* renderTexture;
-	FXAAParameters mParam;
-	FXAAParameters mDefaultParam;
+	RenderTexture* prevTexture;
+
+	TAAParameters mParam;
+	TAAParameters mDefaultParam;
 
 private:
 	Shader* mpShader;

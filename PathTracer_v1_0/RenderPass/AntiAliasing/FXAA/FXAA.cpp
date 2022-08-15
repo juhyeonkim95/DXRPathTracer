@@ -5,7 +5,7 @@ FXAA::FXAA(ID3D12Device5Ptr mpDevice, uvec2 size)
 {
     // Create Shader
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
-    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/FXAA/FXAA.hlsl", mpDevice, 2, rtvFormats);
+    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/AntiAliasing/FXAA/FXAA.hlsl", mpDevice, 1, rtvFormats);
 
     mParam.qualityEdgeThreshold = 0.166f;
     mParam.qualitySubPix = 0.75f;
@@ -14,6 +14,7 @@ FXAA::FXAA(ID3D12Device5Ptr mpDevice, uvec2 size)
     mParam.rcpTexDim = vec2(1.0f/size.x, 1.0f/size.y);
 
     mDefaultParam = mParam;
+    mEnabled = false;
 
     mpParameterBuffer = createBuffer(mpDevice, sizeof(FXAAParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
 }
