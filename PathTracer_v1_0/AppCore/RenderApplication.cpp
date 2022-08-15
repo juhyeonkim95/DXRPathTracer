@@ -559,6 +559,11 @@ void RenderApplication::update()
         rotationSpeed *= 2.0f;
     }
 
+    if (mpKeyboardState[DIK_LCONTROL] & 0x80) {
+        moveSpeed /= 10.0f;
+        rotationSpeed /= 10.0f;
+    }
+
     bool cameraMoved = false;
     if (mpKeyboardState[DIK_W] & 0x80) {
         camera->position += moveSpeed * elapsedTimeSec * camera->forward;
