@@ -2,17 +2,6 @@
 #include "PostProcessPass.h"
 #include "HeapData.h"
 
-struct MotionVectorDeltaTransmissionParameters
-{
-	ivec2 screenSize;
-	int diffuseMaxAccumulatedFrame;
-	int specularMaxAccumulatedFrame;
-	float sigmaP;
-	float sigmaN;
-	float sigmaL;
-	int stepSize;
-};
-
 class MotionVectorDeltaTransmission : public PostProcessPass
 {
 public:
@@ -28,8 +17,6 @@ public:
 	Shader* motionVectorShader;
 
 	RenderTexture* motionVectorRenderTexture;
-	RenderTexture* historyLengthRenderTexture;
-	RenderTexture* historyLengthRenderTexturePrev;
 
 	bool mDirty;
 	bool mEnabled;

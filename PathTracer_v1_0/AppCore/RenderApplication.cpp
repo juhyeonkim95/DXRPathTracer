@@ -137,7 +137,7 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     diffuseFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_DIFFUSE_REFLECTION, "Diffuse RELAX");
     diffuseFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    specularFilterPass = new RELAXSpecularPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_GLOSSY_REFLECTION, "Specular RELAX");
+    specularFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_GLOSSY_REFLECTION, "Specular RELAX");
     specularFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
     deltaReflectionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_DELTA_REFLECTION, "Delta Reflection RELAX");
@@ -149,12 +149,11 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     residualFilterPass = new RELAXPass(mpDevice, mSwapChainSize, BSDF_LOBE::BSDF_LOBE_TRANSMISSION, "Residual RELAX");
     residualFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    motionVectorPass = new MotionVector(mpDevice, mSwapChainSize);
-    motionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+    //motionVectorPass = new MotionVector(mpDevice, mSwapChainSize);
+    //motionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    motionVectorSpecularPass = new MotionVectorSpecular(mpDevice, mSwapChainSize);
-    motionVectorSpecularPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
-
+    //motionVectorSpecularPass = new MotionVectorSpecular(mpDevice, mSwapChainSize);
+    //motionVectorSpecularPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
     deltaReflectionMotionVectorPass = new MotionVectorDeltaReflection(mpDevice, mSwapChainSize);
     deltaReflectionMotionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
@@ -275,20 +274,6 @@ void RenderApplication::onFrameRender()
         depthDerivativeRenderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
         depthDerivativePass->forward(&renderContext, depthDerivativeRenderData);
 
-        //if (svgfPass && svgfPass->mEnabled)
-        //{
-        //    svgfPass->forward(&renderContext, renderDataPathTracer);
-        //    output = svgfPass->reconstructionRenderTexture->getGPUSrvHandler();
-        //}
-        RenderData motionVectorRenderData;
-
-        motionVectorRenderData.clear();
-        motionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
-        motionVectorRenderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalPrev");
-        motionVectorRenderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
-        motionVectorRenderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
-        motionVectorPass->forward(&renderContext, motionVectorRenderData);
-
         RenderData deltaReflectionMotionVectorRenderData;
         deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshIDPrev"];
         deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gNormalPrev"];
@@ -299,21 +284,6 @@ void RenderApplication::onFrameRender()
         deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
 
         deltaReflectionMotionVectorPass->forward(&renderContext, deltaReflectionMotionVectorRenderData);
-
-        RenderData motionVectorSpecularRenderData;
-
-        motionVectorSpecularRenderData.clear();
-        motionVectorSpecularRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
-        motionVectorSpecularRenderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalPrev");
-        motionVectorSpecularRenderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
-        motionVectorSpecularRenderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
-        motionVectorSpecularRenderData.gpuHandleDictionary["gRoughness"] = renderDataPathTracer.outputGPUHandleDictionary.at("gRoughness");
-        motionVectorSpecularRenderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshID"];
-        motionVectorSpecularRenderData.gpuHandleDictionary["gDeltaReflectionPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionPositionMeshIDPrev"];
-        motionVectorSpecularRenderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary["gMotionVector"];
-
-        motionVectorSpecularPass->forward(&renderContext, motionVectorSpecularRenderData);
-
 
         RenderData deltaTransmissionMotionVectorRenderData;
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshIDPrev"];
@@ -332,9 +302,10 @@ void RenderApplication::onFrameRender()
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
             renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
+            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
+            renderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalPrev");
             renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDiffuseRadiance");
-            renderData.gpuHandleDictionary["gMotionVector"] = motionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gHistoryLength"] = motionVectorRenderData.outputGPUHandleDictionary.at("gHistoryLength");
+            renderData.gpuHandleDictionary["gMotionVector"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
             renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
             renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
 
@@ -347,15 +318,17 @@ void RenderApplication::onFrameRender()
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
             renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
+            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
+            renderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalPrev");
             renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gSpecularRadiance");
-            renderData.gpuHandleDictionary["gMotionVector"] = motionVectorSpecularRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gHistoryLength"] = motionVectorSpecularRenderData.outputGPUHandleDictionary.at("gHistoryLength");
+            renderData.gpuHandleDictionary["gMotionVector"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
             renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
             renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
-            renderData.gpuHandleDictionary["gRoughness"] = renderDataPathTracer.outputGPUHandleDictionary.at("gRoughness");
-            renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gDeltaReflectionNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
-            renderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
+
+            //renderData.gpuHandleDictionary["gRoughness"] = renderDataPathTracer.outputGPUHandleDictionary.at("gRoughness");
+            //renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+            //renderData.gpuHandleDictionary["gDeltaReflectionNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
+            //renderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
 
             specularFilterPass->forward(&renderContext, renderData);
             renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
@@ -366,12 +339,13 @@ void RenderApplication::onFrameRender()
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
             renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
+            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshIDPrev");
+            renderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormalPrev");
             renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionRadiance");
             renderData.gpuHandleDictionary["gMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gHistoryLength"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gHistoryLength");
             renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
             renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
-
+            
             deltaReflectionFilterPass->forward(&renderContext, renderData);
             renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
         }
@@ -379,11 +353,12 @@ void RenderApplication::onFrameRender()
         if (deltaTransmissionFilterPass->mEnabled)
         {
             RenderData renderData;
-            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
+            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshID");
             renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionNormal");
+            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshIDPrev");
+            renderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionNormalPrev");
             renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionRadiance");
             renderData.gpuHandleDictionary["gMotionVector"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gHistoryLength"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary.at("gHistoryLength");
             renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
             renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
 
@@ -396,9 +371,10 @@ void RenderApplication::onFrameRender()
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
             renderData.gpuHandleDictionary["gNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormal");
+            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
+            renderData.gpuHandleDictionary["gNormalPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalPrev");
             renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gResidualRadiance");
-            renderData.gpuHandleDictionary["gMotionVector"] = motionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gHistoryLength"] = motionVectorRenderData.outputGPUHandleDictionary.at("gHistoryLength");
+            renderData.gpuHandleDictionary["gMotionVector"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
             renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
             renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
 

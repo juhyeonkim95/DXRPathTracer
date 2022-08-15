@@ -376,11 +376,13 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
 
 
     outputUAVBuffers["gPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8_UINT, "gPathType", 1);
-
+    outputUAVBuffers["gMotionVector"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32_FLOAT, "gMotionVector", 1);
 
     outputUAVBuffers["gDeltaReflectionPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPositionMeshIDPrev", 1);
     outputUAVBuffers["gDeltaTransmissionPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionPositionMeshIDPrev", 1);
-    outputUAVBuffers["gMotionVector"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32_FLOAT, "gMotionVector", 1);
+    outputUAVBuffers["gDeltaReflectionNormalPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaReflectionNormalPrev", 1);
+    outputUAVBuffers["gDeltaTransmissionNormalPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormalPrev", 1);
+
 }
 
 void PathTracer::processGUI()
@@ -482,33 +484,23 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
 
 }
 
+void PathTracer::copybackHelper(ID3D12GraphicsCommandList4Ptr pCmdList, std::string dst, std::string src)
+{
+    resourceBarrier(pCmdList, outputUAVBuffers[src], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    resourceBarrier(pCmdList, outputUAVBuffers[dst], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+    pCmdList->CopyResource(outputUAVBuffers[dst], outputUAVBuffers[src]);
+    resourceBarrier(pCmdList, outputUAVBuffers[src], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+}
 
 void PathTracer::copyback(ID3D12GraphicsCommandList4Ptr pCmdList)
 {
     // copy back
-    resourceBarrier(pCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gPositionMeshIDPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    pCmdList->CopyResource(outputUAVBuffers["gPositionMeshIDPrev"], outputUAVBuffers["gPositionMeshID"]);
-    resourceBarrier(pCmdList, outputUAVBuffers["gPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    copybackHelper(pCmdList, "gPositionMeshIDPrev", "gPositionMeshID");
+    copybackHelper(pCmdList, "gNormalPrev", "gNormal");
+    copybackHelper(pCmdList, "gPrevReserviors", "gCurrReserviors");
 
-    resourceBarrier(pCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gNormalPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    pCmdList->CopyResource(outputUAVBuffers["gNormalPrev"], outputUAVBuffers["gNormal"]);
-    resourceBarrier(pCmdList, outputUAVBuffers["gNormal"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-    resourceBarrier(pCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gPrevReserviors"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    pCmdList->CopyResource(outputUAVBuffers["gPrevReserviors"], outputUAVBuffers["gCurrReserviors"]);
-    resourceBarrier(pCmdList, outputUAVBuffers["gCurrReserviors"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaReflectionPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaReflectionPositionMeshIDPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    pCmdList->CopyResource(outputUAVBuffers["gDeltaReflectionPositionMeshIDPrev"], outputUAVBuffers["gDeltaReflectionPositionMeshID"]);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaReflectionPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaTransmissionPositionMeshID"], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaTransmissionPositionMeshIDPrev"], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    pCmdList->CopyResource(outputUAVBuffers["gDeltaTransmissionPositionMeshIDPrev"], outputUAVBuffers["gDeltaTransmissionPositionMeshID"]);
-    resourceBarrier(pCmdList, outputUAVBuffers["gDeltaTransmissionPositionMeshID"], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
+    copybackHelper(pCmdList, "gDeltaReflectionPositionMeshIDPrev", "gDeltaReflectionPositionMeshID");
+    copybackHelper(pCmdList, "gDeltaReflectionNormalPrev", "gDeltaReflectionNormal");
+    copybackHelper(pCmdList, "gDeltaTransmissionPositionMeshIDPrev", "gDeltaReflectionPositionMeshID");
+    copybackHelper(pCmdList, "gDeltaTransmissionNormalPrev", "gDeltaReflectionNormal");
 }

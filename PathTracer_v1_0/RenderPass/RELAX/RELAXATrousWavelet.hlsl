@@ -86,9 +86,9 @@ float4 main(VS_OUTPUT input) : SV_TARGET
                 float qVariance = gColorVariance.Load(int3(ipos2, 0)).a;
                 float qLuminance = luma(qColor);
 
-                float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 // float w = calculateWeight(pDepth, qDepth, step * sigmaZ * abs(dot(depthDerivative, float2(offsetx, offsety))), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
-                // float w = calculateWeightPosition(pPosition, qPosition, sigmaZ , pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                float w = calculateWeightPosition(pPosition, qPosition, sigmaZ , pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 

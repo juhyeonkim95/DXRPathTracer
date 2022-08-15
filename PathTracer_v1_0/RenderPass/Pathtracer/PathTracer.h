@@ -33,6 +33,7 @@ public:
 	// void forward(ID3D12GraphicsCommandList4Ptr pCmdList, SceneResourceManager* pSceneResourceManager, HeapData* pSrvUavHeap, ReSTIRParameters& restirParam);
 	
 	void copyback(ID3D12GraphicsCommandList4Ptr pCmdList);
+	void copybackHelper(ID3D12GraphicsCommandList4Ptr pCmdList, std::string dst, std::string src);
 	void createShaderResources(HeapData* pSrvUavHeap);
 	void createShaderTable(HeapData* pSrvUavHeap);
 private:

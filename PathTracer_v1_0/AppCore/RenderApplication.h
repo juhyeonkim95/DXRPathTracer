@@ -98,15 +98,15 @@ private:
     DepthDerivativePass* depthDerivativePass;
 
     RELAXPass* diffuseFilterPass;
-    RELAXSpecularPass* specularFilterPass;
+    RELAXPass* specularFilterPass;
     RELAXPass* deltaReflectionFilterPass;
     RELAXPass* deltaTransmissionFilterPass;
     RELAXPass* residualFilterPass;
 
     MotionVectorDeltaReflection* deltaReflectionMotionVectorPass;
     MotionVectorDeltaTransmission* deltaTransmissionMotionVectorPass;
-    MotionVector* motionVectorPass;
-    MotionVectorSpecular* motionVectorSpecularPass;
+    //MotionVector* motionVectorPass;
+    //MotionVectorSpecular* motionVectorSpecularPass;
 
     ModulateIllumination* modulatePass;
 

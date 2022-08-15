@@ -5,13 +5,29 @@ static const float epsilon = 0.00001;
 
 cbuffer ConstantBuffer : register(b0)
 {
-	int2 screenSize;
+	/*int2 screenSize;
 	int gMaxAccumulatedFrame;
 	float sigmaZ;
 	float sigmaN;
 	float sigmaL;
 	int stepSize;
+	uint targetPathType;*/
+
+	// common
+	int2 screenSize;
 	uint targetPathType;
+
+	// Temporal Accumulation
+	float gNormalThreshold;
+	float gPositionThreshold;
+	float gDisocclusionDepthThreshold;
+	int gMaxAccumulatedFrame;
+
+	// Wavelet
+	float sigmaZ;
+	float sigmaN;
+	float sigmaL;
+	int stepSize;
 };
 
 

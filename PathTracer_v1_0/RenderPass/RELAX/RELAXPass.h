@@ -4,13 +4,21 @@
 
 struct RELAXParameters
 {
+	// common
 	ivec2 screenSize;
-	int maxAccumulatedFrame;
+	uint targetPathType;
+
+	// Temporal Accumulation
+	float normalThreshold;
+	float positionThreshold;
+	float depthThreshold;
+	int maxAccumulateFrame;
+
+	// Wavelet
 	float sigmaP;
 	float sigmaN;
 	float sigmaL;
 	int stepSize;
-	uint targetPathType;
 };
 
 
@@ -29,20 +37,26 @@ public:
 	Shader* temporalAccumulationShader;
 	Shader* varianceFilterShader;
 	Shader* waveletShader;
+
+	// Temporal Accumulation
+	RenderTexture* historyLengthRenderTexture;
+	RenderTexture* historyLengthRenderTexturePrev;
 	RenderTexture* temporalAccumulationTexture;
 	RenderTexture* temporalAccumulationTexturePrev;
-
 	RenderTexture* temporalAccumulationTextureMoment;
 	RenderTexture* temporalAccumulationTextureMomentPrev;
 
+	// Variance Filter
 	RenderTexture* temporalAccumulationTextureVarianceFilter;
 
+	// AtrousWavelet
 	RenderTexture* waveletPingPong1;
 	RenderTexture* waveletPingPong2;
 
 	// RELAX parameters
-	RELAXParameters param;
-	RELAXParameters defaultParam;
+	RELAXParameters mParam;
+	RELAXParameters mDefaultParam;
+	vector<ID3D12ResourcePtr> mParamBuffers;
 	
 	bool mEnabled = true;
 	bool mEnableVarianceFilter = true;
@@ -50,7 +64,6 @@ public:
 	const int maxWaveletCount = 8;
 	int waveletCount = 3;
 	int mFeedbackTap = 0;
-	vector<ID3D12ResourcePtr> mRELAXParameterBuffers;
 
 	void uploadParams(uint32_t index);
 };

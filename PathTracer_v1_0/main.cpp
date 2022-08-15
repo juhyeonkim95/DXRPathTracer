@@ -4,9 +4,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 {
     // Scene* scene = new Scene("material-testball");
     //Scene* scene = new Scene("cornell-box");
-    //Scene* scene = new Scene("kitchen");
+    Scene* scene = new Scene("kitchen");
     // Scene* scene = new Scene("living-room-2");
-    Scene* scene = new Scene("staircase");
+    //Scene* scene = new Scene("staircase");
     
     //Scene* scene = new Scene("cornell-box-multi");
     //Scene* scene = new Scene("cornell-box-texture");
