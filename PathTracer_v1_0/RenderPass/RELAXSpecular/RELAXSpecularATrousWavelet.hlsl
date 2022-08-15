@@ -54,6 +54,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float pLuminance = luma(pColor);
 
     float3 pDeltaReflectionPosition = gDeltaReflectionPositionMeshID.Load(int3(ipos, 0)).rgb;
+    float pDeltaReflectionMeshID = gDeltaReflectionPositionMeshID.Load(int3(ipos, 0)).a;
     float3 pDeltaReflectionNormal= gDeltaReflectionNormal.Load(int3(ipos, 0)).rgb;
     
     float pRoughness = gRoughness.Load(int3(ipos, 0)).r;
@@ -72,9 +73,12 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
     float2 depthDerivative = gDepthDerivative.Load(int3(ipos, 0)).rg;
     float fwidthZ = max(abs(depthDerivative.x), abs(depthDerivative.y));
+    
+    float pReflectionDistance = length(pDeltaReflectionPosition - pPosition);
 
-    float customSigmaL = (sigmaL * sqrt(var) + epsilon);
-    float customSigmaZ = sigmaZ * max(fwidthZ, 1e-8);
+    float customSigmaL = (sigmaL * sqrt(var) + epsilon) * pReflectionDistance;
+
+    float customSigmaZ = sigmaZ;// *max(fwidthZ, 1e-8);
 
     float3 c = pColor;
     float v = pVariance;
@@ -89,11 +93,14 @@ float4 main(VS_OUTPUT input) : SV_TARGET
             
             uint qPathType = gPathType.Load(int3(ipos2, 0)).r;
             const bool pathTypeValid = (qPathType & targetPathType);
+            float4 qPositionMeshId = gPositionMeshID.Load(int3(ipos2, 0));
+            float qMeshID = qPositionMeshId.a;
 
-            if (!outside && (offsetx != 0 || offsety != 0) && pathTypeValid) {
-                float4 qPositionMeshId = gPositionMeshID.Load(int3(ipos2, 0));
-                float qMeshID = qPositionMeshId.a;
+            float3 qDeltaReflectionPosition = gDeltaReflectionPositionMeshID.Load(int3(ipos2, 0)).rgb;
+            float qDeltaReflectionMeshID = gDeltaReflectionPositionMeshID.Load(int3(ipos2, 0)).a;
 
+            if (!outside && (offsetx != 0 || offsety != 0) && pathTypeValid && (qMeshID == pMeshID)) {
+                
                 float3 qPosition = qPositionMeshId.rgb;
                 float3 qNormal = gNormal.Load(int3(ipos2, 0)).rgb;
                 float qDepth = gNormal.Load(int3(ipos2, 0)).w;
@@ -102,20 +109,23 @@ float4 main(VS_OUTPUT input) : SV_TARGET
                 float qVariance = gColorVariance.Load(int3(ipos2, 0)).a;
                 float qLuminance = luma(qColor);
 
-                float3 qDeltaReflectionPosition = gDeltaReflectionPositionMeshID.Load(int3(ipos2, 0)).rgb;
                 float3 qDeltaReflectionNormal = gDeltaReflectionNormal.Load(int3(ipos2, 0)).rgb;
 
                 float cosDifference = g_frameData.cameraPosition ;
                 float3 qViewDir = normalize(g_frameData.cameraPosition - qPosition);
                 float cosFactor = pow(dot(pViewDir, qViewDir), 1 / (pRoughness + 0.01));
 
+                //bool reflectedMeshIDDifferent = (qDeltaReflectionMeshID == pDeltaReflectionMeshID);
+
+
                 // float w = calculateWeight(pDepth, qDepth, customSigmaZ * length(float2(offsetx, offsety)), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 // float w = calculateWeight(pDepth, qDepth, step * sigmaZ * abs(dot(depthDerivative, float2(offsetx, offsety))), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
-                float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
+                float w = calculateWeightPosition(pPosition, qPosition, customSigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 //float wDelta = calculateWeightPosition(pDeltaReflectionPosition, qDeltaReflectionPosition, sigmaZ, pDeltaReflectionNormal, qDeltaReflectionNormal, 0, 0, customSigmaL);
                 //w *= lerp(wDelta, 1, clamp(pRoughness * roughnessMultiplier, 0, 1));
                 // w = lerp(wDelta, w, clamp(pRoughness* roughnessMultiplier, 0, 1));
                 w *= cosFactor;
+                //w *= reflectedMeshIDDifferent ? 0 : 1.0f;
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 
@@ -126,8 +136,9 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         }
     }
 
-    float4 cvnext;
+    //return float4(pReflectionDistance, 0, 0, 1);
 
+    float4 cvnext;
     if (weights > epsilon) {
         cvnext.rgb = c / weights;
         cvnext.a = v / (weights * weights);

@@ -173,6 +173,10 @@ struct PathTraceResult
     float3 indirectRadiance;
     float3 diffuseRadiance;
     float3 specularRadiance;
+    
+    float3 diffuseIllumination;
+    float3 specularIllumination;
+
 
     float3 deltaReflectionReflectance;
     float3 deltaReflectionEmission;

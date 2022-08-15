@@ -8,7 +8,7 @@ MotionVectorSpecular::MotionVectorSpecular(ID3D12Device5Ptr mpDevice, uvec2 size
 {
     // Create Shaders
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R16G16_UNORM, DXGI_FORMAT_R32_FLOAT };
-    this->MotionVectorSpecularShader = new Shader(kQuadVertexShader, L"RenderPass/MotionVectorSpecular/MotionVectorSpecular.hlsl", mpDevice, 6, rtvFormats, 2);
+    this->MotionVectorSpecularShader = new Shader(kQuadVertexShader, L"RenderPass/MotionVectorSpecular/MotionVectorSpecular.hlsl", mpDevice, 9, rtvFormats, 2);
     mParameterBuffer = createBuffer(mpDevice, sizeof(MotionVectorSpecularParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
 
     mParam.normalThreshold = 0.75;
@@ -63,6 +63,10 @@ void MotionVectorSpecular::forward(RenderContext* pRenderContext, RenderData& re
     mpCmdList->SetGraphicsRootDescriptorTable(5, gpuHandles.at("gNormal"));
     mpCmdList->SetGraphicsRootDescriptorTable(6, historyLengthRenderTexturePrev->getGPUSrvHandler());
     mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gRoughness"));
+    mpCmdList->SetGraphicsRootDescriptorTable(8, gpuHandles.at("gDeltaReflectionPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gDeltaReflectionPositionMeshIDPrev"));
+    mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gDeltaReflectionMotionVector"));
+
 
     mpCmdList->SetGraphicsRootConstantBufferView(0, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
 

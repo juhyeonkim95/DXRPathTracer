@@ -57,9 +57,9 @@ void RELAXSpecularPass::processGUI()
         mDirty |= ImGui::Checkbox("enableVarianceFilter", &mEnableVarianceFilter);
 
 
-        mDirty |= ImGui::SliderFloat("sigmaP", &param.sigmaP, 0.01f, 16.0f);
-        mDirty |= ImGui::SliderFloat("sigmaN", &param.sigmaN, 0.01f, 256.0f);
-        mDirty |= ImGui::SliderFloat("sigmaL", &param.sigmaL, 0.01f, 16.0f);
+        mDirty |= ImGui::SliderFloat("sigmaP", &param.sigmaP, 0.001f, 2560.0f);
+        mDirty |= ImGui::SliderFloat("sigmaN", &param.sigmaN, 0.001f, 256.0f);
+        mDirty |= ImGui::SliderFloat("sigmaL", &param.sigmaL, 0.001f, 16.0f);
         mDirty |= ImGui::SliderFloat("roughnessMultiplier", &param.roughnessMultiplier, 0.01f, 50.0f);
 
         mDirty |= ImGui::SliderInt("MaxAccumulatedFrame", &param.maxAccumulatedFrame, 1, 64);

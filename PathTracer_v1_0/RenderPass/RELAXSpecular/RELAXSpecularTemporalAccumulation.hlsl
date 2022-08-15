@@ -38,10 +38,13 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     float consistency = floor(prev_uv.x);
     prev_uv.x -= consistency;
 
-    //float2 prev_uv_delta = motion_vectors_delta.Load(int3(ipos, 0)).rg;
+    float2 prev_uv_delta = motion_vectors_delta.Load(int3(ipos, 0)).rg;
 
-    //prev_uv_delta.x *= 2;
-    //prev_uv_delta.x -= floor(prev_uv_delta.x);
+    prev_uv_delta.x *= 2;
+    prev_uv_delta.x -= floor(prev_uv_delta.x);
+    
+    // prev_uv = prev_uv_delta;
+
     //float roughness = gRoughness.Load(int3(ipos, 0)).r;
 
     // prev_uv = lerp(prev_uv_delta, prev_uv, clamp(roughness * 9, 0, 1));

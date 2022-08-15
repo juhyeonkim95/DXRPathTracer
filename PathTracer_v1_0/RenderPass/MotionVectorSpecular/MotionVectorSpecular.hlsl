@@ -6,6 +6,9 @@ Texture2D gPositionMeshID : register(t2);
 Texture2D gNormal : register(t3);
 Texture2D<float> gHistoryLength : register(t4);
 Texture2D<float> gRoughness : register(t5);
+Texture2D gDeltaReflectionPositionMeshID : register(t6);
+Texture2D gDeltaReflectionPositionMeshIDPrev : register(t7);
+Texture2D gDeltaReflectionMotionVector : register(t8);
 
 SamplerState s1 : register(s0);
 
@@ -57,6 +60,9 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     projCoord /= projCoord.w;
     float2 prevPixel = float2(projCoord.x, -projCoord.y);
     prevPixel = (prevPixel + 1) * 0.5;
+
+    // float2 prevPixelDelta = gDeltaReflectionMotionVector.Load(int3(ipos, 0)).rgb;
+
 
     float3 previousNormal = gNormalPrev.Sample(s1, prevPixel).rgb;
     float3 normal = gNormal.Load(int3(ipos, 0)).rgb;
