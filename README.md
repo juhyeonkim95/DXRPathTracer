@@ -37,8 +37,6 @@ For scene data format, [Mitsuba renderer](https://github.com/mitsuba-renderer/mi
 Refer mitsuba renderer for the details.
 Example scenes could be downloaded from [here](https://benedikt-bitterli.me/resources/).
 
-## Example Scene 
-![20220713_mis_cornellbox](https://user-images.githubusercontent.com/59192387/178707155-974f0043-6cdd-4e84-8580-280826ca9310.PNG)
 
 ## Implementation Progress
 ### (Week 1~3) Core Path Tracer
