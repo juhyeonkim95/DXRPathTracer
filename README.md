@@ -1,6 +1,12 @@
 # DXRPathTracer
-This is a real-time path tracer based on DirectX RayTracing.
+
+This is a real-time 1spp path tracer based on DirectX RayTracing.
 Detailed daily work process could be found [here](WorkProgress.md).
+
+![Teaser](assets/200220816_teaser_v1.jpg)
+![Teaser](assets/200220816_teaser_v2.gif)
+![Teaser](assets/200220816_teaser_v3.gif)
+
 
 ## Project Overview
 The goal of this project is to implement a scalable path tracer that runs in real-time.
@@ -14,8 +20,8 @@ Among the various methods, I choose to implement SVGF and ReSTIR respectively.
 ## Project Timeline
 - Week 1~3 : Implement basic path tracer using DirectX12.
 - Week 4,5 : Denoising based on SVGF.
-- Week 6,7 : Enhance sampling quality using ReSTIR.
-- Week 8 : Write a report.
+- Week 6 : Enhance sampling quality using ReSTIR.
+- Week 7,8 : Denoising revisited. Implement advanced algorithm RELAX.
 
 ## Requirements
 This project is implemented based on the framework of [DxrTutorials](https://github.com/NVIDIAGameWorks/DxrTutorials).
