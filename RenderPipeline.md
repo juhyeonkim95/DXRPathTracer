@@ -10,7 +10,7 @@ The overall structure looks like the below.
 ## Render Pass Decomposition
 Radiance is decomposed into several components and each component is denoised respectively.
 
-
+<!---
 <span style="color:blue">diffuseReflectance</span> x <span style="color:red">diffuseIllumination</span> + 
 
 <span style="color:blue">specularReflectance</span> x <span style="color:red">specularIllumination</span> + 
@@ -25,15 +25,14 @@ Radiance is decomposed into several components and each component is denoised re
 
 <span style="color:blue">deltaTransmissionEmission</span> +
 
-<span style="color:red">residualRadiance</span>
+<span style="color:red">residualRadiance</span>-->
 
-Note that blue colored components are noise-free input and red colored components are noisy input which need to be denoised.
+<!-- Note that blue colored components are noise-free input and red colored components are noisy input which need to be denoised.-->
+
+
+![renderpass_decomposition](assets/pipeline/decomposition.png)
+
 Each component will be explained in the following section.
-<!---
-```cpp
-
-```
-![renderpass_decomposition](assets/pipeline/decomposition.png)-->
 
 
 ### Diffuse Pass
@@ -94,10 +93,12 @@ The motion vector used for delta-reflection / transmission is different.
 
 ### Delta Reflection
 In the case of delta-reflecion, motion vector can be calculated analytically.
-![20220811_renderpass](assets/pipeline/delta_reflection_mv.png)
+
+<img src="assets/pipeline/delta_reflection_mv.png" height="250">
+
 
 ### Delta Transmission
 In the case of delta-reflecion, motion vector cannot be calculated analytically.
 We thus exploit the heuristics like below.
 
-![20220811_renderpass](assets/pipeline/delta_transmission_mv.png)
+<img src="assets/pipeline/delta_transmission_mv.png" height="300">
