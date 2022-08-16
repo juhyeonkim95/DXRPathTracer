@@ -268,7 +268,9 @@
     <ClInclude Include="RenderPass\Tonemap\ToneMapper.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\MaterialInfo.md" />
     <None Include="..\README.md" />
+    <None Include="..\RenderPipeline.md" />
     <None Include="..\WorkProgress.md" />
     <None Include="RenderPass\Core\BSDF\BSDFLobes.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

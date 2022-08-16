@@ -436,6 +436,8 @@
     <None Include="RenderPass\Core\BSDF\RoughPlastic.hlsli" />
     <None Include="RenderPass\Core\BSDF\BSDFLobes.hlsli" />
     <None Include="RenderPass\Core\BSDF\BSDFUtils.hlsli" />
+    <None Include="..\RenderPipeline.md" />
+    <None Include="..\MaterialInfo.md" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">

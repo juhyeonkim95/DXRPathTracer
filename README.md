@@ -4,9 +4,15 @@ This is a real-time 1spp path tracer based on DirectX RayTracing.
 Detailed daily work process could be found [here](WorkProgress.md).
 
 ![Teaser](assets/200220816_teaser_v1.jpg)
+
+Followings are real-time rendered images.
+
 ![Teaser](assets/200220816_teaser_v2.gif)
 ![Teaser](assets/200220816_teaser_v3.gif)
 
+Additional details could be found here.
+- [Rendering pipeline](RenderPipeline.md)
+- [Material info](MaterialInfo.md)
 
 ## Project Overview
 The goal of this project is to implement a scalable path tracer that runs in real-time.
@@ -72,7 +78,7 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 - [x] Basic SVGF
 - [x] Variance filtering
 
-### (Week 6, 7) Enhancing Sampling Quality (ReSTIR)
+### (Week 6) Enhancing Sampling Quality (ReSTIR)
 - [x] Basic Resampling
 - [x] Temporal Reuse
 - [ ] Spatial Reuse
@@ -83,8 +89,6 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 - [x] RELAX diffuse version
 - [x] RELAX specular version
 
-## Usage
-(WIP)
 
 ## Acknowledgement
 This project was supported by [PearlAbyss](https://www.pearlabyss.com/ko-kr).
