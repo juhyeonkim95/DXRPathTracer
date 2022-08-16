@@ -507,9 +507,8 @@ void rayGen()
         PrimaryPath(ray, pathResult, payloadPrimary);
         Material material = g_materialinfo[payloadPrimary.materialIndex];
         uint materialReflectionLobe = bsdf::getReflectionLobe(material);
-
         
-        if (materialReflectionLobe & (BSDF_LOBE_DELTA_REFLECTION | BSDF_LOBE_GLOSSY_REFLECTION)) {
+        if (materialReflectionLobe & (BSDF_LOBE_DELTA_REFLECTION)) {
             RayPayload payload = payloadPrimary;
             PathTraceDeltaReflectance(ray, seed, pathResult, payload);
         }

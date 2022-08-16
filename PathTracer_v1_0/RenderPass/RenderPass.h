@@ -18,6 +18,7 @@ public:
 	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> gpuHandleDictionary;
 	map<string, D3D12_CPU_DESCRIPTOR_HANDLE> cpuHandleDictionary;
 	map<string, ID3D12ResourcePtr> resourceDictionary;
+	vector<pair<string, float>> elapsedTimeRecords;
 
 	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> outputGPUHandleDictionary;
 

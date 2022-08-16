@@ -124,6 +124,9 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     map<string, D3D12_GPU_DESCRIPTOR_HANDLE>& gpuHandles = renderData.gpuHandleDictionary;
     this->setViewPort(mpCmdList);
 
+    std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point now = startTime;
+    float elapsedTimeMicrosec;
 
     // (1) Temporal Accumulation
     mpCmdList->SetPipelineState(temporalAccumulationShader->getPipelineStateObject());
@@ -163,6 +166,10 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureMoment->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(historyLengthRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
+    now = std::chrono::steady_clock::now();
+    renderData.elapsedTimeRecords.push_back(std::make_pair(this->name + "(Temporal Accumulation)", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+    startTime = now;
+
     if (mEnableVarianceFilter) {
         // (2.5) Filter variance if length is <4
         // 
@@ -188,6 +195,10 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
         mpCmdList->DrawInstanced(6, 1, 0, 0);
         mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTextureVarianceFilter->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
         std::swap(temporalAccumulationTextureVarianceFilter, temporalAccumulationTexture);
+
+        now = std::chrono::steady_clock::now();
+        renderData.elapsedTimeRecords.push_back(std::make_pair(this->name + "(Disocclusion Fix)", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+        startTime = now;
     }
 
     // (3) Wavelet
@@ -240,6 +251,10 @@ void RELAXPass::forward(RenderContext* pRenderContext, RenderData& renderData)
 
         std::swap(waveletPingPong1, waveletPingPong2);
     }
+
+    now = std::chrono::steady_clock::now();
+    renderData.elapsedTimeRecords.push_back(std::make_pair(this->name + "(Wavelet)", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+    startTime = now;
 
     RenderTexture* filteredRadiance = mWaveletCount > 0? waveletPingPong2 : temporalAccumulationTexture;
     renderData.outputGPUHandleDictionary["filteredRadiance"] = filteredRadiance -> getGPUSrvHandler();

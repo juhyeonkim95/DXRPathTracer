@@ -222,14 +222,23 @@ void RenderApplication::onFrameRender()
     renderContext.pSrvUavHeap = mpSrvUavHeap;
     renderContext.restirParam = &restirPass->param;
 
+    std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point now = startTime;
+    std::chrono::steady_clock::time_point renderStartTime = startTime;
+
+    float elapsedTimeMicrosec;
+    vector<pair<string, float>> elapsedTimeRecords;
+
     RenderData renderDataPathTracer;
     // renderDataPathTracer.gpuHandleDictionary = mpSrvUavHeap->getGPUHandleMap();
     this->pathTracer->forward(&renderContext, renderDataPathTracer);
-        
+    now = std::chrono::steady_clock::now();
+    elapsedTimeRecords.push_back(std::make_pair("Path Tracing", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+    startTime = now;
+
     postProcessQuad->bind(mpCmdList);
 
     D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
-    
 
     if (this->renderMode != 10  && this->renderMode != 0) {
         switch (this->renderMode) {
@@ -274,6 +283,11 @@ void RenderApplication::onFrameRender()
         depthDerivativeRenderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepth");
         depthDerivativePass->forward(&renderContext, depthDerivativeRenderData);
 
+        now = std::chrono::steady_clock::now();
+        elapsedTimeRecords.push_back(std::make_pair("Depth Derivative", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+        startTime = now;
+
+
         RenderData deltaReflectionMotionVectorRenderData;
         deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshIDPrev"];
         deltaReflectionMotionVectorRenderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gNormalDepthPrev"];
@@ -285,6 +299,10 @@ void RenderApplication::onFrameRender()
 
         deltaReflectionMotionVectorPass->forward(&renderContext, deltaReflectionMotionVectorRenderData);
 
+        now = std::chrono::steady_clock::now();
+        elapsedTimeRecords.push_back(std::make_pair("Delta Reflection Motion Vector", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+        startTime = now;
+
         RenderData deltaTransmissionMotionVectorRenderData;
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gPositionMeshIDPrev"];
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary["gNormalDepthPrev"];
@@ -295,7 +313,9 @@ void RenderApplication::onFrameRender()
         deltaTransmissionMotionVectorRenderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
 
         deltaTransmissionMotionVectorPass->forward(&renderContext, deltaTransmissionMotionVectorRenderData);
-
+        now = std::chrono::steady_clock::now();
+        elapsedTimeRecords.push_back(std::make_pair("Delta Transmission Motion Vector", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+        startTime = now;
 
         if (diffuseFilterPass->mEnabled) 
         {
@@ -311,6 +331,8 @@ void RenderApplication::onFrameRender()
 
             diffuseFilterPass->forward(&renderContext, renderData);
             renderDataPathTracer.outputGPUHandleDictionary["gDiffuseRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
+
+            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
         if (specularFilterPass->mEnabled)
@@ -332,6 +354,7 @@ void RenderApplication::onFrameRender()
 
             specularFilterPass->forward(&renderContext, renderData);
             renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
+            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
         if (deltaReflectionFilterPass->mEnabled)
@@ -348,6 +371,7 @@ void RenderApplication::onFrameRender()
             
             deltaReflectionFilterPass->forward(&renderContext, renderData);
             renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
+            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
         if (deltaTransmissionFilterPass->mEnabled)
@@ -364,6 +388,7 @@ void RenderApplication::onFrameRender()
 
             deltaTransmissionFilterPass->forward(&renderContext, renderData);
             renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
+            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
         if (residualFilterPass->mEnabled)
@@ -380,7 +405,11 @@ void RenderApplication::onFrameRender()
 
             residualFilterPass->forward(&renderContext, renderData);
             renderDataPathTracer.outputGPUHandleDictionary["gResidualRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
+            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
+
+        now = std::chrono::steady_clock::now();
+        startTime = now;
 
         RenderData renderDataModulatePass;
 
@@ -388,7 +417,10 @@ void RenderApplication::onFrameRender()
 
         modulatePass->forward(&renderContext, renderDataModulatePass);
         output = renderDataModulatePass.outputGPUHandleDictionary.at("gOutput");
-        
+
+        now = std::chrono::steady_clock::now();
+        elapsedTimeRecords.push_back(std::make_pair("Modulate Pass", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+        startTime = now;
 
         if (fxaaPass->isEnabled())
         {
@@ -398,8 +430,12 @@ void RenderApplication::onFrameRender()
             fxaaPass->forward(&renderContext, renderData);
 
             output = renderData.outputGPUHandleDictionary.at("gOutput");
-        }
 
+            now = std::chrono::steady_clock::now();
+            elapsedTimeRecords.push_back(std::make_pair("FXAA", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+            startTime = now;
+
+        }
         else if (taaPass->isEnabled())
         {
             RenderData renderData;
@@ -410,6 +446,11 @@ void RenderApplication::onFrameRender()
 
             output = renderData.outputGPUHandleDictionary.at("gOutput");
         }
+
+        pathTracer->copyback(mpCmdList);
+        now = std::chrono::steady_clock::now();
+        elapsedTimeRecords.push_back(std::make_pair("Copy back", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+        startTime = now;
     }
 
     RenderData renderDataTonemap;
@@ -418,8 +459,16 @@ void RenderApplication::onFrameRender()
     renderDataTonemap.resourceDictionary["dst"] = mFrameObjects[rtvIndex].pSwapChainBuffer;
 
     this->tonemapPass->forward(&renderContext, renderDataTonemap);
-    pathTracer->copyback(mpCmdList);
+    now = std::chrono::steady_clock::now();
+    elapsedTimeRecords.push_back(std::make_pair("Tonemap", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+    startTime = now;
 
+
+    
+
+    now = std::chrono::steady_clock::now();
+    elapsedTimeRecords.push_back(std::make_pair("Total", std::chrono::duration_cast<std::chrono::microseconds>(now - renderStartTime).count()));
+    startTime = now;
 
     // Start the Dear ImGui frame
     ImGui_ImplDX12_NewFrame();
@@ -451,6 +500,17 @@ void RenderApplication::onFrameRender()
     blendPass->processGUI();
     fxaaPass->processGUI();
     taaPass->processGUI();
+
+    if (ImGui::CollapsingHeader("Statistics"))
+    {
+        for (auto it = elapsedTimeRecords.begin(); it != elapsedTimeRecords.end(); it++)
+        {
+            std::stringstream stream;
+            stream << it->second;
+            std::string elapsedTimeString = stream.str();
+            ImGui::Text((it->first + ": " + elapsedTimeString).c_str());
+        }
+    }
 
     mDirty = false;
     mDirty |= pathTracer->isDirty();

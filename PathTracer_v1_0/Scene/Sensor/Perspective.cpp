@@ -8,8 +8,8 @@ Perspective::Perspective(XMLElement* e)
 	this->transform = loadMatrix4(e->FirstChildElement("transform")->FirstChildElement("matrix"));
 	mat3 orientation = mat3(this->transform);
 
-	this->width = getIntByName(e->FirstChildElement("film"), "width") / 2;
-	this->height = getIntByName(e->FirstChildElement("film"), "height") / 2;
+	this->width = getIntByName(e->FirstChildElement("film"), "width");
+	this->height = getIntByName(e->FirstChildElement("film"), "height");
 
 	float focalLength = ((float)this->width) * 0.5f / tan(radians(fov) * 0.5);
 	this->fovy = 2 * degrees(atan(height * 0.5f / focalLength));

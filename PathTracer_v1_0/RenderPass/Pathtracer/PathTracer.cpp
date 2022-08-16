@@ -463,7 +463,7 @@ void PathTracer::copyback(ID3D12GraphicsCommandList4Ptr pCmdList)
     // copy back
     copybackHelper(pCmdList, "gPositionMeshIDPrev", "gPositionMeshID");
     copybackHelper(pCmdList, "gNormalDepthPrev", "gNormalDepth");
-    copybackHelper(pCmdList, "gPrevReserviors", "gCurrReserviors");
+    // copybackHelper(pCmdList, "gPrevReserviors", "gCurrReserviors");
 
     copybackHelper(pCmdList, "gDeltaReflectionPositionMeshIDPrev", "gDeltaReflectionPositionMeshID");
     copybackHelper(pCmdList, "gDeltaReflectionNormalPrev", "gDeltaReflectionNormal");
