@@ -131,10 +131,10 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     float3 previousPosition = gPositionMeshIDPrev.Sample(s1, prevUV).rgb;
 
     // output.color = float4(position, variance);
-    if (length(position - previousPosition) == 0.0f)
+    /*if (length(position - previousPosition) < 0.1f)
     {
         output.color = float4(1, 0, 0, 0);
-    }
+    }*/
 
     
     output.moment = moments;
