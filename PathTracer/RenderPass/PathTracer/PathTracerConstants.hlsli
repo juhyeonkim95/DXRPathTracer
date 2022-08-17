@@ -6,6 +6,7 @@
 #define PATHTRACE_RR_BEGIN_DEPTH 4
 #define PATHTRACE_SPP 1
 #define OUTPUT_ADDITIONAL_PROPERTIES 1
+#define OUTPUT_SVGF_RELATED 0
 
 static const int ReSTIR_MODE_NO_REUSE = 0;
 static const int ReSTIR_MODE_TEMPORAL_REUSE = 1;
@@ -14,5 +15,7 @@ static const int ReSTIR_MODE_SPATIOTEMPORAL_REUSE = 3;
 
 static const float SCENE_T_MIN = 1e-5;
 static const float SCENE_T_MAX = 1e5;
+
+static const float kMinReflectance = 0.04;
 
 #endif

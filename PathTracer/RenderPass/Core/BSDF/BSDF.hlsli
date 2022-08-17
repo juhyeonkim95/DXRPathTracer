@@ -160,7 +160,7 @@ namespace bsdf
 		return diffuse::EvalAndPdf(material, payload, wo);
 	}
 
-	void Sample(in Material material, in RayPayload payload, inout uint seed, inout BSDFSample bs) {
+	void Sample(in Material material, in RayPayload payload, inout uint seed, out BSDFSample bs) {
 		switch (material.materialType) {
 		case BSDF_TYPE_DIFFUSE: diffuse::Sample(material, payload, seed, bs); break;
 		case BSDF_TYPE_CONDUCTOR: conductor::Sample(material, payload, seed, bs); break;
@@ -173,7 +173,7 @@ namespace bsdf
 		}
 	}
 
-	/*void Sample(in Material material, in RayPayload payload, inout uint seed, inout BSDFSample bs) {
+	/*void Sample(in Material material, in RayPayload payload, inout uint seed, out BSDFSample bs) {
 		diffuse::Sample(material, payload, seed, bs);
 	}
 	float3 Eval(in Material material, in RayPayload payload, in float3 wo) {

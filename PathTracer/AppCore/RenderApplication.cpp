@@ -446,8 +446,6 @@ void RenderApplication::onFrameRender()
 
             output = renderData.outputGPUHandleDictionary.at("gOutput");
         }
-
-        pathTracer->copyback(mpCmdList);
         now = std::chrono::steady_clock::now();
         elapsedTimeRecords.push_back(std::make_pair("Copy back", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
         startTime = now;
@@ -462,9 +460,6 @@ void RenderApplication::onFrameRender()
     now = std::chrono::steady_clock::now();
     elapsedTimeRecords.push_back(std::make_pair("Tonemap", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
     startTime = now;
-
-
-    
 
     now = std::chrono::steady_clock::now();
     elapsedTimeRecords.push_back(std::make_pair("Total", std::chrono::duration_cast<std::chrono::microseconds>(now - renderStartTime).count()));

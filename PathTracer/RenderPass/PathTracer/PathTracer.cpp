@@ -156,9 +156,11 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
 {
     RootSignatureDesc desc;
 
-    desc.range.resize(2);
+    int nSwap = 10;
+    desc.range.resize(2 + nSwap);
 
     // SRV
+    // (0) Acceleration Structure (Structured Buffer)
     // (1) material Info (Structured Buffer)
     // (2) geometry Info (Structured Buffer)
     // (3) indices Info (uint Buffer)
@@ -171,11 +173,19 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
 
     // UAV
     desc.range[1].BaseShaderRegister = 0;
-    desc.range[1].NumDescriptors = 30;
+    desc.range[1].NumDescriptors = 20;
     desc.range[1].RegisterSpace = 0;
     desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
-    desc.rootParams.resize(5);
+    for (int i = 0; i < nSwap; i++)
+    {
+        desc.range[i + 2].BaseShaderRegister = 20 + i;
+        desc.range[i + 2].NumDescriptors = 1;
+        desc.range[i + 2].RegisterSpace = 0;
+        desc.range[i + 2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    }
+
+    desc.rootParams.resize(5 + nSwap);
 
     // camera 
     desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -204,6 +214,15 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
     desc.rootParams[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     desc.rootParams[4].DescriptorTable.NumDescriptorRanges = 1;
     desc.rootParams[4].DescriptorTable.pDescriptorRanges = &desc.range[1];
+
+    for (int i = 0; i < nSwap; i++)
+    {
+        // Position Mesh ID Prev
+        desc.rootParams[5 + i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        desc.rootParams[5 + i].DescriptorTable.NumDescriptorRanges = 1;
+        desc.rootParams[5 + i].DescriptorTable.pDescriptorRanges = &desc.range[2 + i];
+    }
+
 
     CD3DX12_STATIC_SAMPLER_DESC bilinearClamp(
         0,
@@ -320,17 +339,6 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     mUAVResourceDictionary["gDiffuseReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDiffuseReflectance", 1);
     mUAVResourceDictionary["gSpecularReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gSpecularReflectance", 1);
 
-    // PositionID / NormalDepth
-    mUAVResourceDictionary["gPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
-    mUAVResourceDictionary["gNormalDepth"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalDepth", 1);
-    mUAVResourceDictionary["gPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev", 1);
-    mUAVResourceDictionary["gNormalDepthPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalDepthPrev", 1);
-
-    // Reservoirs for ReSTIR
-    mUAVResourceDictionary["gPrevReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
-    mUAVResourceDictionary["gCurrReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gCurrReserviors", 1, sizeof(Reservoir));
-
-
     // Delta Reflection / Transmission
     mUAVResourceDictionary["gDeltaReflectionReflectance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_UNORM, "gDeltaReflectionReflectance", 1);
     mUAVResourceDictionary["gDeltaReflectionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionEmission", 1);
@@ -340,16 +348,33 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
     mUAVResourceDictionary["gDeltaTransmissionEmission"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionEmission", 1);
     mUAVResourceDictionary["gDeltaTransmissionRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionRadiance", 1);
 
-    mUAVResourceDictionary["gDeltaReflectionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPositionMeshID", 1);
-    mUAVResourceDictionary["gDeltaReflectionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaReflectionNormal", 1);
-    mUAVResourceDictionary["gDeltaTransmissionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionPositionMeshID", 1);
-    mUAVResourceDictionary["gDeltaTransmissionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormal", 1);
-
     // Others
     mUAVResourceDictionary["gResidualRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gResidualRadiance", 1);
     mUAVResourceDictionary["gRoughness"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R16_UNORM, "gRoughness", 1);
     mUAVResourceDictionary["gPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8_UINT, "gPathType", 1);
     mUAVResourceDictionary["gMotionVector"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32_FLOAT, "gMotionVector", 1);
+
+
+    // ***************
+    // To be swapped
+    // ***************
+    
+    // PositionID / NormalDepth
+    mUAVResourceDictionary["gPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshID", 1);
+    mUAVResourceDictionary["gPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gPositionMeshIDPrev", 1);
+
+    mUAVResourceDictionary["gNormalDepth"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalDepth", 1);
+    mUAVResourceDictionary["gNormalDepthPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gNormalDepthPrev", 1);
+
+    mUAVResourceDictionary["gDeltaReflectionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPositionMeshID", 1);
+    mUAVResourceDictionary["gDeltaReflectionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaReflectionNormal", 1);
+    mUAVResourceDictionary["gDeltaTransmissionPositionMeshID"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaTransmissionPositionMeshID", 1);
+    mUAVResourceDictionary["gDeltaTransmissionNormal"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8G8B8A8_SNORM, "gDeltaTransmissionNormal", 1);
+
+    // Reservoirs for ReSTIR
+    mUAVResourceDictionary["gPrevReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gPrevReserviors", 1, sizeof(Reservoir));
+    mUAVResourceDictionary["gCurrReserviors"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_UNKNOWN, "gCurrReserviors", 1, sizeof(Reservoir));
+
 
     // not visible by shader
     mUAVResourceDictionary["gDeltaReflectionPositionMeshIDPrev"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gDeltaReflectionPositionMeshIDPrev", 1);
@@ -434,6 +459,21 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     // UAVs
     pCmdList->SetComputeRootDescriptorTable(4, pSrvUavHeap->getGPUHandleByName("gOutput"));//4 at createGlobalRootDesc
+    
+    pCmdList->SetComputeRootDescriptorTable(5, pSrvUavHeap->getGPUHandleByName("gPositionMeshID"));
+    pCmdList->SetComputeRootDescriptorTable(6, pSrvUavHeap->getGPUHandleByName("gPositionMeshIDPrev"));
+
+    pCmdList->SetComputeRootDescriptorTable(7, pSrvUavHeap->getGPUHandleByName("gNormalDepth"));
+    pCmdList->SetComputeRootDescriptorTable(8, pSrvUavHeap->getGPUHandleByName("gNormalDepthPrev"));
+
+    pCmdList->SetComputeRootDescriptorTable(9, pSrvUavHeap->getGPUHandleByName("gDeltaReflectionPositionMeshID"));
+    pCmdList->SetComputeRootDescriptorTable(10, pSrvUavHeap->getGPUHandleByName("gDeltaReflectionNormal"));
+    pCmdList->SetComputeRootDescriptorTable(11, pSrvUavHeap->getGPUHandleByName("gDeltaTransmissionPositionMeshID"));
+    pCmdList->SetComputeRootDescriptorTable(12, pSrvUavHeap->getGPUHandleByName("gDeltaTransmissionNormal"));
+    
+    pCmdList->SetComputeRootDescriptorTable(13, pSrvUavHeap->getGPUHandleByName("gPrevReserviors"));
+    pCmdList->SetComputeRootDescriptorTable(14, pSrvUavHeap->getGPUHandleByName("gCurrReserviors"));
+
 
     // Dispatch
     pCmdList->SetPipelineState1(mpPipelineState.GetInterfacePtr());
@@ -447,26 +487,17 @@ void PathTracer::forward(RenderContext* pRenderContext, RenderData& renderData)
 
     renderData.addOutputs(pSrvUavHeap->getGPUHandleMap());
 
+    swapHandle(pSrvUavHeap, "gPositionMeshID", "gPositionMeshIDPrev");
+    swapHandle(pSrvUavHeap, "gNormalDepth", "gNormalDepthPrev");
+    swapHandle(pSrvUavHeap, "gDeltaReflectionPositionMeshID", "gDeltaReflectionPositionMeshIDPrev");
+    swapHandle(pSrvUavHeap, "gDeltaReflectionNormal", "gDeltaReflectionNormalPrev");
+    swapHandle(pSrvUavHeap, "gDeltaTransmissionPositionMeshID", "gDeltaTransmissionPositionMeshIDPrev");
+    swapHandle(pSrvUavHeap, "gDeltaTransmissionNormal", "gDeltaTransmissionNormalPrev");
+    swapHandle(pSrvUavHeap, "gPrevReserviors", "gCurrReserviors");
 }
 
-void PathTracer::copybackHelper(ID3D12GraphicsCommandList4Ptr pCmdList, std::string dst, std::string src)
+void PathTracer::swapHandle(HeapData* pSrvUavHeap, const char* name1, const char* name2)
 {
-    resourceBarrier(pCmdList, mUAVResourceDictionary[src], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    resourceBarrier(pCmdList, mUAVResourceDictionary[dst], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    pCmdList->CopyResource(mUAVResourceDictionary[dst], mUAVResourceDictionary[src]);
-    resourceBarrier(pCmdList, mUAVResourceDictionary[src], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    resourceBarrier(pCmdList, mUAVResourceDictionary[dst], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-}
-
-void PathTracer::copyback(ID3D12GraphicsCommandList4Ptr pCmdList)
-{
-    // copy back
-    copybackHelper(pCmdList, "gPositionMeshIDPrev", "gPositionMeshID");
-    copybackHelper(pCmdList, "gNormalDepthPrev", "gNormalDepth");
-    // copybackHelper(pCmdList, "gPrevReserviors", "gCurrReserviors");
-
-    copybackHelper(pCmdList, "gDeltaReflectionPositionMeshIDPrev", "gDeltaReflectionPositionMeshID");
-    copybackHelper(pCmdList, "gDeltaReflectionNormalPrev", "gDeltaReflectionNormal");
-    copybackHelper(pCmdList, "gDeltaTransmissionPositionMeshIDPrev", "gDeltaTransmissionPositionMeshID");
-    copybackHelper(pCmdList, "gDeltaTransmissionNormalPrev", "gDeltaTransmissionNormal");
+    std::swap(this->mUAVResourceDictionary.at(name1), this->mUAVResourceDictionary.at(name2));
+    pSrvUavHeap->swapHandle(name1, name2);
 }

@@ -20,7 +20,7 @@ namespace dielectric
 		return float4(0, 0, 0, 0);
 	}
 
-	void Sample(in Material mat, in RayPayload si, inout uint seed, inout BSDFSample bs) {
+	void Sample(in Material mat, in RayPayload si, inout uint seed, out BSDFSample bs) {
 		float ior = mat.intIOR / mat.extIOR;
 		float eta = si.wi.z < 0.0f ? ior : 1 / ior;
 		float cosThetaT;

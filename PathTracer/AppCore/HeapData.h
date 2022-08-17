@@ -19,6 +19,7 @@ public:
 	map<string, D3D12_GPU_DESCRIPTOR_HANDLE> &getGPUHandleMap() { return mGPUHandlesMap; };
 	D3D12_CPU_DESCRIPTOR_HANDLE getLastCPUHandle();
 	D3D12_GPU_DESCRIPTOR_HANDLE getLastGPUHandle();
+	void swapHandle(const char* name1, const char* name2);
 private:
 	ID3D12Device5Ptr mpDevice;
 	ID3D12DescriptorHeapPtr mpHeap;

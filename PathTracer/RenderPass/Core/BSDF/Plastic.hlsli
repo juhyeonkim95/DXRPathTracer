@@ -137,7 +137,7 @@ namespace plastic
 
 
 
-	void Sample(in Material mat, in RayPayload si, inout uint seed, inout BSDFSample bs) {
+	void Sample(in Material mat, in RayPayload si, inout uint seed, out BSDFSample bs) {
 		const float3 wi = si.wi;
 
 		if (wi.z < 0) {

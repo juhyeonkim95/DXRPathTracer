@@ -29,11 +29,6 @@ public:
 	PathTracer(ID3D12Device5Ptr mpDevice, Scene* scene, uvec2 size);
 	void processGUI() override;
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
-
-	// void forward(ID3D12GraphicsCommandList4Ptr pCmdList, SceneResourceManager* pSceneResourceManager, HeapData* pSrvUavHeap, ReSTIRParameters& restirParam);
-	
-	void copyback(ID3D12GraphicsCommandList4Ptr pCmdList);
-	void copybackHelper(ID3D12GraphicsCommandList4Ptr pCmdList, std::string dst, std::string src);
 	void createShaderResources(HeapData* pSrvUavHeap);
 	void createShaderTable(HeapData* pSrvUavHeap);
 private:
@@ -41,6 +36,7 @@ private:
 	RootSignatureDesc createRayGenRootDesc();
 	RootSignatureDesc createHitRootDesc();
 	RootSignatureDesc createGlobalRootDesc();
+	void swapHandle(HeapData* pSrvUavHeap, const char* name1, const char* name2);
 
 	Scene* mpScene;
 	D3D12_GPU_DESCRIPTOR_HANDLE mpTextureStartHandle;;
@@ -71,4 +67,6 @@ private:
 	const WCHAR* kShadowChs = L"shadowChs";
 	const WCHAR* kShadowMiss = L"shadowMiss";
 	const WCHAR* kShadowHitGroup = L"ShadowHitGroup";
+
+	bool swap = false;
 };

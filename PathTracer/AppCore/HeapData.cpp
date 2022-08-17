@@ -60,3 +60,10 @@ D3D12_CPU_DESCRIPTOR_HANDLE HeapData::addDescriptorHandle() {
 	string name = "anonymous_" + std::to_string(mUsedEntries);
 	return this->addDescriptorHandle(name.c_str());
 }
+
+void HeapData::swapHandle(const char* name1, const char* name2)
+{
+	std::swap(mGPUHandlesMap.at(name1), mGPUHandlesMap.at(name2));
+	std::swap(mCPUHandlesMap.at(name1), mCPUHandlesMap.at(name2));
+	std::swap(mHandlesOffsetMap.at(name1), mHandlesOffsetMap.at(name2));
+}

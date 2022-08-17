@@ -180,3 +180,12 @@ About x1.5 speed up!
 ## 20220813, 14, 15
 - Implement delta reflection / refraction motion vector calculation
 - RELAX diffuse / specular version implement
+
+## 20220816
+- Prepare final presentation
+- Write a document
+
+## 20220817
+- Code refactoring
+- Try to minimize copying buffer --> change to swap.
+- Refactor writing to UAV part.

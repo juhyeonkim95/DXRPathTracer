@@ -122,21 +122,6 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     moments = lerp(prevMoment, moments, alphaMoments);
     float variance = max(0.f, moments.g - moments.r * moments.r);
     output.color = float4(lerp(prevColor, color, alpha), variance);
-
-    float3 position = gPositionMeshID.Load(int3(ipos, 0)).rgb;
-    float meshID = gPositionMeshID.Load(int3(ipos, 0)).w;
-    float3 normal = gNormalDepth.Load(int3(ipos, 0)).rgb;
-    float depth = gNormalDepth.Load(int3(ipos, 0)).w;
-
-    float3 previousPosition = gPositionMeshIDPrev.Sample(s1, prevUV).rgb;
-
-    // output.color = float4(position, variance);
-    /*if (length(position - previousPosition) < 0.1f)
-    {
-        output.color = float4(1, 0, 0, 0);
-    }*/
-
-    
     output.moment = moments;
     output.historyLength = historyLength;
 

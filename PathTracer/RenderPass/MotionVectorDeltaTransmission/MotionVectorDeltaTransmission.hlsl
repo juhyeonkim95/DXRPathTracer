@@ -30,7 +30,7 @@ float2 main(VS_OUTPUT input) : SV_TARGET
     const int2 ipos = int2(input.pos.xy);
     uint pathType = gPathType.Load(int3(ipos, 0)).r;
 
-    if (!(pathType & BSDF_LOBE_DELTA_REFLECTION)) {
+    if (!(pathType & BSDF_LOBE_DELTA_TRANSMISSION)) {
         return float2(0, 0);
     }
 

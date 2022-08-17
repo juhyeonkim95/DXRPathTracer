@@ -20,7 +20,7 @@ namespace conductor
 		return float4(0, 0, 0, 0);
 	}
 
-	void Sample(in Material mat, in RayPayload si, inout uint seed, inout BSDFSample bs) {
+	void Sample(in Material mat, in RayPayload si, inout uint seed, out BSDFSample bs) {
 		if (si.wi.z <= 0.0f) {
 			bs.pdf = 0.0f;
 			bs.weight = 0.0f;
