@@ -35,7 +35,10 @@ RoughPlastic::RoughPlastic(XMLElement* e)
 	this->microfacetDistribution = getValueByNameDefault(e, "distribution", "beckmann");
 	this->alpha = getFloatByName(e, "alpha", 0.1f);
 	this->nonlinear = getBoolByName(e, "nonlinear", false);
-	this->diffuseFresnel = fresnel::DiffuseFresnel(this->intIOR / this->extIOR);
+
+	float ior = intIOR / extIOR;
+	float eta = 1 / ior;
+	this->diffuseFresnel = fresnel::DiffuseFresnel(eta);
 }
 
 std::string RoughPlastic::toString()

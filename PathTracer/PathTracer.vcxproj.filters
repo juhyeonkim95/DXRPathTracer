@@ -314,9 +314,6 @@
     <ClInclude Include="RenderPass\Tonemap\ToneMapper.h">
       <Filter>RenderPass\Tonemapper</Filter>
     </ClInclude>
-    <ClInclude Include="ImGuiManager.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
     <ClInclude Include="..\Framework\Externals\imgui\imconfig.h">
       <Filter>External\imgui</Filter>
     </ClInclude>

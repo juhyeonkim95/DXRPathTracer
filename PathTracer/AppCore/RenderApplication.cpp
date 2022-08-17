@@ -238,7 +238,7 @@ void RenderApplication::onFrameRender()
 
     postProcessQuad->bind(mpCmdList);
 
-    D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
+    D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gPositionMeshID");
 
     if (this->renderMode != 10  && this->renderMode != 0) {
         switch (this->renderMode) {

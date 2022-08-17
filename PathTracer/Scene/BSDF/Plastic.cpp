@@ -33,7 +33,9 @@ Plastic::Plastic(XMLElement* e)
 	this->specularReflectance = getVec3ByName(e, "specularReflectance", vec3(1, 1, 1));
 	this->nonlinear = getBoolByName(e, "nonlinear", false);
 
-	this->diffuseFresnel = fresnel::DiffuseFresnel(this->intIOR / this->extIOR);
+	float ior = intIOR / extIOR;
+	float eta = 1 / ior;
+	this->diffuseFresnel = fresnel::DiffuseFresnel(eta);
 }
 
 std::string Plastic::toString()

@@ -238,7 +238,6 @@
     <ClInclude Include="Scene\BSDF\Fresnel.h" />
     <ClInclude Include="Scene\Emitter\Emitter.h" />
     <ClInclude Include="AppCore\HeapData.h" />
-    <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="RenderPass\PathTracer\PathTracer.h" />
     <ClInclude Include="RenderPass\RenderPass.h" />
     <ClInclude Include="RenderPass\ReSTIR\ReSTIR.h" />

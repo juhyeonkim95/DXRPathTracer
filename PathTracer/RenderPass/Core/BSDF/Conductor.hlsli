@@ -1,19 +1,22 @@
-#ifndef BSDF_CONDUCTOR
-#define BSDF_CONDUCTOR
+#ifndef BSDF_CONDUCTOR_HLSLI
+#define BSDF_CONDUCTOR_HLSLI
 
 #include "../stdafx.hlsli"
 
 namespace conductor
 {
 	float Pdf(in Material mat, in RayPayload si, in float3 wo) {
+		// delta function!
 		return 0.0f;
 	}
 
 	float3 Eval(in Material mat, in RayPayload si, in float3 wo) {
+		// delta function!
 		return float3(0, 0, 0);
 	}
 
 	float4 EvalAndPdf(in Material mat, in RayPayload si, in float3 wo) {
+		// delta function!
 		return float4(0, 0, 0, 0);
 	}
 

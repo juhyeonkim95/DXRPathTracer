@@ -1,5 +1,5 @@
-#ifndef BSDF_DIFFUSE
-#define BSDF_DIFFUSE
+#ifndef BSDF_DIFFUSE_HLSLI
+#define BSDF_DIFFUSE_HLSLI
 
 #include "../stdafx.hlsli"
 

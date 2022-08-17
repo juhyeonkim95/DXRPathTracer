@@ -1,5 +1,5 @@
-#ifndef BSDF_ROUGHDIELECTRIC
-#define BSDF_ROUGHDIELECTRIC
+#ifndef BSDF_ROUGHDIELECTRIC_HLSLI
+#define BSDF_ROUGHDIELECTRIC_HLSLI
 
 #include "../stdafx.hlsli"
 
@@ -56,7 +56,7 @@ namespace roughdielectric
 		float ior = mat.intIOR / mat.extIOR;
 		uint dist = mat.microfacetDistribution;
 
-		float roughness = EvalRoughness(mat, si);
+		float roughness = si.roughness;
 		float alpha = microfacet::roughnessToAlpha(dist, roughness);
 
 		float wiDotN = wi.z;
@@ -82,11 +82,11 @@ namespace roughdielectric
 
 		if (reflect) {
 			float fr = (F * G * D * 0.25f) / abs(wiDotN);
-			return EvalSpecularReflectance(mat, si) * fr;
+			return si.specularReflectance * fr;
 		}
 		else {
 			float fs = abs(wiDotM * woDotM) * (1.0f - F) * G * D / (sqr(eta * wiDotM + woDotM) * abs(wiDotN));
-			return EvalSpecularTransmittance(mat, si) * fs;
+			return si.specularTransmittance * fs;
 		}
 	}
 	
@@ -110,7 +110,7 @@ namespace roughdielectric
 			return float4(0, 0, 0, 0);
 		}
 
-		float roughness = EvalRoughness(mat, si);
+		float roughness = si.roughness;
 		float alpha = microfacet::roughnessToAlpha(dist, roughness);
 		float sampleRoughness = (1.2f - 0.2f * sqrt(abs(wiDotN))) * si.roughness;
 		float sampleAlpha = microfacet::roughnessToAlpha(dist, sampleRoughness);
@@ -132,11 +132,11 @@ namespace roughdielectric
 		float pdf;
 		if (reflect) {
 			float fr = (F * G * D * 0.25f) / abs(wiDotN);
-			f = EvalSpecularReflectance(mat, si) * fr;
+			f = si.specularReflectance * fr;
 		}
 		else {
 			float fs = abs(wiDotM * woDotM) * (1.0f - F) * G * D / (sqr(eta * wiDotM + woDotM) * abs(wiDotN));
-			f = EvalSpecularTransmittance(mat, si) * fs;
+			f = si.specularTransmittance * fs;
 		}
 
 		if (reflect) {
@@ -160,9 +160,9 @@ namespace roughdielectric
 	}
 
 	void SampleBase(in Material mat, bool sampleR, bool sampleT, in RayPayload si, inout uint seed, inout BSDFSample bs) {
-		float roughness = EvalRoughness(mat, si);
-		float3 specularReflectance = EvalSpecularReflectance(mat, si);
-		float3 specularTransmittance = EvalSpecularTransmittance(mat, si);
+		float roughness = si.roughness;
+		float3 specularReflectance = si.specularReflectance;
+		float3 specularTransmittance = si.specularTransmittance;
 
 		const float3 wi = si.wi;
 		bs.pdf = 0.0f;

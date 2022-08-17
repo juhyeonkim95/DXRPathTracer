@@ -108,13 +108,11 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
                 // TraceRay(gRtScene, 0  /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, shadowRay, shadowPayload);
                 if (!shadowPayload.hit) {
                     wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
-                    // const float3 f = bsdf::Eval(material, payload, wo);
                     const float nDl = dot(payload.normal, L);
                     const float LnDl = -dot(newReservoir.lightSample.normal, L);
 
                     Li = newReservoir.lightSample.Li;
                     weight = max(LnDl, 0) / (Ldist * Ldist) * newReservoir.W;
-                    // L =  * f * max(LnDl, 0) / (Ldist * Ldist) * newReservoir.W;
                 }
             }
         }
@@ -145,26 +143,22 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
                 if (!shadowPayload.hit) {
                     wo = ToLocal(payload.tangent, payload.bitangent, payload.normal, L);
                     const float scatterPdf = bsdf::Pdf(material, payload, wo);
-                    // const float3 f = bsdf::Eval(material, payload, wo);
 
                     Li = lightSample.Li;
                     weight = powerHeuristic(lightPdf, scatterPdf) / lightPdf;
-
-                    // L = weight * lightSample.Li * f / lightPdf * throughput;
-
                 }
             }
         }
         if (weight > 0)
         {
-            
             if (depth == 1)
             {
                 const float3 fDiffuse = bsdf::EvalDiffuse(material, payload, wo);
                 const float3 fSpecular = bsdf::EvalSpecular(material, payload, wo);
 
-                const float3 LDiffuse = weight * Li * fDiffuse * throughput;
-                const float3 LSpecular = weight * Li * fSpecular * throughput;
+                const float3 LCommon = weight * Li * throughput;
+                const float3 LDiffuse = LCommon * fDiffuse;
+                const float3 LSpecular = LCommon * fSpecular;
 
                 const float3 L = LDiffuse + LSpecular;
                 result += L;
@@ -173,9 +167,8 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
                 pathResult.specularRadiance += LSpecular;
                 pathResult.directRadiance += L;
 
-                const float3 LIllum = weight * Li * wo.z * M_1_PIf;
-                pathResult.diffuseIllumination += LIllum;
-                // pathResult.specularIllumination += LSpecular;
+                const float3 LDiffuseIllum = LCommon * wo.z * M_1_PIf;
+                pathResult.diffuseIllumination += LDiffuseIllum;
             }
             else {
                 const float3 f = bsdf::Eval(material, payload, wo);
@@ -561,7 +554,7 @@ void rayGen()
     gPositionMeshID[launchIndex.xy] = float4(position, currentMeshID);
     gNormalDepth[launchIndex.xy] = float4(normal, depth);
 
-    float minReflectance = float3(0.001, 0.001, 0.001);
+    float3 minReflectance = float3(0.001, 0.001, 0.001);
 
     float3 directIllumination = directRadiance / max(reflectance, minReflectance);
     float3 indirectIllumination = indirectRadiance / max(reflectance, minReflectance);

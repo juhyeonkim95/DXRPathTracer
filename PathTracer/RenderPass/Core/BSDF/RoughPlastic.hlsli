@@ -1,5 +1,5 @@
-#ifndef BSDF_ROUGH_PLASTIC
-#define BSDF_ROUGH_PLASTIC
+#ifndef BSDF_ROUGH_PLASTIC_HLSLI
+#define BSDF_ROUGH_PLASTIC_HLSLI
 
 #include "../stdafx.hlsli"
 #include "roughdielectric.hlsli"
@@ -22,11 +22,10 @@ namespace roughplastic
 		
 		if (sampleT && sampleR)
 		{
-			float3 diffuseReflectance = si.diffuseReflectance;
 			float ior = mat.intIOR / mat.extIOR;
 			float eta = 1 / ior;
 			float Fi = fresnel::DielectricReflectance(eta, wi.z);
-			float probSpecular = plastic::getProbSpecular(mat, diffuseReflectance, Fi);
+			float probSpecular = plastic::getProbSpecular(mat, si.diffuseReflectance, si.specularReflectance, Fi);
 
 
 			diffusePdf *= (1.0 - probSpecular);
@@ -59,13 +58,60 @@ namespace roughplastic
 			float Fo = fresnel::DielectricReflectance(eta, wo.z);
 
 			float3 diffuseReflectance = si.diffuseReflectance;
-			float diffuseFresnel = fresnel::DiffuseFresnel(eta);
+			float diffuseFresnel = mat.diffuseFresnel; // fresnel::DiffuseFresnel(eta);
 			float3 temp = (mat.nonlinear ? diffuseReflectance * diffuseFresnel : float3(diffuseFresnel, diffuseFresnel, diffuseFresnel));
 			diffuseR = ((1.0f - Fi) * (1.0f - Fo) * eta * eta) * (diffuseReflectance / (1.0f - temp));
 			diffuseR *= wo.z * M_1_PIf;
 		}
 		return glossyR + diffuseR;
 	}
+
+	float4 EvalAndPdf(in Material mat, in RayPayload si, in float3 wo, bool sampleR, bool sampleT) {
+		const float3 wi = si.wi;
+		if (wi.z <= 0 || wo.z <= 0)
+		{
+			return float4(0, 0, 0, 0);
+		}
+
+		if (!sampleR && !sampleT)
+			return float4(0, 0, 0, 0);
+
+		float3 specularBSDF = 0.0f;
+		float specularPdf = 0.0f;
+		if (sampleR)
+		{
+			float4 specularBSDFPdf = roughdielectric::EvalAndPdfBase(mat, true, false, si, wo);
+			specularBSDF = specularBSDFPdf.xyz;
+			specularPdf = specularBSDFPdf.w;
+		}
+
+		float3 diffuseBSDF = 0.0f;
+		float diffusePdf = 0.0f;
+		if (sampleT)
+		{
+			float ior = mat.intIOR / mat.extIOR;
+			float eta = 1 / ior;
+			float Fi = fresnel::DielectricReflectance(eta, wi.z);
+			float Fo = fresnel::DielectricReflectance(eta, wo.z);
+
+			float3 diffuseReflectance = si.diffuseReflectance;
+			float diffuseFresnel = mat.diffuseFresnel; // fresnel::DiffuseFresnel(eta);
+			float3 temp = (mat.nonlinear ? diffuseReflectance * diffuseFresnel : float3(diffuseFresnel, diffuseFresnel, diffuseFresnel));
+			diffuseBSDF = ((1.0f - Fi) * (1.0f - Fo) * eta * eta) * (diffuseReflectance / (1.0f - temp));
+			diffuseBSDF *= wo.z * M_1_PIf;
+			diffusePdf = wo.z * M_1_PIf;
+
+			if (sampleR)
+			{
+				float probSpecular = plastic::getProbSpecular(mat, si.diffuseReflectance, si.specularReflectance, Fi);
+				diffusePdf *= (1.0 - probSpecular);
+				specularPdf *= probSpecular;
+			}
+		}
+
+		return float4(diffuseBSDF + specularBSDF, diffusePdf + specularPdf);
+	}
+
 
 	void Sample(in Material mat, in RayPayload si, inout uint seed, inout BSDFSample bs) {
 		const float3 wi = si.wi;
@@ -76,18 +122,21 @@ namespace roughplastic
 			return;
 		}
 
-		bool sampleR = true;
-		bool sampleT = true;
+		bool sampleR = si.requestedLobe & BSDF_LOBE_GLOSSY_REFLECTION;
+		bool sampleT = si.requestedLobe & BSDF_LOBE_DIFFUSE_REFLECTION;
+
 		if (!sampleR && !sampleT)
 			return;
 
-		float3 diffuseReflectance = si.diffuseReflectance;
+		const float3 diffuseReflectance = si.diffuseReflectance;
+		const float3 specularReflectance = si.specularReflectance;
+
 		float ior = mat.intIOR / mat.extIOR;
 		float eta = 1 / ior;
 		float Fi = fresnel::DielectricReflectance(eta, wi.z);
-		float probSpecular = plastic::getProbSpecular(mat, diffuseReflectance, Fi);
+		float probSpecular = plastic::getProbSpecular(mat, diffuseReflectance, specularReflectance, Fi);
 
-		float diffuseFresnel = fresnel::DiffuseFresnel(eta);
+		float diffuseFresnel = mat.diffuseFresnel; //fresnel::DiffuseFresnel(eta);
 
 		if ((sampleR && (nextRand(seed) <= probSpecular)) || !sampleT)
 		{
@@ -129,8 +178,12 @@ namespace roughplastic
 			{
 				float3 brdfSubstrate = bs.weight * bs.pdf;
 				float  pdfSubstrate = bs.pdf * (1.0f - probSpecular);
-				float3 brdfSpecular = roughdielectric::EvalBase(mat, true, false, si, bs.wo);
-				float pdfSpecular = roughdielectric::PdfBase(mat, true, false, si, bs.wo);
+				float4 brdfPdfSpecular = roughdielectric::EvalAndPdfBase(mat, true, false, si, bs.wo);
+				float3 brdfSpecular = brdfPdfSpecular.xyz;
+				float pdfSpecular = brdfPdfSpecular.w;
+
+				//float3 brdfSpecular = roughdielectric::EvalBase(mat, true, false, si, bs.wo);
+				//float pdfSpecular = roughdielectric::PdfBase(mat, true, false, si, bs.wo);
 				pdfSpecular *= probSpecular;
 
 				bs.weight = (brdfSpecular + brdfSubstrate) / (pdfSpecular + pdfSubstrate);

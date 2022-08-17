@@ -1,5 +1,5 @@
-#ifndef BSDF_ROUGHCONDUCTOR
-#define BSDF_ROUGHCONDUCTOR
+#ifndef BSDF_ROUGHCONDUCTOR_HLSLI
+#define BSDF_ROUGHCONDUCTOR_HLSLI
 
 #include "../stdafx.hlsli"
 
@@ -35,7 +35,7 @@ namespace roughconductor
 
 		float3 hr = normalize(wo + wi);
 		float cosThetaM = dot(wi, hr);
-		float3 F = fresnel::ConductorReflectance(float3(0,0,0), float3(1, 1, 1), cosThetaM);
+		float3 F = fresnel::ConductorReflectance(float3(0, 0, 0), float3(1, 1, 1), cosThetaM);
 		float G = microfacet::G(dist, alpha, wi, wo, hr);
 		float D = microfacet::D(dist, alpha, hr);
 		float fr = (G * D * 0.25f) / wi.z;

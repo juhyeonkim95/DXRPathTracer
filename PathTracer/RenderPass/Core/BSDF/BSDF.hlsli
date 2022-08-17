@@ -147,18 +147,18 @@ namespace bsdf
 	}
 
 	// TODO : Eval BSDF & PDF at the same time?
-	//float4 EvalAndPdf(in Material material, in RayPayload payload, in float3 wo) {
-	//	switch (material.materialType) {
-	//	case BSDF_TYPE_DIFFUSE: return diffuse::EvalAndPdf(material, payload, wo);
-	//	case BSDF_TYPE_CONDUCTOR: return conductor::EvalAndPdf(material, payload, wo);
-	//	case BSDF_TYPE_ROUGH_CONDUCTOR: return roughconductor::EvalAndPdf(material, payload, wo);
-	//	case BSDF_TYPE_DIELECTRIC: return dielectric::EvalAndPdf(material, payload, wo);
-	//	case BSDF_TYPE_ROUGH_DIELECTRIC: return roughdielectric::EvalAndPdf(material, payload, wo);
-	//	case BSDF_TYPE_PLASTIC: return plastic::EvalAndPdf(material, payload, wo);
-	//	case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::EvalAndPdf(material, payload, wo);
-	//	}
-	//	return diffuse::EvalAndPdf(material, payload, wo);
-	//}
+	float4 EvalAndPdf(in Material material, in RayPayload payload, in float3 wo) {
+		switch (material.materialType) {
+		case BSDF_TYPE_DIFFUSE: return diffuse::EvalAndPdf(material, payload, wo);
+		case BSDF_TYPE_CONDUCTOR: return conductor::EvalAndPdf(material, payload, wo);
+		case BSDF_TYPE_ROUGH_CONDUCTOR: return roughconductor::EvalAndPdf(material, payload, wo);
+		case BSDF_TYPE_DIELECTRIC: return dielectric::EvalAndPdf(material, payload, wo);
+		case BSDF_TYPE_ROUGH_DIELECTRIC: return roughdielectric::EvalAndPdf(material, payload, wo);
+		case BSDF_TYPE_PLASTIC: return plastic::EvalAndPdf(material, payload, wo, true, true);
+		case BSDF_TYPE_ROUGH_PLASTIC: return roughplastic::EvalAndPdf(material, payload, wo, true, true);
+		}
+		return diffuse::EvalAndPdf(material, payload, wo);
+	}
 
 	void Sample(in Material material, in RayPayload payload, inout uint seed, inout BSDFSample bs) {
 		switch (material.materialType) {
@@ -172,4 +172,20 @@ namespace bsdf
 		default: diffuse::Sample(material, payload, seed, bs); break;
 		}
 	}
+
+	/*void Sample(in Material material, in RayPayload payload, inout uint seed, inout BSDFSample bs) {
+		diffuse::Sample(material, payload, seed, bs);
+	}
+	float3 Eval(in Material material, in RayPayload payload, in float3 wo) {
+		return diffuse::Eval(material, payload, wo);
+	}
+	float Pdf(in Material material, in RayPayload payload, in float3 wo) {
+		return diffuse::Pdf(material, payload, wo);
+	}
+	float3 EvalDiffuse(in Material material, in RayPayload payload, in float3 wo) {
+		return diffuse::Eval(material, payload, wo);
+	}
+	float3 EvalSpecular(in Material material, in RayPayload payload, in float3 wo) {
+		return float3(0, 0, 0);
+	}*/
 }

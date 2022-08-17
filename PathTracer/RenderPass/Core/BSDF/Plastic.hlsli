@@ -1,19 +1,19 @@
-#ifndef BSDF_PLASTIC
-#define BSDF_PLASTIC
+#ifndef BSDF_PLASTIC_HLSLI
+#define BSDF_PLASTIC_HLSLI
 
 #include "../stdafx.hlsli"
 #include "BSDFUtils.hlsli"
 
 namespace plastic
 {
-	float getProbSpecular(in Material mat, in float3 diffuseReflectance, float Fi)
+	float getProbSpecular(in Material mat, in float3 diffuseReflectance, in float3 specularReflectance, float Fi)
 	{
-		float s_mean = 1.0f;
-		float d_mean = (diffuseReflectance.x + diffuseReflectance.y + diffuseReflectance.z) / 3.0f;
-		float m_specular_sampling_weight = s_mean / (d_mean + s_mean);
+		float specularMean = (specularReflectance.x + specularReflectance.y + specularReflectance.z) / 3.0f;
+		float diffuseMean = (diffuseReflectance.x + diffuseReflectance.y + diffuseReflectance.z) / 3.0f;
+		float specularSamplingWeight = specularMean / (diffuseMean + specularMean);
 
-		float probSpecular = Fi * m_specular_sampling_weight;
-		float probDiffuse = (1 - Fi) * (1 - m_specular_sampling_weight);
+		float probSpecular = Fi * specularSamplingWeight;
+		float probDiffuse = (1 - Fi) * (1 - specularSamplingWeight);
 
 		probSpecular = probSpecular / (probSpecular + probDiffuse);
 		return probSpecular;
@@ -27,14 +27,11 @@ namespace plastic
 			return 0.0f;
 		}
 		if (sampleR && sampleT) {
-			float3 diffuseReflectance = si.diffuseReflectance;
-
 			float ior = mat.intIOR / mat.extIOR;
 			float eta = 1 / ior;
 			float Fi = fresnel::DielectricReflectance(eta, wi.z);
 
-			float probSpecular = getProbSpecular(mat, diffuseReflectance, Fi);
-
+			float probSpecular = getProbSpecular(mat, si.diffuseReflectance, si.specularReflectance, Fi);
 
 			if (checkReflectionConstraint(wi, wo)) {
 				return probSpecular;
@@ -54,7 +51,7 @@ namespace plastic
 		return 0.0f;
 	}
 
-	float3 Eval(in Material mat, in RayPayload si, in float3 wo, bool evalR, bool evalT) {
+	float3 Eval(in Material mat, in RayPayload si, in float3 wo, bool sampleR, bool sampleT) {
 		const float3 wi = si.wi;
 
 		if (wo.z < 0 || wi.z < 0) 
@@ -67,15 +64,15 @@ namespace plastic
 		float Fi = fresnel::DielectricReflectance(eta, wi.z);
 		float Fo = fresnel::DielectricReflectance(eta, wo.z);
 
-		if (evalR && checkReflectionConstraint(wi, wo)) 
+		if (sampleR && checkReflectionConstraint(wi, wo))
 		{
-			return float3(Fi, Fi, Fi);
+			return float3(Fi, Fi, Fi) * si.specularReflectance;
 		}
-		else if(evalT)
+		else if(sampleT)
 		{
 			float3 diffuseReflectance = si.diffuseReflectance;
 
-			float diffuseFresnel = fresnel::DiffuseFresnel(eta);
+			float diffuseFresnel = mat.diffuseFresnel;// fresnel::DiffuseFresnel(eta);
 			float3 value = diffuseReflectance;
 			value = value / (1 - (mat.nonlinear ? value * diffuseFresnel : (diffuseFresnel)));
 			value *= ((1.0f - Fi) * (1.0f - Fo) * eta * eta * wo.z * M_1_PIf);
@@ -84,6 +81,59 @@ namespace plastic
 		}
 		return float3(0, 0, 0);
 	}
+
+	float4 EvalAndPdf(in Material mat, in RayPayload si, in float3 wo, bool sampleR, bool sampleT) {
+		const float3 wi = si.wi;
+
+		if (wo.z < 0 || wi.z < 0)
+		{
+			return float4(0, 0, 0, 0);
+		}
+
+		float ior = mat.intIOR / mat.extIOR;
+		float eta = 1 / ior;
+		float Fi = fresnel::DielectricReflectance(eta, wi.z);
+		// float Fo = fresnel::DielectricReflectance(eta, wo.z);
+
+		float3 bsdf;
+		if (sampleR && checkReflectionConstraint(wi, wo))
+		{
+			bsdf = float3(Fi, Fi, Fi) * si.specularReflectance;
+		}
+		else if (sampleT)
+		{
+			float3 diffuseReflectance = si.diffuseReflectance;
+			float Fo = fresnel::DielectricReflectance(eta, wo.z);
+			float diffuseFresnel = mat.diffuseFresnel;// fresnel::DiffuseFresnel(eta);
+			float3 value = diffuseReflectance;
+			value = value / (1 - (mat.nonlinear ? value * diffuseFresnel : (diffuseFresnel)));
+			value *= ((1.0f - Fi) * (1.0f - Fo) * eta * eta * wo.z * M_1_PIf);
+
+			bsdf = value;
+		}
+		float pdf;
+		if (sampleR && sampleT) {
+			
+			float probSpecular = getProbSpecular(mat, si.diffuseReflectance, si.specularReflectance, Fi);
+
+			if (checkReflectionConstraint(wi, wo)) {
+				pdf = probSpecular;
+			}
+			else
+			{
+				pdf = wo.z * M_1_PIf * (1.0f - probSpecular);
+			}
+		}
+		else if (sampleT) {
+			pdf = wo.z * M_1_PIf;
+		}
+		else if (sampleR)
+		{
+			pdf = checkReflectionConstraint(wi, wo) ? 1.0f : 0.0f;
+		}
+		return float4(bsdf, pdf);
+	}
+
 
 
 
@@ -99,7 +149,8 @@ namespace plastic
 		bool sampleR = si.requestedLobe & BSDF_LOBE_DELTA_REFLECTION;
 		bool sampleT = si.requestedLobe & BSDF_LOBE_DIFFUSE_REFLECTION;
 
-		float3 diffuseReflectance = si.diffuseReflectance;
+		const float3 diffuseReflectance = si.diffuseReflectance;
+		const float3 specularReflectance = si.specularReflectance;
 
 		float ior = mat.intIOR / mat.extIOR;
 		float eta = 1 / ior;
@@ -107,7 +158,7 @@ namespace plastic
 
 		float probSpecular;
 		if (sampleR && sampleT)
-			probSpecular = getProbSpecular(mat, diffuseReflectance, Fi);
+			probSpecular = getProbSpecular(mat, diffuseReflectance, specularReflectance, Fi);
 		else if (sampleR)
 			probSpecular = 1.0f;
 		else if (sampleT)
@@ -117,13 +168,13 @@ namespace plastic
 
 		float probDiffuse = 1.f - probSpecular;
 
-		float diffuseFresnel = fresnel::DiffuseFresnel(eta);
+		float diffuseFresnel = mat.diffuseFresnel;// fresnel::DiffuseFresnel(eta);
 		if (sampleR && nextRand(seed) <= probSpecular)
 		{
 			// Reflect
 			bs.wo = float3(-wi.x, -wi.y, wi.z);
 			bs.pdf = probSpecular;
-			bs.weight = (Fi / probSpecular);
+			bs.weight = (Fi / probSpecular) * specularReflectance;
 			bs.sampledLobe = BSDF_LOBE_DELTA_REFLECTION;
 		}
 		else

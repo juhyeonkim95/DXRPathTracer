@@ -10,7 +10,8 @@
 #define D3D_COMPILE_STANDARD_FILE_INCLUDE ((ID3DInclude*)(UINT_PTR)1)
 
 
-// Used for Full screen processing only.
+// This is a shader for post processing!
+// Used for full screen post-processing only.
 class Shader
 {
 public:
