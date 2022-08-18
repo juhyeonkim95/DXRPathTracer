@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{31D7956C-92AD-4290-A469-CF7EA129F153}</ProjectGuid>
+    <RootNamespace>PathTracer_v1_0</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>PathTracer</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\PropertySheet1.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\DirectXTK12\Inc;$(SolutionDir)\..\DirectXTex\DirectXTex;$(SolutionDir)\Framework\;$(SolutionDir)Framework\Externals\imgui;$(SolutionDir)Framework\Externals\imgui\backends;$(ProjectDir)\;$(ProjectDir)\Scene;$(ProjectDir)\External;$(ProjectDir)\Utils;$(ProjectDir)\DX12;$(ProjectDir)\RenderPass;$(ProjectDir)\AppCore</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>D3D12.lib;DXGI.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /y $(SolutionDir)\Framework\Externals\dxcompiler\*.dll $(OutDir) &gt;nul</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\DirectXTex\DirectXTex\DirectXTex_Desktop_2019_Win10.vcxproj">
+      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Framework\Framework.vcxproj">
+      <Project>{3b602f0e-3834-4f73-b97d-7dfc91597a98}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Framework\Externals\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\Framework\Externals\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\Framework\Externals\imgui\imgui.cpp" />
+    <ClCompile Include="..\Framework\Externals\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Framework\Externals\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\Framework\Externals\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\Framework\Externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="AppCore\SceneAccelerationStructure.cpp" />
+    <ClCompile Include="DX12\DX12AccelerationStructureUtils.cpp" />
+    <ClCompile Include="DX12\DX12StateSubobjects.cpp" />
+    <ClCompile Include="DX12\DX12DxilLibrary.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="RenderPass\BlendPass\BlendPass.cpp" />
+    <ClCompile Include="RenderPass\DepthDerivative\DepthDerivativePass.cpp" />
+    <ClCompile Include="RenderPass\AntiAliasing\FXAA\FXAA.cpp" />
+    <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp" />
+    <ClCompile Include="RenderPass\MotionVectorDeltaReflection\MotionVectorDeltaReflection.cpp" />
+    <ClCompile Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.cpp" />
+    <ClCompile Include="RenderPass\RELAXSingle\RELAXSinglePass.cpp" />
+    <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp" />
+    <ClCompile Include="RenderPass\AntiAliasing\TAA\TAA.cpp" />
+    <ClCompile Include="Scene\BSDF\Conductor.cpp" />
+    <ClCompile Include="Scene\BSDF\Dielectric.cpp" />
+    <ClCompile Include="Scene\BSDF\Diffuse.cpp" />
+    <ClCompile Include="DX12\DX12BufferUtils.cpp" />
+    <ClCompile Include="DX12\DX12Utils.cpp" />
+    <ClCompile Include="AppCore\HeapData.cpp" />
+    <ClCompile Include="RenderPass\PathTracer\PathTracer.cpp" />
+    <ClCompile Include="RenderPass\ReSTIR\ReSTIR.cpp" />
+    <ClCompile Include="Scene\BSDF\Fresnel.cpp" />
+    <ClCompile Include="Utils\light_utils.cpp" />
+    <ClCompile Include="Utils\loader_utils.cpp" />
+    <ClCompile Include="Scene\Shape\Mesh.cpp" />
+    <ClCompile Include="AppCore\RenderApplication.cpp" />
+    <ClCompile Include="Scene\Sensor\Perspective.cpp" />
+    <ClCompile Include="Scene\BSDF\Plastic.cpp" />
+    <ClCompile Include="RenderPass\PostProcessPass.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="AppCore\RenderTexture.cpp" />
+    <ClCompile Include="Scene\BSDF\RoughConductor.cpp" />
+    <ClCompile Include="Scene\BSDF\RoughDielectric.cpp" />
+    <ClCompile Include="Scene\BSDF\RoughPlastic.cpp" />
+    <ClCompile Include="Scene\Scene.cpp" />
+    <ClCompile Include="AppCore\Shader.cpp" />
+    <ClCompile Include="AppCore\SceneResourceManager.cpp" />
+    <ClCompile Include="RenderPass\SVGF\SVGFPass.cpp" />
+    <ClCompile Include="Scene\Texture\Texture.cpp" />
+    <ClCompile Include="Scene\BSDF\ThinDielectric.cpp" />
+    <ClCompile Include="External\tinyxml2.cpp" />
+    <ClCompile Include="RenderPass\Tonemap\ToneMapper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Framework\Externals\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="..\Framework\Externals\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\Framework\Externals\imgui\imconfig.h" />
+    <ClInclude Include="..\Framework\Externals\imgui\imgui.h" />
+    <ClInclude Include="..\Framework\Externals\imgui\imgui_internal.h" />
+    <ClInclude Include="..\Framework\Externals\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\Framework\Externals\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\Framework\Externals\imgui\imstb_truetype.h" />
+    <ClInclude Include="AppCore\SceneAccelerationStructure.h" />
+    <ClInclude Include="DX12\DX12AccelerationStructureUtils.h" />
+    <ClInclude Include="DX12\DX12StateSubobjects.h" />
+    <ClInclude Include="External\stb_image_write.h" />
+    <ClInclude Include="RenderPass\BlendPass\BlendPass.h" />
+    <ClInclude Include="RenderPass\DepthDerivative\DepthDerivativePass.h" />
+    <ClInclude Include="RenderPass\AntiAliasing\FXAA\FXAA.h" />
+    <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h" />
+    <ClInclude Include="RenderPass\MotionVectorDeltaReflection\MotionVectorDeltaReflection.h" />
+    <ClInclude Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.h" />
+    <ClInclude Include="RenderPass\RELAXSingle\RELAXSinglePass.h" />
+    <ClInclude Include="RenderPass\RELAX\RELAXPass.h" />
+    <ClInclude Include="RenderPass\AntiAliasing\TAA\TAA.h" />
+    <ClInclude Include="Scene\BSDF\BSDF.h" />
+    <ClInclude Include="Scene\BSDF\BSDFLobes.h" />
+    <ClInclude Include="Scene\BSDF\Conductor.h" />
+    <ClInclude Include="Scene\BSDF\Dielectric.h" />
+    <ClInclude Include="Scene\BSDF\Diffuse.h" />
+    <ClInclude Include="DX12\DX12BufferUtils.h" />
+    <ClInclude Include="DX12\DX12Utils.h" />
+    <ClInclude Include="DX12\DX12DxilLibrary.h" />
+    <ClInclude Include="Scene\BSDF\Fresnel.h" />
+    <ClInclude Include="Scene\Emitter\Emitter.h" />
+    <ClInclude Include="AppCore\HeapData.h" />
+    <ClInclude Include="RenderPass\PathTracer\PathTracer.h" />
+    <ClInclude Include="RenderPass\RenderPass.h" />
+    <ClInclude Include="RenderPass\ReSTIR\ReSTIR.h" />
+    <ClInclude Include="Utils\light_utils.h" />
+    <ClInclude Include="Utils\loader_bsdf.h" />
+    <ClInclude Include="Utils\loader_utils.h" />
+    <ClInclude Include="Scene\CommonStruct.h" />
+    <ClInclude Include="Scene\Shape\Mesh.h" />
+    <ClInclude Include="AppCore\RenderApplication.h" />
+    <ClInclude Include="Scene\Sensor\Perspective.h" />
+    <ClInclude Include="Scene\BSDF\Plastic.h" />
+    <ClInclude Include="RenderPass\PostProcessPass.h" />
+    <ClInclude Include="AppCore\RenderTexture.h" />
+    <ClInclude Include="Scene\BSDF\RoughConductor.h" />
+    <ClInclude Include="Scene\BSDF\RoughDielectric.h" />
+    <ClInclude Include="Scene\BSDF\RoughPlastic.h" />
+    <ClInclude Include="Scene\Scene.h" />
+    <ClInclude Include="Scene\Sensor\Sensor.h" />
+    <ClInclude Include="AppCore\Shader.h" />
+    <ClInclude Include="AppCore\SceneResourceManager.h" />
+    <ClInclude Include="External\stb_image.h" />
+    <ClInclude Include="RenderPass\SVGF\SVGFPass.h" />
+    <ClInclude Include="Scene\Texture\Texture.h" />
+    <ClInclude Include="Scene\BSDF\ThinDielectric.h" />
+    <ClInclude Include="External\tinyxml2.h" />
+    <ClInclude Include="External\tiny_obj_loader.h" />
+    <ClInclude Include="RenderPass\Tonemap\ToneMapper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\MaterialInfo.md" />
+    <None Include="..\README.md" />
+    <None Include="..\RenderPipeline.md" />
+    <None Include="..\WorkProgress.md" />
+    <None Include="RenderPass\Core\BSDF\BSDFLobes.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\BSDF\BSDFUtils.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\BSDF\RoughPlastic.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\stdafx.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\EvalUtils.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\ColorHelpers.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\CommonStructs.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\Constants.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\DescriptorTable.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\ReSTIR\ReSTIRInitTemporal.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\SVGF\SVGFCommon.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\BSDF\BSDF.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\BSDF\Fresnel.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\BSDF\Microfacet.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Light\LightSampling.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\PathTracer\PathTracerConstants.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Core\Common\MathUtils.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\Tonemap\TonemapParams.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\PathTracer\PathTracer.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\DepthDerivative\DepthDerivative.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\RELAX\RELAXSpecularAtrousWavelet.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\RELAX\RELAXSpecularDisocclusionFix.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\RELAX\RELAXSpecularTemporalAccumulation.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\RELAX\RELAXDiffuseAtrousWavelet.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\RELAX\RELAXDiffuseDisocclusionFix.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\RELAX\RELAXDiffuseTemporalAccumulation.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\SVGF\SVGFFilterVariance.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\SVGF\SVGFReconstruction.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\Tonemap\Tonemap.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\SVGF\SVGFMotionVector.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\SVGF\SVGFATrousWavelet.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\SVGF\SVGFTemporalAccumulation.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="RenderPass\QuadVertexShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
