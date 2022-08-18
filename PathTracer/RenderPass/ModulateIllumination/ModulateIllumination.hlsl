@@ -1,3 +1,5 @@
+#include "../Core/BSDF/BSDFLobes.hlsli"
+
 Texture2D gDiffuseRadiance : register(t0);
 Texture2D gSpecularRadiance : register(t1);
 Texture2D gDiffuseReflectance : register(t2);
@@ -10,6 +12,41 @@ Texture2D gDeltaTransmissionReflectance : register(t8);
 Texture2D gDeltaReflectionEmission : register(t9);
 Texture2D gDeltaTransmissionEmission : register(t10);
 Texture2D gResidualRadiance : register(t11);
+Texture2D<uint> gPathType : register(t12);
+
+
+// Generates a seed for a random number generator from 2 inputs plus a backoff
+uint initRand(uint val0, uint val1, uint backoff = 16)
+{
+    uint v0 = val0, v1 = val1, s0 = 0;
+
+    [unroll]
+    for (uint n = 0; n < backoff; n++)
+    {
+        s0 += 0x9e3779b9;
+        v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + s0) ^ ((v1 >> 5) + 0xc8013ea4);
+        v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + s0) ^ ((v0 >> 5) + 0x7e95761e);
+    }
+    return v0;
+}
+
+// Takes our seed, updates it, and returns a pseudorandom float in [0..1]
+float nextRand(inout uint s)
+{
+    s = (1664525u * s + 1013904223u);
+    return float(s & 0x00FFFFFF) / float(0x01000000);
+}
+
+float3 getRandomColor(uint index)
+{
+    uint seed = initRand(index, index + 100, 16);
+    float r = nextRand(seed);
+    float g = nextRand(seed);
+    float b = nextRand(seed);
+    return float3(r, g, b);
+}
+
+
 
 
 SamplerState s1 : register(s0);
@@ -58,6 +95,14 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 residualRadiance = gResidualRadiance.Load(int3(ipos, 0)).rgb;
 
     float3 color = 0.0f;
+
+    uint pathType = gPathType.Load(int3(ipos, 0));
+
+    //deltaReflectionReflectance = float(bool(pathType & BSDF_LOBE_DELTA_REFLECTION));
+    //deltaTransmissionReflectance = float(bool(pathType & BSDF_LOBE_DELTA_TRANSMISSION));
+
+
+    
     if (enableDiffuseRadiance) {
         float3 diffuse = diffuseRadiance;
         if (enableDiffuseReflectance) {
@@ -70,7 +115,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         color = diffuseReflectance;
     }
 
-    if (enableSpecularRadiance) {
+    /*if (enableSpecularRadiance) {
         float3 specular = specularRadiance;
         if (enableSpecularReflectance) {
             specular *= specularReflectance;
@@ -85,46 +130,51 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     if (enableEmission)
     {
         color += emission;
-    }
+    }*/
 
-    if (enableDeltaReflectionRadiance) {
-        float3 deltaReflection = deltaReflectionRadiance;
-        if (enableDeltaReflectionReflectance) {
-            deltaReflection *= deltaReflectionReflectance;
-        }
-        color += deltaReflection;
-    }
-    if (!enableDeltaReflectionRadiance && enableDeltaReflectionReflectance)
-    {
-        color = deltaReflectionReflectance;
-    }
+    //if (pathType & BSDF_LOBE_DELTA_REFLECTION)
+    //{
+    //    if (enableDeltaReflectionRadiance) {
+    //        float3 deltaReflection = deltaReflectionRadiance;
+    //        if (enableDeltaReflectionReflectance) {
+    //            deltaReflection *= deltaReflectionReflectance;
+    //        }
+    //        color += deltaReflection;
+    //    }
+    //    if (!enableDeltaReflectionRadiance && enableDeltaReflectionReflectance)
+    //    {
+    //        color = deltaReflectionReflectance;
+    //    }
+    //    if (enableDeltaReflectionEmission)
+    //    {
+    //        color += deltaReflectionEmission;
+    //    }
+    //}
 
-    if (enableDeltaTransmissionRadiance) {
-        float3 deltaTransmission = deltaTransmissionRadiance;
-        if (enableDeltaTransmissionReflectance) {
-            deltaTransmission *= deltaTransmissionReflectance;
-        }
-        color += deltaTransmission;
-    }
-    if (!enableDeltaTransmissionRadiance && enableDeltaTransmissionReflectance)
-    {
-        color = deltaTransmissionReflectance;
-    }
+    //if (pathType & BSDF_LOBE_DELTA_TRANSMISSION)
+    //{
+    //    if (enableDeltaTransmissionRadiance) {
+    //        float3 deltaTransmission = deltaTransmissionRadiance;
+    //        if (enableDeltaTransmissionReflectance) {
+    //            deltaTransmission *= deltaTransmissionReflectance;
+    //        }
+    //        color += deltaTransmission;
+    //    }
+    //    if (!enableDeltaTransmissionRadiance && enableDeltaTransmissionReflectance)
+    //    {
+    //        color = deltaTransmissionReflectance;
+    //    }
 
-    if (enableDeltaReflectionEmission)
-    {
-        color += deltaReflectionEmission;
-    }
-
-    if (enableDeltaTransmissionEmission)
-    {
-        color += deltaTransmissionEmission;
-    }
-
-    if (enableResidualRadiance)
-    {
-        color += residualRadiance;
-    }
+    //    if (enableDeltaTransmissionEmission)
+    //    {
+    //        color += deltaTransmissionEmission;
+    //    }
+    //}
+    //
+    //if (enableResidualRadiance)
+    //{
+    //    color += residualRadiance;
+    //}
 
     return float4(color, 1.0f);
 }

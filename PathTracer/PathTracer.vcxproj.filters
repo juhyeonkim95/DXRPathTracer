@@ -472,7 +472,6 @@
     </FxCompile>
     <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl" />
     <FxCompile Include="RenderPass\DepthDerivative\DepthDerivative.hlsl" />
-    <FxCompile Include="RenderPass\RELAX\RELAXOFFICIAL.hlsl" />
     <FxCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.hlsl" />
     <FxCompile Include="RenderPass\RELAX\RELAXDiffuseAtrousWavelet.hlsl" />
     <FxCompile Include="RenderPass\RELAX\RELAXDiffuseTemporalAccumulation.hlsl" />

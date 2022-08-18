@@ -12,8 +12,10 @@ Texture2D gPositionMeshIDPrev : register(t6);
 Texture2D gNormalDepth : register(t7);
 Texture2D gNormalDepthPrev : register(t8);
 Texture2D<uint> gPathType : register(t9);
-Texture2D<float> gRoughness : register(t10);
 
+#ifdef RELAX_SPECULAR
+Texture2D<float> gRoughness : register(t10);
+#endif
 
 SamplerState s1 : register(s0);
 
@@ -95,9 +97,9 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     PS_OUT output;
     const int2 ipos = int2(input.pos.xy);
     uint pathType = gPathType.Load(int3(ipos, 0)).r;
-    if (!(pathType & targetPathType)) {
-        return output;
-    }
+    //if (!(pathType & targetPathType)) {
+    //    return output;
+    //}
 
     float2 prevUV = gMotionVector.Load(int3(ipos, 0)).rg;
 

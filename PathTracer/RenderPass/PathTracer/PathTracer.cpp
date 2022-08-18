@@ -350,8 +350,8 @@ void PathTracer::createShaderResources(HeapData *pSrvUavHeap)
 
     // Others
     mUAVResourceDictionary["gResidualRadiance"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32B32A32_FLOAT, "gResidualRadiance", 1);
-    mUAVResourceDictionary["gRoughness"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R16_UNORM, "gRoughness", 1);
-    mUAVResourceDictionary["gPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R8_UINT, "gPathType", 1);
+    mUAVResourceDictionary["gPathType"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32_UINT, "gPathType", 1);
+    mUAVResourceDictionary["gRoughness"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32_FLOAT, "gRoughness", 1);
     mUAVResourceDictionary["gMotionVector"] = createUAVBuffer(mpDevice, pSrvUavHeap, size, DXGI_FORMAT_R32G32_FLOAT, "gMotionVector", 1);
 
 

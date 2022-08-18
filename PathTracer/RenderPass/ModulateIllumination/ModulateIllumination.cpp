@@ -5,7 +5,7 @@ ModulateIllumination::ModulateIllumination(ID3D12Device5Ptr mpDevice, uvec2 size
 {
     // Create Shader
     std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
-    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/ModulateIllumination/ModulateIllumination.hlsl", mpDevice, 12, rtvFormats);
+    this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/ModulateIllumination/ModulateIllumination.hlsl", mpDevice, 13, rtvFormats);
 
     mpParameterBuffer = createBuffer(mpDevice, sizeof(ModulateIlluminationParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
 
@@ -121,6 +121,7 @@ void ModulateIllumination::forward(RenderContext* pRenderContext, RenderData& re
     mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gDeltaReflectionEmission"));
     mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gDeltaTransmissionEmission"));
     mpCmdList->SetGraphicsRootDescriptorTable(12, gpuHandles.at("gResidualRadiance"));
+    mpCmdList->SetGraphicsRootDescriptorTable(13, gpuHandles.at("gPathType"));
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
     mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mpRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));

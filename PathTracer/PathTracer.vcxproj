@@ -362,9 +362,6 @@
     <FxCompile Include="RenderPass\RELAX\RELAXDiffuseTemporalAccumulation.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="RenderPass\RELAX\RELAXOFFICIAL.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </FxCompile>
     <FxCompile Include="RenderPass\ReSTIR\ReSTIRSpatialReuse.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
