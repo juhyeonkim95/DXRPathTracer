@@ -134,26 +134,28 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     depthDerivativePass = new DepthDerivativePass(mpDevice, mSwapChainSize);
     depthDerivativePass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    diffuseFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DIFFUSE_REFLECTION, "Diffuse RELAX");
-    diffuseFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+    if (processAllInOne)
+    {
+        allInOneFilterPass = new RELAXSinglePass(mpDevice, mSwapChainSize, "All in one RELAX");
+        allInOneFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    specularFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_SPECULAR, BSDF_LOBE::BSDF_LOBE_GLOSSY_REFLECTION, "Specular RELAX");
-    specularFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+    }
+    else {
+        diffuseFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DIFFUSE_REFLECTION, "Diffuse RELAX");
+        diffuseFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    deltaReflectionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DELTA_REFLECTION, "Delta Reflection RELAX");
-    deltaReflectionFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+        specularFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_SPECULAR, BSDF_LOBE::BSDF_LOBE_GLOSSY_REFLECTION, "Specular RELAX");
+        specularFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    deltaTransmissionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DELTA_TRANSMISSION, "Delta Transmission RELAX");
-    deltaTransmissionFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
-    
-    residualFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_TRANSMISSION, "Residual RELAX");
-    residualFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+        deltaReflectionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DELTA_REFLECTION, "Delta Reflection RELAX");
+        deltaReflectionFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    //motionVectorPass = new MotionVector(mpDevice, mSwapChainSize);
-    //motionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+        deltaTransmissionFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_DELTA_TRANSMISSION, "Delta Transmission RELAX");
+        deltaTransmissionFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
 
-    //motionVectorSpecularPass = new MotionVectorSpecular(mpDevice, mSwapChainSize);
-    //motionVectorSpecularPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+        residualFilterPass = new RELAXPass(mpDevice, mSwapChainSize, RELAX_TYPE::RELAX_DIFFUSE, BSDF_LOBE::BSDF_LOBE_TRANSMISSION, "Residual RELAX");
+        residualFilterPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
+    }
 
     deltaReflectionMotionVectorPass = new MotionVectorDeltaReflection(mpDevice, mSwapChainSize);
     deltaReflectionMotionVectorPass->createRenderTextures(mRtvHeap, mpSrvUavHeap);
@@ -317,7 +319,7 @@ void RenderApplication::onFrameRender()
         elapsedTimeRecords.push_back(std::make_pair("Delta Transmission Motion Vector", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
         startTime = now;
 
-        if (diffuseFilterPass->mEnabled) 
+        if (diffuseFilterPass && diffuseFilterPass->mEnabled)
         {
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
@@ -335,7 +337,7 @@ void RenderApplication::onFrameRender()
             elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
-        if (specularFilterPass->mEnabled)
+        if (specularFilterPass && specularFilterPass->mEnabled)
         {
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
@@ -357,7 +359,7 @@ void RenderApplication::onFrameRender()
             elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
-        if (deltaReflectionFilterPass->mEnabled)
+        if (deltaReflectionFilterPass && deltaReflectionFilterPass->mEnabled)
         {
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
@@ -374,7 +376,7 @@ void RenderApplication::onFrameRender()
             elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
-        if (deltaTransmissionFilterPass->mEnabled)
+        if (deltaTransmissionFilterPass && deltaTransmissionFilterPass->mEnabled)
         {
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshID");
@@ -391,7 +393,7 @@ void RenderApplication::onFrameRender()
             elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
-        if (residualFilterPass->mEnabled)
+        if (residualFilterPass && residualFilterPass->mEnabled)
         {
             RenderData renderData;
             renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
@@ -407,6 +409,25 @@ void RenderApplication::onFrameRender()
             renderDataPathTracer.outputGPUHandleDictionary["gResidualRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
             elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
+
+        if (allInOneFilterPass && allInOneFilterPass->mEnabled)
+        {
+            RenderData renderData;
+            renderData.gpuHandleDictionary = renderDataPathTracer.outputGPUHandleDictionary;
+            renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
+            renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+            renderData.gpuHandleDictionary["gDeltaTransmissionMotionVector"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+
+
+            allInOneFilterPass->forward(&renderContext, renderData);
+            renderDataPathTracer.outputGPUHandleDictionary["gDiffuseRadiance"] = renderData.outputGPUHandleDictionary["gDiffuseRadianceFiltered"];
+            renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["gSpecularRadianceFiltered"];
+            renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"] = renderData.outputGPUHandleDictionary["gDeltaReflectionRadianceFiltered"];
+            renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionRadiance"] = renderData.outputGPUHandleDictionary["gDeltaTransmissionRadianceFiltered"];
+
+            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
+        }
+
 
         now = std::chrono::steady_clock::now();
         startTime = now;
@@ -489,6 +510,8 @@ void RenderApplication::onFrameRender()
         deltaTransmissionFilterPass->processGUI();
     if (residualFilterPass)
         residualFilterPass->processGUI();
+    if (allInOneFilterPass)
+        allInOneFilterPass->processGUI();
 
     modulatePass->processGUI();
     tonemapPass->processGUI();
@@ -509,11 +532,12 @@ void RenderApplication::onFrameRender()
 
     mDirty = false;
     mDirty |= pathTracer->isDirty();
-    mDirty |= diffuseFilterPass->isDirty();
-    mDirty |= specularFilterPass->isDirty();
-    mDirty |= deltaReflectionFilterPass->isDirty();
-    mDirty |= deltaTransmissionFilterPass->isDirty();
-    mDirty |= residualFilterPass->isDirty();
+    mDirty |= diffuseFilterPass && diffuseFilterPass->isDirty();
+    mDirty |= specularFilterPass && specularFilterPass->isDirty();
+    mDirty |= deltaReflectionFilterPass && deltaReflectionFilterPass->isDirty();
+    mDirty |= deltaTransmissionFilterPass && deltaTransmissionFilterPass->isDirty();
+    mDirty |= residualFilterPass && residualFilterPass->isDirty();
+    mDirty |= allInOneFilterPass && allInOneFilterPass->isDirty();
     mDirty |= deltaReflectionMotionVectorPass->isDirty();
     mDirty |= deltaTransmissionMotionVectorPass->isDirty();
 

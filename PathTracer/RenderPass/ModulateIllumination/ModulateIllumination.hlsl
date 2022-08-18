@@ -65,7 +65,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         }
         color += diffuse;
     }
-    /*if (!enableDiffuseRadiance && enableDiffuseReflectance)
+    if (!enableDiffuseRadiance && enableDiffuseReflectance)
     {
         color = diffuseReflectance;
     }
@@ -124,7 +124,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     if (enableResidualRadiance)
     {
         color += residualRadiance;
-    }*/
+    }
 
     return float4(color, 1.0f);
 }

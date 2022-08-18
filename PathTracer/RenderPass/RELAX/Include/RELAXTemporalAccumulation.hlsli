@@ -106,7 +106,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     float3 color = gCurrentColor.Load(int3(ipos, 0)).rgb;
     float3 prevColor = gColorHistory.Sample(s1, prevUV).rgb;
     float2 prevMoment = gMomentsHistory.Sample(s1, prevUV).rg;
-    float prevHistoryLength = gHistoryLength.Load(int3(ipos, 0)).x;
+    float prevHistoryLength = gHistoryLength.Sample(s1, prevUV).x;
 
     float historyLength = min(255.0f, (consistency ? (prevHistoryLength + 1.0f) : 1.0f));
 

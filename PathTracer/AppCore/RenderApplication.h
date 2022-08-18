@@ -7,6 +7,8 @@
 #include <fstream>
 #include "SVGF/SVGFPass.h"
 #include "RELAX/RELAXPass.h"
+#include "RELAXSingle/RELAXSinglePass.h"
+
 #include "ModulateIllumination/ModulateIllumination.h"
 #include "ReSTIR/ReSTIR.h"
 #include "PathTracer/PathTracer.h"
@@ -99,6 +101,8 @@ private:
     RELAXPass* deltaReflectionFilterPass;
     RELAXPass* deltaTransmissionFilterPass;
     RELAXPass* residualFilterPass;
+    RELAXSinglePass* allInOneFilterPass;
+    bool processAllInOne = true;
 
     MotionVectorDeltaReflection* deltaReflectionMotionVectorPass;
     MotionVectorDeltaTransmission* deltaTransmissionMotionVectorPass;

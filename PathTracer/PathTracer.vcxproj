@@ -173,6 +173,7 @@
     <ClCompile Include="RenderPass\ModulateIllumination\ModulateIllumination.cpp" />
     <ClCompile Include="RenderPass\MotionVectorDeltaReflection\MotionVectorDeltaReflection.cpp" />
     <ClCompile Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.cpp" />
+    <ClCompile Include="RenderPass\RELAXSingle\RELAXSinglePass.cpp" />
     <ClCompile Include="RenderPass\RELAX\RELAXPass.cpp" />
     <ClCompile Include="RenderPass\AntiAliasing\TAA\TAA.cpp" />
     <ClCompile Include="Scene\BSDF\Conductor.cpp" />
@@ -225,6 +226,7 @@
     <ClInclude Include="RenderPass\ModulateIllumination\ModulateIllumination.h" />
     <ClInclude Include="RenderPass\MotionVectorDeltaReflection\MotionVectorDeltaReflection.h" />
     <ClInclude Include="RenderPass\MotionVectorDeltaTransmission\MotionVectorDeltaTransmission.h" />
+    <ClInclude Include="RenderPass\RELAXSingle\RELAXSinglePass.h" />
     <ClInclude Include="RenderPass\RELAX\RELAXPass.h" />
     <ClInclude Include="RenderPass\AntiAliasing\TAA\TAA.h" />
     <ClInclude Include="Scene\BSDF\BSDF.h" />
