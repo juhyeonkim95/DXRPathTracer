@@ -26,6 +26,7 @@
 #pragma comment(lib, "dxguid.lib")
 
 static const int FRAME_ACCUMULATE_NUMBER = 32;
+static const uint32_t kDefaultSwapChainBuffers = 2;  // TODO : change!!
 
 class RenderApplication : public Application
 {
@@ -44,6 +45,8 @@ private:
     void initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight);
     uint32_t beginFrame();
     void endFrame(uint32_t rtvIndex);
+    void renderGUI(uint32_t rtvIndex);
+
     HWND mHwnd = nullptr;
     ID3D12Device5Ptr mpDevice;
     ID3D12CommandQueuePtr mpCmdQueue;
@@ -53,6 +56,7 @@ private:
     ID3D12FencePtr mpFence;
     HANDLE mFenceEvent;
     uint64_t mFenceValue = 0;
+    vector<pair<string, float>> elapsedTimeRecords;
 
     struct
     {
@@ -102,17 +106,13 @@ private:
     RELAXPass* deltaTransmissionFilterPass;
     RELAXPass* residualFilterPass;
     RELAXSinglePass* allInOneFilterPass;
-    bool processAllInOne = false;
+    bool processAllInOne = true;
+    bool mUseVSync = true;
 
     MotionVectorDeltaReflection* deltaReflectionMotionVectorPass;
     MotionVectorDeltaTransmission* deltaTransmissionMotionVectorPass;
-    //MotionVector* motionVectorPass;
-    //MotionVectorSpecular* motionVectorSpecularPass;
 
     ModulateIllumination* modulatePass;
-
-
-    bool createSVGF = false;
 
     BlendPass* blendPass;
     FXAA* fxaaPass;
@@ -121,7 +121,6 @@ private:
     ToneMapper* tonemapPass;
     bool mDirty = true;
 
-    Shader* defaultCopyShader;
     ID3D12ResourcePtr mParamBuffer = nullptr;
 
     ID3D12DescriptorHeapPtr g_pd3dSrvDescHeap;

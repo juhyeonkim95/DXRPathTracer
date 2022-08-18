@@ -3,7 +3,7 @@
 
 // Other DX12 util functions
 
-IDXGISwapChain3Ptr createDxgiSwapChain(IDXGIFactory4Ptr pFactory, HWND hwnd, uint32_t width, uint32_t height, DXGI_FORMAT format, ID3D12CommandQueuePtr pCommandQueue);
+IDXGISwapChain3Ptr createDxgiSwapChain(IDXGIFactory4Ptr pFactory, HWND hwnd, uint32_t width, uint32_t height, uint32_t swapChainBufferCount, DXGI_FORMAT format, ID3D12CommandQueuePtr pCommandQueue);
 
 ID3D12Device5Ptr createDevice(IDXGIFactory4Ptr pDxgiFactory);
 

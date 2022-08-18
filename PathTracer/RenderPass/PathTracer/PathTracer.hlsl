@@ -520,6 +520,7 @@ void rayGen()
     gPrimaryPathType[ipos] = uint(pathResult.primaryPathType);
     gRoughness[ipos] = pathResult.roughness;
 
+    // Minimize UAV writing!
     // ******************
     // Noise free outputs
     // ******************

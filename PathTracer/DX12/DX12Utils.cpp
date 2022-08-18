@@ -1,9 +1,9 @@
 #include "DX12Utils.h"
 
-IDXGISwapChain3Ptr createDxgiSwapChain(IDXGIFactory4Ptr pFactory, HWND hwnd, uint32_t width, uint32_t height, DXGI_FORMAT format, ID3D12CommandQueuePtr pCommandQueue)
+IDXGISwapChain3Ptr createDxgiSwapChain(IDXGIFactory4Ptr pFactory, HWND hwnd, uint32_t width, uint32_t height, uint32_t swapChainBufferCount, DXGI_FORMAT format, ID3D12CommandQueuePtr pCommandQueue)
 {
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.BufferCount = kDefaultSwapChainBuffers;
+    swapChainDesc.BufferCount = swapChainBufferCount;
     swapChainDesc.Width = width;
     swapChainDesc.Height = height;
     swapChainDesc.Format = format;
