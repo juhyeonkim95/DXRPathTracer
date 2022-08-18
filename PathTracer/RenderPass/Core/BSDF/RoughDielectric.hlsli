@@ -159,7 +159,7 @@ namespace roughdielectric
 		return EvalAndPdfBase(mat, true, true, si, wo);
 	}
 
-	void SampleBase(in Material mat, bool sampleR, bool sampleT, in RayPayload si, inout uint seed, out BSDFSample bs) {
+	void SampleBase(in Material mat, bool sampleR, bool sampleT, in RayPayload si, inout uint seed, inout BSDFSample bs) {
 		float roughness = si.roughness;
 		float3 specularReflectance = si.specularReflectance;
 		float3 specularTransmittance = si.specularTransmittance;
@@ -256,7 +256,7 @@ namespace roughdielectric
 		return;
 	}
 
-	void Sample(in Material mat, in RayPayload si, inout uint seed, out BSDFSample bs) {
+	void Sample(in Material mat, in RayPayload si, inout uint seed, inout BSDFSample bs) {
 		SampleBase(mat, true, true, si, seed, bs);
 		return;
 	}

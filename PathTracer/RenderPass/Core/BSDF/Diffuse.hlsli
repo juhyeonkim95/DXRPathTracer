@@ -25,7 +25,7 @@ namespace diffuse
 		return float4(f, pdf);
 	}
 
-	void Sample(in Material mat, in RayPayload si, inout uint seed, out BSDFSample bs) {
+	void Sample(in Material mat, in RayPayload si, inout uint seed, inout BSDFSample bs) {
 		if (si.wi.z <= 0.0f) {
 			bs.pdf = 0.0f;
 			bs.weight = 0.0f;
