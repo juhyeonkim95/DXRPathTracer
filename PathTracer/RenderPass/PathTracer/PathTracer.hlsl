@@ -485,10 +485,10 @@ void rayGen()
         // ******************
         // Noise free outputs
         // ******************
-        //gDeltaReflectionPositionMeshID[ipos] = float4(pathResult.deltaReflectionPosition, pathResult.deltaReflectionMeshID);
-        //gDeltaReflectionNormal[ipos] = float4(pathResult.deltaReflectionNormal, 0.0f);
-        //gDeltaReflectionReflectance[ipos] = float4(pathResult.deltaReflectionReflectance, 1.0f);
-        //gDeltaReflectionEmission[ipos] = float4(pathResult.deltaReflectionEmission, 1.0f);
+        gDeltaReflectionPositionMeshID[ipos] = float4(pathResult.deltaReflectionPosition, pathResult.deltaReflectionMeshID);
+        gDeltaReflectionNormal[ipos] = float4(pathResult.deltaReflectionNormal, 0.0f);
+        gDeltaReflectionReflectance[ipos] = float4(pathResult.deltaReflectionReflectance, 1.0f);
+        gDeltaReflectionEmission[ipos] = float4(pathResult.deltaReflectionEmission, 1.0f);
         
     }
     if (materialReflectionLobe & BSDF_LOBE_DELTA_TRANSMISSION) {
@@ -497,10 +497,10 @@ void rayGen()
         // ******************
         // Noise free outputs
         // ******************
-        //gDeltaTransmissionPositionMeshID[ipos] = float4(pathResult.deltaTransmissionPosition, pathResult.deltaTransmissionMeshID);
-        //gDeltaTransmissionNormal[ipos] = float4(pathResult.deltaTransmissionNormal, 0.0f);
-        //gDeltaTransmissionReflectance[ipos] = float4(pathResult.deltaTransmissionReflectance, 1.0f);
-        //gDeltaTransmissionEmission[ipos] = float4(pathResult.deltaTransmissionEmission, 1.0f);
+        gDeltaTransmissionPositionMeshID[ipos] = float4(pathResult.deltaTransmissionPosition, pathResult.deltaTransmissionMeshID);
+        gDeltaTransmissionNormal[ipos] = float4(pathResult.deltaTransmissionNormal, 0.0f);
+        gDeltaTransmissionReflectance[ipos] = float4(pathResult.deltaTransmissionReflectance, 1.0f);
+        gDeltaTransmissionEmission[ipos] = float4(pathResult.deltaTransmissionEmission, 1.0f);
     }
 #endif
 
@@ -521,20 +521,20 @@ void rayGen()
     gRoughness[ipos] = pathResult.roughness;
 
     // ******************
-        // Noise free outputs
-        // ******************
-    gDeltaReflectionPositionMeshID[ipos] = float4(pathResult.deltaReflectionPosition, pathResult.deltaReflectionMeshID);
-    gDeltaReflectionNormal[ipos] = float4(pathResult.deltaReflectionNormal, 0.0f);
-    gDeltaReflectionReflectance[ipos] = float4(pathResult.deltaReflectionReflectance, 1.0f);
-    gDeltaReflectionEmission[ipos] = float4(pathResult.deltaReflectionEmission, 1.0f);
+    // Noise free outputs
+    // ******************
+    //gDeltaReflectionPositionMeshID[ipos] = float4(pathResult.deltaReflectionPosition, pathResult.deltaReflectionMeshID);
+    //gDeltaReflectionNormal[ipos] = float4(pathResult.deltaReflectionNormal, 0.0f);
+    //gDeltaReflectionReflectance[ipos] = float4(pathResult.deltaReflectionReflectance, 1.0f);
+    //gDeltaReflectionEmission[ipos] = float4(pathResult.deltaReflectionEmission, 1.0f);
 
     // ******************
-// Noise free outputs
-// ******************
-    gDeltaTransmissionPositionMeshID[ipos] = float4(pathResult.deltaTransmissionPosition, pathResult.deltaTransmissionMeshID);
-    gDeltaTransmissionNormal[ipos] = float4(pathResult.deltaTransmissionNormal, 0.0f);
-    gDeltaTransmissionReflectance[ipos] = float4(pathResult.deltaTransmissionReflectance, 1.0f);
-    gDeltaTransmissionEmission[ipos] = float4(pathResult.deltaTransmissionEmission, 1.0f);
+    // Noise free outputs
+    // ******************
+    //gDeltaTransmissionPositionMeshID[ipos] = float4(pathResult.deltaTransmissionPosition, pathResult.deltaTransmissionMeshID);
+    //gDeltaTransmissionNormal[ipos] = float4(pathResult.deltaTransmissionNormal, 0.0f);
+    //gDeltaTransmissionReflectance[ipos] = float4(pathResult.deltaTransmissionReflectance, 1.0f);
+    //gDeltaTransmissionEmission[ipos] = float4(pathResult.deltaTransmissionEmission, 1.0f);
 
 
     // ******************

@@ -98,7 +98,7 @@ void temporalAccumulation(int i, int j, in uint pathType, in int2 ipos, out floa
 {
     float2 prevUV = gMotionVector[j].Load(int3(ipos, 0)).rg;
 
-    bool consistency = true;// checkConsistency(j, ipos, prevUV, false);
+    bool consistency = checkConsistency(j, ipos, prevUV, false);
 
     float3 color = gCurrentColor[i].Load(int3(ipos, 0)).rgb;
     float3 prevColor = gColorHistory[i].Sample(s1, prevUV).rgb;
@@ -117,7 +117,7 @@ void temporalAccumulation(int i, int j, in uint pathType, in int2 ipos, out floa
     // temporal integration of the moments
     moments = lerp(prevMoment, moments, alphaMoments);
     float variance = max(0.f, moments.g - moments.r * moments.r);
-    outColor = float4(lerp(prevColor, color, 0.5), variance);
+    outColor = float4(lerp(prevColor, color, alpha), variance);
     outMomentAndHistory = float4(moments.x, moments.y, 0, historyLength);
 }
 
@@ -126,10 +126,38 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     PS_OUT output;
     const int2 ipos = int2(input.pos.xy);
     uint pathType = gPathType.Load(int3(ipos, 0)).r;
+
     if ((pathType & BSDF_LOBE_DIFFUSE_REFLECTION)) {
         temporalAccumulation(0, 0, BSDF_LOBE_DIFFUSE_REFLECTION, ipos, output.color1, output.momentAndHistory1);
     }
-    // output.color1 = gCurrentColor[0].Load(int3(ipos, 0));
+    else {
+        output.color1 = 0.0f;
+        output.momentAndHistory1 = 0.0f;
+    }
+
+    if ((pathType & BSDF_LOBE_GLOSSY_REFLECTION)) {
+        temporalAccumulation(1, 0, BSDF_LOBE_GLOSSY_REFLECTION, ipos, output.color2, output.momentAndHistory2);
+    }
+    else {
+        output.color2 = 0.0f;
+        output.momentAndHistory2 = 0.0f;
+    }
+
+    if ((pathType & BSDF_LOBE_DELTA_REFLECTION)) {
+        temporalAccumulation(2, 1, BSDF_LOBE_DELTA_REFLECTION, ipos, output.color3, output.momentAndHistory3);
+    }
+    else {
+        output.color3 = 0.0f;
+        output.momentAndHistory3 = 0.0f;
+    }
+
+    if ((pathType & BSDF_LOBE_DELTA_TRANSMISSION)) {
+        temporalAccumulation(3, 2, BSDF_LOBE_DELTA_TRANSMISSION, ipos, output.color4, output.momentAndHistory4);
+    }
+    else {
+        output.color4 = 0.0f;
+        output.momentAndHistory4 = 0.0f;
+    }
 
     //if ((pathType & BSDF_LOBE_GLOSSY_REFLECTION)) {
     //    output.color2 = float4(1, 0, 0, 0);

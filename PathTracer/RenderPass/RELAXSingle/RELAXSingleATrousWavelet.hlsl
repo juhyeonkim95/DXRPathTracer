@@ -134,14 +134,26 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     if ((pathType & BSDF_LOBE_DIFFUSE_REFLECTION)) {
         output.color1 = wavelet(0, 0, ipos);
     }
+    else {
+        output.color1 = 0.0f;
+    }
     if ((pathType & BSDF_LOBE_GLOSSY_REFLECTION)) {
         output.color2 = wavelet(1, 0, ipos);
+    }
+    else {
+        output.color2 = 0.0f;
     }
     if ((pathType & BSDF_LOBE_DELTA_REFLECTION)) {
         output.color3 = wavelet(2, 1, ipos);
     }
+    else {
+        output.color3 = 0.0f;
+    }
     if ((pathType & BSDF_LOBE_DELTA_TRANSMISSION)) {
         output.color4 = wavelet(3, 2, ipos);
+    }
+    else {
+        output.color4 = 0.0f;
     }
 
     return output;

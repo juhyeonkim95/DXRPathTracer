@@ -28,9 +28,9 @@ float4 disocclusionFix(int i, int j, in int2 ipos)
 
     if (h < 4.0) {
         uint pPathType = gPathType.Load(int3(ipos, 0)).r;
-        if (!(pPathType & targetPathType)) {
-            return float4(0, 0, 0, 0);
-        }
+        //if (!(pPathType & targetPathType)) {
+        //    return float4(0, 0, 0, 0);
+        //}
 
         float3 pPosition = gPositionMeshID[j].Load(int3(ipos, 0)).rgb;
         float3 pNormal = gNormalDepth[j].Load(int3(ipos, 0)).rgb;
@@ -103,15 +103,26 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     if ((pathType & BSDF_LOBE_DIFFUSE_REFLECTION)) {
         output.color1 = disocclusionFix(0, 0, ipos);
     }
+    else {
+        output.color1 = 0.0f;
+    }
     if ((pathType & BSDF_LOBE_GLOSSY_REFLECTION)) {
         output.color2 = disocclusionFix(1, 0, ipos);
+    }
+    else {
+        output.color2 = 0.0f;
     }
     if ((pathType & BSDF_LOBE_DELTA_REFLECTION)) {
         output.color3 = disocclusionFix(2, 1, ipos);
     }
+    else {
+        output.color3 = 0.0f;
+    }
     if ((pathType & BSDF_LOBE_DELTA_TRANSMISSION)) {
         output.color4 = disocclusionFix(3, 2, ipos);
     }
-
+    else {
+        output.color4 = 0.0f;
+    }
     return output;
 }

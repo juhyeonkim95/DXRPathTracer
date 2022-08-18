@@ -102,7 +102,7 @@ private:
     RELAXPass* deltaTransmissionFilterPass;
     RELAXPass* residualFilterPass;
     RELAXSinglePass* allInOneFilterPass;
-    bool processAllInOne = true;
+    bool processAllInOne = false;
 
     MotionVectorDeltaReflection* deltaReflectionMotionVectorPass;
     MotionVectorDeltaTransmission* deltaTransmissionMotionVectorPass;

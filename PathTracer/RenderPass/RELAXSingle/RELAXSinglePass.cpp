@@ -47,9 +47,9 @@ RELAXSinglePass::RELAXSinglePass(ID3D12Device5Ptr mpDevice, uvec2 size, std::str
     mParam.depthThreshold = 0.02f;
     mParam.maxAccumulateFrame = 32;
 
-    mWaveletCount = 0;
+    mWaveletCount = 3;
     mFeedbackTap = 0;
-    mEnableVarianceFilter = false;
+    mEnableVarianceFilter = true;
 
     mDefaultParam = mParam;
 }
@@ -197,116 +197,116 @@ void RELAXSinglePass::forward(RenderContext* pRenderContext, RenderData& renderD
     renderData.elapsedTimeRecords.push_back(std::make_pair(this->name + "(Temporal Accumulation)", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
     startTime = now;
 
-    //if (mEnableVarianceFilter) {
-    //    // (2) Filter variance if length is <4
-    //    // 
-    //    mpCmdList->SetPipelineState(disocclusionFixShader->getPipelineStateObject());
-    //    mpCmdList->SetGraphicsRootSignature(disocclusionFixShader->getRootSignature()); // set the root signature
-    //    D3D12_CPU_DESCRIPTOR_HANDLE handles[4];
-    //    for (int j = 0; j < 4; j++)
-    //    {
-    //        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTexturesVarianceFilter.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    //        handles[j] = temporalAccumulationTexturesVarianceFilter.at(j)->mRtvDescriptorHandle;
-    //        mpCmdList->SetGraphicsRootDescriptorTable(2 + j, temporalAccumulationTextures.at(j)->getGPUSrvHandler());
-    //        mpCmdList->SetGraphicsRootDescriptorTable(6 + j, temporalAccumulationTexturesMomentAndLength.at(j)->getGPUSrvHandler());
-    //    }
+    if (mEnableVarianceFilter) {
+        // (2) Filter variance if length is <4
+        // 
+        mpCmdList->SetPipelineState(disocclusionFixShader->getPipelineStateObject());
+        mpCmdList->SetGraphicsRootSignature(disocclusionFixShader->getRootSignature()); // set the root signature
+        D3D12_CPU_DESCRIPTOR_HANDLE handles[4];
+        for (int j = 0; j < 4; j++)
+        {
+            mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTexturesVarianceFilter.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+            handles[j] = temporalAccumulationTexturesVarianceFilter.at(j)->mRtvDescriptorHandle;
+            mpCmdList->SetGraphicsRootDescriptorTable(2 + j, temporalAccumulationTextures.at(j)->getGPUSrvHandler());
+            mpCmdList->SetGraphicsRootDescriptorTable(6 + j, temporalAccumulationTexturesMomentAndLength.at(j)->getGPUSrvHandler());
+        }
 
-    //    mpCmdList->OMSetRenderTargets(4, handles, FALSE, nullptr);
+        mpCmdList->OMSetRenderTargets(4, handles, FALSE, nullptr);
 
-    //    mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gPositionMeshID"));
-    //    mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gDeltaReflectionPositionMeshID"));
-    //    mpCmdList->SetGraphicsRootDescriptorTable(12, gpuHandles.at("gDeltaTransmissionPositionMeshID"));
+        mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gPositionMeshID"));
+        mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gDeltaReflectionPositionMeshID"));
+        mpCmdList->SetGraphicsRootDescriptorTable(12, gpuHandles.at("gDeltaTransmissionPositionMeshID"));
 
-    //    mpCmdList->SetGraphicsRootDescriptorTable(13, gpuHandles.at("gNormalDepth"));
-    //    mpCmdList->SetGraphicsRootDescriptorTable(14, gpuHandles.at("gDeltaReflectionNormal"));
-    //    mpCmdList->SetGraphicsRootDescriptorTable(15, gpuHandles.at("gDeltaTransmissionNormal"));
+        mpCmdList->SetGraphicsRootDescriptorTable(13, gpuHandles.at("gNormalDepth"));
+        mpCmdList->SetGraphicsRootDescriptorTable(14, gpuHandles.at("gDeltaReflectionNormal"));
+        mpCmdList->SetGraphicsRootDescriptorTable(15, gpuHandles.at("gDeltaTransmissionNormal"));
 
-    //    mpCmdList->SetGraphicsRootDescriptorTable(16, gpuHandles.at("gDepthDerivative"));
-    //    mpCmdList->SetGraphicsRootDescriptorTable(17, gpuHandles.at("gPathType"));
+        mpCmdList->SetGraphicsRootDescriptorTable(16, gpuHandles.at("gDepthDerivative"));
+        mpCmdList->SetGraphicsRootDescriptorTable(17, gpuHandles.at("gPathType"));
 
-    //    this->uploadParams(0);
-    //    mpCmdList->SetGraphicsRootConstantBufferView(0, mParamBuffers.at(0)->GetGPUVirtualAddress());
-    //    mpCmdList->SetGraphicsRootConstantBufferView(1, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
+        this->uploadParams(0);
+        mpCmdList->SetGraphicsRootConstantBufferView(0, mParamBuffers.at(0)->GetGPUVirtualAddress());
+        mpCmdList->SetGraphicsRootConstantBufferView(1, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
 
-    //    mpCmdList->DrawInstanced(6, 1, 0, 0);
+        mpCmdList->DrawInstanced(6, 1, 0, 0);
 
-    //    for (int j = 0; j < 4; j++)
-    //    {
-    //        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTexturesVarianceFilter.at(j)->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    //        
-    //        std::swap(temporalAccumulationTexturesVarianceFilter.at(j), temporalAccumulationTextures.at(j));
+        for (int j = 0; j < 4; j++)
+        {
+            mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(temporalAccumulationTexturesVarianceFilter.at(j)->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+            
+            std::swap(temporalAccumulationTexturesVarianceFilter.at(j), temporalAccumulationTextures.at(j));
 
-    //        handles[j] = temporalAccumulationTexturesVarianceFilter.at(j)->mRtvDescriptorHandle;
-    //        mpCmdList->SetGraphicsRootDescriptorTable(2 + j, temporalAccumulationTextures.at(j)->getGPUSrvHandler());
-    //        mpCmdList->SetGraphicsRootDescriptorTable(6 + j, temporalAccumulationTexturesMomentAndLength.at(j)->getGPUSrvHandler());
-    //    }
+            handles[j] = temporalAccumulationTexturesVarianceFilter.at(j)->mRtvDescriptorHandle;
+            mpCmdList->SetGraphicsRootDescriptorTable(2 + j, temporalAccumulationTextures.at(j)->getGPUSrvHandler());
+            mpCmdList->SetGraphicsRootDescriptorTable(6 + j, temporalAccumulationTexturesMomentAndLength.at(j)->getGPUSrvHandler());
+        }
 
-    //    now = std::chrono::steady_clock::now();
-    //    renderData.elapsedTimeRecords.push_back(std::make_pair(this->name + "(Disocclusion Fix)", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
-    //    startTime = now;
-    //}
-
-
-    //// (3) Wavelet
-    //mpCmdList->SetPipelineState(waveletShader->getPipelineStateObject());
-    //mpCmdList->SetGraphicsRootSignature(waveletShader->getRootSignature()); // set the root signature
-
-    //mpCmdList->SetGraphicsRootConstantBufferView(1, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
-    //
-    //mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gPositionMeshID"));
-    //mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gDeltaReflectionPositionMeshID"));
-    //mpCmdList->SetGraphicsRootDescriptorTable(8, gpuHandles.at("gDeltaTransmissionPositionMeshID"));
-
-    //mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gNormalDepth"));
-    //mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gDeltaReflectionNormal"));
-    //mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gDeltaTransmissionNormal"));
+        now = std::chrono::steady_clock::now();
+        renderData.elapsedTimeRecords.push_back(std::make_pair(this->name + "(Disocclusion Fix)", std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count()));
+        startTime = now;
+    }
 
 
-    //mpCmdList->SetGraphicsRootDescriptorTable(12, gpuHandles.at("gDepthDerivative"));
-    //mpCmdList->SetGraphicsRootDescriptorTable(13, gpuHandles.at("gPathType"));
-    //mpCmdList->SetGraphicsRootDescriptorTable(14, gpuHandles.at("gRoughness"));
+    // (3) Wavelet
+    mpCmdList->SetPipelineState(waveletShader->getPipelineStateObject());
+    mpCmdList->SetGraphicsRootSignature(waveletShader->getRootSignature()); // set the root signature
+
+    mpCmdList->SetGraphicsRootConstantBufferView(1, pRenderContext->pSceneResourceManager->getCameraConstantBuffer()->GetGPUVirtualAddress());
+    
+    mpCmdList->SetGraphicsRootDescriptorTable(6, gpuHandles.at("gPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(7, gpuHandles.at("gDeltaReflectionPositionMeshID"));
+    mpCmdList->SetGraphicsRootDescriptorTable(8, gpuHandles.at("gDeltaTransmissionPositionMeshID"));
+
+    mpCmdList->SetGraphicsRootDescriptorTable(9, gpuHandles.at("gNormalDepth"));
+    mpCmdList->SetGraphicsRootDescriptorTable(10, gpuHandles.at("gDeltaReflectionNormal"));
+    mpCmdList->SetGraphicsRootDescriptorTable(11, gpuHandles.at("gDeltaTransmissionNormal"));
 
 
-    //// (3) Wavelet
-    //for (int i = 0; i < mWaveletCount; i++) {
-    //    D3D12_CPU_DESCRIPTOR_HANDLE handles[4];
-    //    for (int j = 0; j < 4; j++) {
-    //        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPongs1.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    //        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPongs2.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-    //        handles[j] = waveletPingPongs1.at(j)->mRtvDescriptorHandle;
+    mpCmdList->SetGraphicsRootDescriptorTable(12, gpuHandles.at("gDepthDerivative"));
+    mpCmdList->SetGraphicsRootDescriptorTable(13, gpuHandles.at("gPathType"));
+    mpCmdList->SetGraphicsRootDescriptorTable(14, gpuHandles.at("gRoughness"));
 
-    //        if (i == 0) {
-    //            mpCmdList->SetGraphicsRootDescriptorTable(2 + j, temporalAccumulationTextures.at(j)->getGPUSrvHandler());
-    //        }
-    //        else {
-    //            mpCmdList->SetGraphicsRootDescriptorTable(2 + j, waveletPingPongs2.at(j)->getGPUSrvHandler());
-    //        }
-    //    }
-    //    
-    //    mpCmdList->OMSetRenderTargets(4, handles, FALSE, nullptr);
 
-    //    mParam.stepSize = 1 << i;
-    //    uploadParams(i);
+    // (3) Wavelet
+    for (int i = 0; i < mWaveletCount; i++) {
+        D3D12_CPU_DESCRIPTOR_HANDLE handles[4];
+        for (int j = 0; j < 4; j++) {
+            mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPongs1.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+            mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPongs2.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+            handles[j] = waveletPingPongs1.at(j)->mRtvDescriptorHandle;
 
-    //    mpCmdList->SetGraphicsRootConstantBufferView(0, mParamBuffers.at(i)->GetGPUVirtualAddress());
+            if (i == 0) {
+                mpCmdList->SetGraphicsRootDescriptorTable(2 + j, temporalAccumulationTextures.at(j)->getGPUSrvHandler());
+            }
+            else {
+                mpCmdList->SetGraphicsRootDescriptorTable(2 + j, waveletPingPongs2.at(j)->getGPUSrvHandler());
+            }
+        }
+        
+        mpCmdList->OMSetRenderTargets(4, handles, FALSE, nullptr);
 
-    //    mpCmdList->DrawInstanced(6, 1, 0, 0);
-    //    
-    //    for (int j = 0; j < 4; j++) {
-    //        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPongs1.at(j)->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-    //        mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPongs2.at(j)->mResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PRESENT));
+        mParam.stepSize = 1 << i;
+        uploadParams(i);
 
-    //        if (i + 1 == mFeedbackTap)
-    //        {
-    //            resourceBarrier(mpCmdList, waveletPingPongs1.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    //            resourceBarrier(mpCmdList, temporalAccumulationTexturesPrev.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-    //            mpCmdList->CopyResource(temporalAccumulationTexturesPrev.at(j)->mResource, waveletPingPongs1.at(j)->mResource);
-    //            resourceBarrier(mpCmdList, waveletPingPongs1.at(j)->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
-    //        }
+        mpCmdList->SetGraphicsRootConstantBufferView(0, mParamBuffers.at(i)->GetGPUVirtualAddress());
 
-    //        std::swap(waveletPingPongs1.at(j), waveletPingPongs2.at(j));
-    //    }
-    //}
+        mpCmdList->DrawInstanced(6, 1, 0, 0);
+        
+        for (int j = 0; j < 4; j++) {
+            mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPongs1.at(j)->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+            mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(waveletPingPongs2.at(j)->mResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PRESENT));
+
+            if (i + 1 == mFeedbackTap)
+            {
+                resourceBarrier(mpCmdList, waveletPingPongs1.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
+                resourceBarrier(mpCmdList, temporalAccumulationTexturesPrev.at(j)->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+                mpCmdList->CopyResource(temporalAccumulationTexturesPrev.at(j)->mResource, waveletPingPongs1.at(j)->mResource);
+                resourceBarrier(mpCmdList, waveletPingPongs1.at(j)->mResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
+            }
+
+            std::swap(waveletPingPongs1.at(j), waveletPingPongs2.at(j));
+        }
+    }
     
 
     RenderTexture* filteredRadianceDiffuse = mWaveletCount > 0? waveletPingPongs2.at(0) : temporalAccumulationTextures.at(0);

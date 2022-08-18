@@ -115,7 +115,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
         color = diffuseReflectance;
     }
 
-    /*if (enableSpecularRadiance) {
+    if (enableSpecularRadiance) {
         float3 specular = specularRadiance;
         if (enableSpecularReflectance) {
             specular *= specularReflectance;
@@ -130,51 +130,51 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     if (enableEmission)
     {
         color += emission;
-    }*/
+    }
 
-    //if (pathType & BSDF_LOBE_DELTA_REFLECTION)
-    //{
-    //    if (enableDeltaReflectionRadiance) {
-    //        float3 deltaReflection = deltaReflectionRadiance;
-    //        if (enableDeltaReflectionReflectance) {
-    //            deltaReflection *= deltaReflectionReflectance;
-    //        }
-    //        color += deltaReflection;
-    //    }
-    //    if (!enableDeltaReflectionRadiance && enableDeltaReflectionReflectance)
-    //    {
-    //        color = deltaReflectionReflectance;
-    //    }
-    //    if (enableDeltaReflectionEmission)
-    //    {
-    //        color += deltaReflectionEmission;
-    //    }
-    //}
+    if (pathType & BSDF_LOBE_DELTA_REFLECTION)
+    {
+        if (enableDeltaReflectionRadiance) {
+            float3 deltaReflection = deltaReflectionRadiance;
+            if (enableDeltaReflectionReflectance) {
+                deltaReflection *= deltaReflectionReflectance;
+            }
+            color += deltaReflection;
+        }
+        if (!enableDeltaReflectionRadiance && enableDeltaReflectionReflectance)
+        {
+            color = deltaReflectionReflectance;
+        }
+        if (enableDeltaReflectionEmission)
+        {
+            color += deltaReflectionEmission;
+        }
+    }
 
-    //if (pathType & BSDF_LOBE_DELTA_TRANSMISSION)
-    //{
-    //    if (enableDeltaTransmissionRadiance) {
-    //        float3 deltaTransmission = deltaTransmissionRadiance;
-    //        if (enableDeltaTransmissionReflectance) {
-    //            deltaTransmission *= deltaTransmissionReflectance;
-    //        }
-    //        color += deltaTransmission;
-    //    }
-    //    if (!enableDeltaTransmissionRadiance && enableDeltaTransmissionReflectance)
-    //    {
-    //        color = deltaTransmissionReflectance;
-    //    }
+    if (pathType & BSDF_LOBE_DELTA_TRANSMISSION)
+    {
+        if (enableDeltaTransmissionRadiance) {
+            float3 deltaTransmission = deltaTransmissionRadiance;
+            if (enableDeltaTransmissionReflectance) {
+                deltaTransmission *= deltaTransmissionReflectance;
+            }
+            color += deltaTransmission;
+        }
+        if (!enableDeltaTransmissionRadiance && enableDeltaTransmissionReflectance)
+        {
+            color = deltaTransmissionReflectance;
+        }
 
-    //    if (enableDeltaTransmissionEmission)
-    //    {
-    //        color += deltaTransmissionEmission;
-    //    }
-    //}
-    //
-    //if (enableResidualRadiance)
-    //{
-    //    color += residualRadiance;
-    //}
+        if (enableDeltaTransmissionEmission)
+        {
+            color += deltaTransmissionEmission;
+        }
+    }
+    
+    if (enableResidualRadiance)
+    {
+        color += residualRadiance;
+    }
 
     return float4(color, 1.0f);
 }

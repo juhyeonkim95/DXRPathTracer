@@ -189,3 +189,8 @@ About x1.5 speed up!
 - Code refactoring
 - Try to minimize copying buffer --> change to swap.
 - Refactor writing to UAV part.
+- FPS 52 (before) -> 63 (now)
+
+## 20220818
+- Remove writing to UAV as most. (FPS : 63->72)
+- Merged all denoising pass into one large pass (RELAXSingle). (FPS: 72 -> 80)
