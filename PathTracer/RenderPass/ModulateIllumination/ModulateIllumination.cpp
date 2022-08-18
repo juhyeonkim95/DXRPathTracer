@@ -25,7 +25,7 @@ ModulateIllumination::ModulateIllumination(ID3D12Device5Ptr mpDevice, uvec2 size
     mEnableDeltaTransmissionReflectance = true;
     mEnableDeltaTransmissionEmission = true;
 
-    mEnableResidualRadiance = true;
+    mEnableResidualRadiance = false;
 }
 
 void ModulateIllumination::createRenderTextures(

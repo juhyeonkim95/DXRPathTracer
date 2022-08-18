@@ -22,6 +22,8 @@ struct RELAXSingleParameters
 };
 
 
+// Megakernel RELAX --> slightly faster than separate pass
+
 class RELAXSinglePass : public PostProcessPass
 {
 public:

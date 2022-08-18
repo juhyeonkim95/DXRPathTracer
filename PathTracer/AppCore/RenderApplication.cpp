@@ -337,96 +337,96 @@ void RenderApplication::onFrameRender()
             elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
         }
 
-        if (specularFilterPass && specularFilterPass->mEnabled)
-        {
-            RenderData renderData;
-            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
-            renderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepth");
-            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
-            renderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepthPrev");
-            renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gSpecularRadiance");
-            renderData.gpuHandleDictionary["gMotionVector"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
-            renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
+        //if (specularFilterPass && specularFilterPass->mEnabled)
+        //{
+        //    RenderData renderData;
+        //    renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
+        //    renderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepth");
+        //    renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
+        //    renderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepthPrev");
+        //    renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gSpecularRadiance");
+        //    renderData.gpuHandleDictionary["gMotionVector"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
+        //    renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
+        //    renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
 
-            renderData.gpuHandleDictionary["gRoughness"] = renderDataPathTracer.outputGPUHandleDictionary.at("gRoughness");
-            // renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gDeltaReflectionNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
-            renderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
+        //    renderData.gpuHandleDictionary["gRoughness"] = renderDataPathTracer.outputGPUHandleDictionary.at("gRoughness");
+        //    // renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+        //    renderData.gpuHandleDictionary["gDeltaReflectionNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
+        //    renderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
 
-            specularFilterPass->forward(&renderContext, renderData);
-            renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
-            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
-        }
+        //    specularFilterPass->forward(&renderContext, renderData);
+        //    renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["filteredRadiance"];
+        //    elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
+        //}
 
-        if (deltaReflectionFilterPass && deltaReflectionFilterPass->mEnabled)
-        {
-            RenderData renderData;
-            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
-            renderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
-            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshIDPrev");
-            renderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormalPrev");
-            renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionRadiance");
-            renderData.gpuHandleDictionary["gMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
-            renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
-            
-            deltaReflectionFilterPass->forward(&renderContext, renderData);
-            renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
-            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
-        }
+        //if (deltaReflectionFilterPass && deltaReflectionFilterPass->mEnabled)
+        //{
+        //    RenderData renderData;
+        //    renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
+        //    renderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
+        //    renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshIDPrev");
+        //    renderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormalPrev");
+        //    renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionRadiance");
+        //    renderData.gpuHandleDictionary["gMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+        //    renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
+        //    renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
+        //    
+        //    deltaReflectionFilterPass->forward(&renderContext, renderData);
+        //    renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
+        //    elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
+        //}
 
-        if (deltaTransmissionFilterPass && deltaTransmissionFilterPass->mEnabled)
-        {
-            RenderData renderData;
-            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshID");
-            renderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionNormal");
-            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshIDPrev");
-            renderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionNormalPrev");
-            renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionRadiance");
-            renderData.gpuHandleDictionary["gMotionVector"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
-            renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
+        //if (deltaTransmissionFilterPass && deltaTransmissionFilterPass->mEnabled)
+        //{
+        //    RenderData renderData;
+        //    renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshID");
+        //    renderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionNormal");
+        //    renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionPositionMeshIDPrev");
+        //    renderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionNormalPrev");
+        //    renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaTransmissionRadiance");
+        //    renderData.gpuHandleDictionary["gMotionVector"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+        //    renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
+        //    renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
 
-            deltaTransmissionFilterPass->forward(&renderContext, renderData);
-            renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
-            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
-        }
+        //    deltaTransmissionFilterPass->forward(&renderContext, renderData);
+        //    renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
+        //    elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
+        //}
 
-        if (residualFilterPass && residualFilterPass->mEnabled)
-        {
-            RenderData renderData;
-            renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
-            renderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepth");
-            renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
-            renderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepthPrev");
-            renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gResidualRadiance");
-            renderData.gpuHandleDictionary["gMotionVector"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
-            renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
+        //if (residualFilterPass && residualFilterPass->mEnabled)
+        //{
+        //    RenderData renderData;
+        //    renderData.gpuHandleDictionary["gPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshID");
+        //    renderData.gpuHandleDictionary["gNormalDepth"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepth");
+        //    renderData.gpuHandleDictionary["gPositionMeshIDPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPositionMeshIDPrev");
+        //    renderData.gpuHandleDictionary["gNormalDepthPrev"] = renderDataPathTracer.outputGPUHandleDictionary.at("gNormalDepthPrev");
+        //    renderData.gpuHandleDictionary["gRadiance"] = renderDataPathTracer.outputGPUHandleDictionary.at("gResidualRadiance");
+        //    renderData.gpuHandleDictionary["gMotionVector"] = renderDataPathTracer.outputGPUHandleDictionary.at("gMotionVector");
+        //    renderData.gpuHandleDictionary["gPathType"] = renderDataPathTracer.outputGPUHandleDictionary.at("gPathType");
+        //    renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
 
-            residualFilterPass->forward(&renderContext, renderData);
-            renderDataPathTracer.outputGPUHandleDictionary["gResidualRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
-            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
-        }
+        //    residualFilterPass->forward(&renderContext, renderData);
+        //    renderDataPathTracer.outputGPUHandleDictionary["gResidualRadiance"] = renderData.outputGPUHandleDictionary.at("filteredRadiance");
+        //    elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
+        //}
 
-        if (allInOneFilterPass && allInOneFilterPass->mEnabled)
-        {
-            RenderData renderData;
-            renderData.gpuHandleDictionary = renderDataPathTracer.outputGPUHandleDictionary;
-            renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
-            renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
-            renderData.gpuHandleDictionary["gDeltaTransmissionMotionVector"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+        //if (allInOneFilterPass && allInOneFilterPass->mEnabled)
+        //{
+        //    RenderData renderData;
+        //    renderData.gpuHandleDictionary = renderDataPathTracer.outputGPUHandleDictionary;
+        //    renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
+        //    renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
+        //    renderData.gpuHandleDictionary["gDeltaTransmissionMotionVector"] = deltaTransmissionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
 
 
-            allInOneFilterPass->forward(&renderContext, renderData);
-            renderDataPathTracer.outputGPUHandleDictionary["gDiffuseRadiance"] = renderData.outputGPUHandleDictionary["gDiffuseRadianceFiltered"];
-            renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["gSpecularRadianceFiltered"];
-            renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"] = renderData.outputGPUHandleDictionary["gDeltaReflectionRadianceFiltered"];
-            renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionRadiance"] = renderData.outputGPUHandleDictionary["gDeltaTransmissionRadianceFiltered"];
+        //    allInOneFilterPass->forward(&renderContext, renderData);
+        //    renderDataPathTracer.outputGPUHandleDictionary["gDiffuseRadiance"] = renderData.outputGPUHandleDictionary["gDiffuseRadianceFiltered"];
+        //    renderDataPathTracer.outputGPUHandleDictionary["gSpecularRadiance"] = renderData.outputGPUHandleDictionary["gSpecularRadianceFiltered"];
+        //    renderDataPathTracer.outputGPUHandleDictionary["gDeltaReflectionRadiance"] = renderData.outputGPUHandleDictionary["gDeltaReflectionRadianceFiltered"];
+        //    renderDataPathTracer.outputGPUHandleDictionary["gDeltaTransmissionRadiance"] = renderData.outputGPUHandleDictionary["gDeltaTransmissionRadianceFiltered"];
 
-            elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
-        }
+        //    elapsedTimeRecords.insert(elapsedTimeRecords.end(), renderData.elapsedTimeRecords.begin(), renderData.elapsedTimeRecords.end());
+        //}
 
 
         now = std::chrono::steady_clock::now();

@@ -94,11 +94,11 @@ bool checkConsistency(int j, in int2 ipos, in float2 prevPixel, bool checkRoughn
     return consistency;
 }
 
-void temporalAccumulation(int i, int j, in uint pathType, in int2 ipos, out float4 outColor, out float4 outMomentAndHistory)
+void temporalAccumulation(int i, int j, in uint pathType, in int2 ipos, out float4 outColor, out float4 outMomentAndHistory, bool checkRoughness)
 {
     float2 prevUV = gMotionVector[j].Load(int3(ipos, 0)).rg;
 
-    bool consistency = checkConsistency(j, ipos, prevUV, false);
+    bool consistency = checkConsistency(j, ipos, prevUV, checkRoughness);
 
     float3 color = gCurrentColor[i].Load(int3(ipos, 0)).rgb;
     float3 prevColor = gColorHistory[i].Sample(s1, prevUV).rgb;
@@ -128,7 +128,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     uint pathType = gPathType.Load(int3(ipos, 0)).r;
 
     if ((pathType & BSDF_LOBE_DIFFUSE_REFLECTION)) {
-        temporalAccumulation(0, 0, BSDF_LOBE_DIFFUSE_REFLECTION, ipos, output.color1, output.momentAndHistory1);
+        temporalAccumulation(0, 0, BSDF_LOBE_DIFFUSE_REFLECTION, ipos, output.color1, output.momentAndHistory1, false);
     }
     else {
         output.color1 = 0.0f;
@@ -136,7 +136,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     }
 
     if ((pathType & BSDF_LOBE_GLOSSY_REFLECTION)) {
-        temporalAccumulation(1, 0, BSDF_LOBE_GLOSSY_REFLECTION, ipos, output.color2, output.momentAndHistory2);
+        temporalAccumulation(1, 0, BSDF_LOBE_GLOSSY_REFLECTION, ipos, output.color2, output.momentAndHistory2, true);
     }
     else {
         output.color2 = 0.0f;
@@ -144,7 +144,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     }
 
     if ((pathType & BSDF_LOBE_DELTA_REFLECTION)) {
-        temporalAccumulation(2, 1, BSDF_LOBE_DELTA_REFLECTION, ipos, output.color3, output.momentAndHistory3);
+        temporalAccumulation(2, 1, BSDF_LOBE_DELTA_REFLECTION, ipos, output.color3, output.momentAndHistory3, false);
     }
     else {
         output.color3 = 0.0f;
@@ -152,7 +152,7 @@ PS_OUT main(VS_OUTPUT input) : SV_Target
     }
 
     if ((pathType & BSDF_LOBE_DELTA_TRANSMISSION)) {
-        temporalAccumulation(3, 2, BSDF_LOBE_DELTA_TRANSMISSION, ipos, output.color4, output.momentAndHistory4);
+        temporalAccumulation(3, 2, BSDF_LOBE_DELTA_TRANSMISSION, ipos, output.color4, output.momentAndHistory4, false);
     }
     else {
         output.color4 = 0.0f;

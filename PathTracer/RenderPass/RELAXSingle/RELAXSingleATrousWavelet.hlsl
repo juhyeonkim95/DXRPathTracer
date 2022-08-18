@@ -32,7 +32,7 @@ struct VS_OUTPUT
     float2 texCoord: TEXCOORD;
 };
 
-float4 wavelet(int i, int j, in int2 ipos)
+float4 wavelet(int i, int j, in int2 ipos, bool isSpecular)
 {
     // int2 ipos = int2(input.pos.xy);
 
@@ -71,8 +71,8 @@ float4 wavelet(int i, int j, in int2 ipos)
     float weights = 1.0f;
 
     //#ifdef RELAXSingle_SPECULAR
-    //    float pRoughness = gRoughness.Load(int3(ipos, 0)).r;
-    //    float3 pViewDir = normalize(g_frameData.cameraPosition - pPosition);
+    float pRoughness = gRoughness.Load(int3(ipos, 0)).r;
+    float3 pViewDir = normalize(g_frameData.cameraPosition - pPosition);
     //#endif
 
     for (int offsetx = -support; offsetx <= support; offsetx++) {
@@ -99,11 +99,12 @@ float4 wavelet(int i, int j, in int2 ipos)
                 // float w = calculateWeight(pDepth, qDepth, step * sigmaZ * abs(dot(depthDerivative, float2(offsetx, offsety))), pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
                 float w = calculateWeightPosition(pPosition, qPosition, sigmaZ, pNormal, qNormal, pLuminance, qLuminance, customSigmaL);
 
-                //#ifdef RELAXSingle_SPECULAR
-                //                float3 qViewDir = normalize(g_frameData.cameraPosition - qPosition);
-                //                float cosFactor = pow(dot(pViewDir, qViewDir), 1 / (pRoughness + 0.01));
-                //                w *= cosFactor;
-                //#endif
+                if (isSpecular)
+                {
+                    float3 qViewDir = normalize(g_frameData.cameraPosition - qPosition);
+                    float cosFactor = pow(dot(pViewDir, qViewDir), 1 / (pRoughness + 0.01));
+                    w *= cosFactor;
+                }
 
                 float weight = kernelWeights[abs(offsety)] * kernelWeights[abs(offsetx)] * w;
 
@@ -132,25 +133,25 @@ PS_OUT main(VS_OUTPUT input) : SV_TARGET
     const int2 ipos = int2(input.pos.xy);
     uint pathType = gPathType.Load(int3(ipos, 0)).r;
     if ((pathType & BSDF_LOBE_DIFFUSE_REFLECTION)) {
-        output.color1 = wavelet(0, 0, ipos);
+        output.color1 = wavelet(0, 0, ipos, false);
     }
     else {
         output.color1 = 0.0f;
     }
     if ((pathType & BSDF_LOBE_GLOSSY_REFLECTION)) {
-        output.color2 = wavelet(1, 0, ipos);
+        output.color2 = wavelet(1, 0, ipos, true);
     }
     else {
         output.color2 = 0.0f;
     }
     if ((pathType & BSDF_LOBE_DELTA_REFLECTION)) {
-        output.color3 = wavelet(2, 1, ipos);
+        output.color3 = wavelet(2, 1, ipos, false);
     }
     else {
         output.color3 = 0.0f;
     }
     if ((pathType & BSDF_LOBE_DELTA_TRANSMISSION)) {
-        output.color4 = wavelet(3, 2, ipos);
+        output.color4 = wavelet(3, 2, ipos, false);
     }
     else {
         output.color4 = 0.0f;

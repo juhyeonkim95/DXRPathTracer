@@ -435,7 +435,6 @@
     <None Include="RenderPass\Core\Common\EvalUtils.hlsli" />
     <None Include="RenderPass\Core\Common\DescriptorTable.hlsli" />
     <None Include="RenderPass\Core\stdafx.hlsli" />
-    <None Include="RenderPass\SVGF\SVGFDepthDerivative.hlsl" />
     <None Include="RenderPass\Core\BSDF\RoughPlastic.hlsli" />
     <None Include="RenderPass\Core\BSDF\BSDFLobes.hlsli" />
     <None Include="RenderPass\Core\BSDF\BSDFUtils.hlsli" />
