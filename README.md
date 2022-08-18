@@ -64,8 +64,11 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 - [x] Dielectric
 - [x] Rough Dielectric
 - [x] Plastic
-- [ ] Rough Plastic
+- [x] Rough Plastic
 - [ ] Disney
+
+For details, refer [this document](MaterialInfo.md).
+
 #### Emitter
 - [x] Area (rectangle only)
 - [x] Environment
@@ -79,8 +82,9 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 - [ ] Guided Path Tracer
 
 ### (Week 4, 5) Denoising (SVGF)
-- [x] Basic SVGF
-- [x] Variance filtering
+- [x] Temporal accumulation
+- [x] Disocclusion fix
+- [x] A-Trous wavelet filter
 
 ### (Week 6) Enhancing Sampling Quality (ReSTIR)
 - [x] Basic Resampling
@@ -94,7 +98,7 @@ Example scenes could be downloaded from [here](https://benedikt-bitterli.me/reso
 - [x] RELAX specular version
 
 Because of the time limit, RELAX implementation is quite different from the original one.
-I only managed to split the renderpass, and still used large portion of SVGF code.
+I only managed to develop motion vectors for delta reflection / tramission and split the renderpass, and still used a large portion of SVGF code.
 If you want to know the exact implementation of RELAX, please refer to the [original code](https://github.com/NVIDIAGameWorks/RayTracingDenoiser).
 
 ## Acknowledgement
