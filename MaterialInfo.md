@@ -1,7 +1,7 @@
 # Material Info
 
 This document explains the materials (BSDF) used in the renderer.
-Basically, we used mitsuba-styled BSDF.
+Basically, I used mitsuba-styled BSDF, and also referred to [tungsten renderer](https://github.com/tunabrain/tungsten).
 
 ### Diffuse
 ![material_diffuse](assets/material/diffuse.jpg)

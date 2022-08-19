@@ -20,6 +20,10 @@
 #include "imgui_impl_dx12.h"
 #include "BSDF/BSDFLobes.h"
 
+RenderApplication::RenderApplication(bool useVsync)
+{
+    mUseVSync = useVsync;
+}
 
 void RenderApplication::initDX12(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 {
@@ -198,7 +202,7 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     desc.NumDescriptors = 2;
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-    mpDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pd3dSrvDescHeap));
+    mpDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&mImguiSrvDescHeap));
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -208,9 +212,9 @@ void RenderApplication::onLoad(HWND winHandle, uint32_t winWidth, uint32_t winHe
     ImGui_ImplWin32_Init(winHandle);
 
     ImGui_ImplDX12_Init(mpDevice, kDefaultSwapChainBuffers,
-        DXGI_FORMAT_R8G8B8A8_UNORM, g_pd3dSrvDescHeap,
-        g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
-        g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+        DXGI_FORMAT_R8G8B8A8_UNORM, mImguiSrvDescHeap,
+        mImguiSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
+        mImguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void RenderApplication::onFrameRender()
@@ -245,37 +249,15 @@ void RenderApplication::onFrameRender()
     if (this->renderMode != 10  && this->renderMode != 0) {
         switch (this->renderMode) {
         case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
-        //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
-        //case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
-
         case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionRadiance"); break;
         case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionRadiance"); break;
         case 4: output = mpSrvUavHeap->getGPUHandleByName("gResidualRadiance"); break;
-        //case 4: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseRadiance"); break;
-        //case 5: output = mpSrvUavHeap->getGPUHandleByName("gSpecularRadiance"); break;
-        //case 6: output = mpSrvUavHeap->getGPUHandleByName("gEmission"); break;
         case 5: output = mpSrvUavHeap->getGPUHandleByName("gDiffuseReflectance"); break;
         case 6: output = mpSrvUavHeap->getGPUHandleByName("gSpecularReflectance"); break;
-
         case 7: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionReflectance"); break;
         case 8: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionReflectance"); break;
-
         default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
         }
-        //switch (this->renderMode) {
-        //case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
-        //    //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDirectIllumination"); break;
-        //    //case 3: output = mpSrvUavHeap->getGPUHandleByName("gIndirectIllumination"); break;
-
-        //case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionPositionMeshID"); break;
-        //case 3: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionNormal"); break;
-        //case 4: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionPositionMeshID"); break;
-        //case 5: output = mpSrvUavHeap->getGPUHandleByName("gDeltaTransmissionNormal"); break;
-        //case 6: output = mpSrvUavHeap->getGPUHandleByName("gPositionMeshID"); break;
-        //case 7: output = mpSrvUavHeap->getGPUHandleByName("gNormalDepth"); break;
-
-        //default: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
-        //}
     }
     else
     {
@@ -350,7 +332,6 @@ void RenderApplication::onFrameRender()
             renderData.gpuHandleDictionary["gDepthDerivative"] = depthDerivativeRenderData.outputGPUHandleDictionary.at("gDepthDerivative");
 
             renderData.gpuHandleDictionary["gRoughness"] = renderDataPathTracer.outputGPUHandleDictionary.at("gRoughness");
-            // renderData.gpuHandleDictionary["gDeltaReflectionMotionVector"] = deltaReflectionMotionVectorRenderData.outputGPUHandleDictionary.at("gMotionVector");
             renderData.gpuHandleDictionary["gDeltaReflectionNormal"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionNormal");
             renderData.gpuHandleDictionary["gDeltaReflectionPositionMeshID"] = renderDataPathTracer.outputGPUHandleDictionary.at("gDeltaReflectionPositionMeshID");
 
@@ -558,7 +539,7 @@ void RenderApplication::renderGUI(uint32_t rtvIndex)
     mpCmdList->OMSetRenderTargets(1, &mFrameObjects[rtvIndex].rtvHandle, FALSE, nullptr);
 
     // Bind the descriptor heaps
-    ID3D12DescriptorHeap* heaps[] = { g_pd3dSrvDescHeap };
+    ID3D12DescriptorHeap* heaps[] = { mImguiSrvDescHeap };
     mpCmdList->SetDescriptorHeaps(arraysize(heaps), heaps);
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mpCmdList);
 }

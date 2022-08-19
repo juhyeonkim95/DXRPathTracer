@@ -1,8 +1,7 @@
 # DXRPathTracer
 
-This is a real-time 1spp path tracer based on DirectX RayTracing.
+This is a real-time 1spp path tracer based on DirectX 12 RayTracing.
 Detailed daily work process could be found [here](WorkProgress.md).
-
 ![Teaser](assets/20220816_teaser_v1.jpg)
 
 Followings are real-time rendered images.
@@ -46,7 +45,10 @@ You also need to download and import [DirectXTex](https://github.com/microsoft/D
 For scene data format, [Mitsuba renderer](https://github.com/mitsuba-renderer/mitsuba)'s format was used.
 Refer mitsuba renderer for the details.
 Example scenes could be downloaded from [here](https://benedikt-bitterli.me/resources/).
-
+Since scene loading was not the main focus of the project, its implementation is at minimal level.
+It can load and render only limited scenes.
+I have tested with Country Kitchen, The Wooden Staircase, The White Room and Salle de bain.
+Scene with environment map is not fully implemented.
 
 ## Implementation Progress
 ### (Week 1~3) Core Path Tracer
@@ -91,7 +93,8 @@ For details, refer [this document](MaterialInfo.md).
 - [x] Temporal Reuse
 - [ ] Spatial Reuse
 
-### (Week 7, 8) Advanced denoising
+### (Week 7, 8) Render Pass & Advanced denoising
+- [x] Falcor-styled render pass structuring (Antialiasing, Tonemap, etc..)
 - [x] Delta reflection motion vector
 - [x] Delta transmission motion vector
 - [x] RELAX diffuse version

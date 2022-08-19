@@ -10,7 +10,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // Scene* scene = new Scene("living-room-2");
     //Scene* scene = new Scene("staircase");
     
-    RenderApplication application = RenderApplication();
+    // TODO : Disabling Vsync makes the denoising process noisy.
+
+    bool useVsync = true;
+    RenderApplication application = RenderApplication(useVsync);
     application.setScene(scene);
     Framework::run(application, "DXR PathTracer", scene->getSensor()->width, scene->getSensor()->height);
 }

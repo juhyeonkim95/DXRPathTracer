@@ -31,6 +31,8 @@ static const uint32_t kDefaultSwapChainBuffers = 2;  // TODO : change!!
 class RenderApplication : public Application
 {
 public:
+    RenderApplication(bool useVsync);
+
     Scene* getScene() { return this->scene; }
     void setScene(Scene* scene) { this->scene = scene; }
 
@@ -76,6 +78,8 @@ private:
 
     Scene *scene;
 
+
+    // keyboard inputs
     IDirectInput8A* mpInput = 0;
     IDirectInputDevice8A* mpKeyboard = 0;
     unsigned char mpKeyboardState[256];
@@ -91,8 +95,7 @@ private:
     uint renderMode = 0;
     bool doPostProcess = false;
     
-
-    // Post processing
+    // Render Pass
     PostProcessQuad* postProcessQuad;
     PathTracer* pathTracer;
     ReSTIR* restirPass;
@@ -100,15 +103,20 @@ private:
     
     DepthDerivativePass* depthDerivativePass;
 
+    // Denoising
     RELAXPass* diffuseFilterPass;
     RELAXPass* specularFilterPass;
     RELAXPass* deltaReflectionFilterPass;
     RELAXPass* deltaTransmissionFilterPass;
     RELAXPass* residualFilterPass;
+
+    // processing diffuse/specular/delta reflection/transmission at once slightly improves the performance.
     RELAXSinglePass* allInOneFilterPass;
+
     bool processAllInOne = true;
     bool mUseVSync = true;
 
+    // Motion vector renderpass
     MotionVectorDeltaReflection* deltaReflectionMotionVectorPass;
     MotionVectorDeltaTransmission* deltaTransmissionMotionVectorPass;
 
@@ -121,7 +129,6 @@ private:
     ToneMapper* tonemapPass;
     bool mDirty = true;
 
-    ID3D12ResourcePtr mParamBuffer = nullptr;
 
-    ID3D12DescriptorHeapPtr g_pd3dSrvDescHeap;
+    ID3D12DescriptorHeapPtr mImguiSrvDescHeap;
 };

@@ -77,9 +77,6 @@ void Scene::loadShape()
 			mat4 transform = loadMatrix4(e->FirstChildElement("transform")->FirstChildElement("matrix"));
 			mesh.transform = transform;
 			this->meshes.push_back(mesh);
-			//const char* refID;
-			//e->FirstChildElement("ref")->QueryStringAttribute("id", &refID);
-			//this->meshRefID.push_back(refID);
 		}
 		if (e->FirstChildElement("ref")) {
 			const char* refID;
