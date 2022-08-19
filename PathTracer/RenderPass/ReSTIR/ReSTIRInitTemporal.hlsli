@@ -1,5 +1,6 @@
 #include "../Core/stdafx.hlsli"
 #include "../PathTracer/PathTracerConstants.hlsli"
+#include "../PathTracer/PathTracerAdditionalOutputDescriptorTable.hlsli"
 
 RWStructuredBuffer<Reservoir> gPrevReserviors : register(u28);
 RWStructuredBuffer<Reservoir> gCurrReserviors : register(u29);

@@ -20,7 +20,6 @@ public:
 	void forward(RenderContext* pRenderContext, RenderData& renderData) override;
 	void setAlpha(int frameNumber);
 
-	bool mEnabled = false;
 	RenderTexture* blendRenderTexture;
 	BlendParameters mParam;
 private:

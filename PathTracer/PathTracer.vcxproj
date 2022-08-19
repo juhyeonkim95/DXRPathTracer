@@ -273,6 +273,7 @@
   <ItemGroup>
     <None Include="..\MaterialInfo.md" />
     <None Include="..\README.md" />
+    <None Include="..\RenderPassDetails.md" />
     <None Include="..\RenderPipeline.md" />
     <None Include="..\WorkProgress.md" />
     <None Include="RenderPass\Core\BSDF\BSDFLobes.hlsli">
@@ -300,6 +301,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="RenderPass\Core\Common\DescriptorTable.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="RenderPass\PathTracer\PathTracerAdditionalOutputDescriptorTable.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="RenderPass\ReSTIR\ReSTIRInitTemporal.hlsli">

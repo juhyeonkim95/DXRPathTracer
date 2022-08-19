@@ -446,6 +446,8 @@
     <None Include="RenderPass\Core\BSDF\BSDFUtils.hlsli" />
     <None Include="..\RenderPipeline.md" />
     <None Include="..\MaterialInfo.md" />
+    <None Include="RenderPass\PathTracer\PathTracerAdditionalOutputDescriptorTable.hlsli" />
+    <None Include="..\RenderPassDetails.md" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="RenderPass\PathTracer\PathTracerMinimal.hlsl">

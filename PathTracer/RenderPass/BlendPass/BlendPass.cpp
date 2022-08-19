@@ -8,6 +8,7 @@ BlendPass::BlendPass(ID3D12Device5Ptr mpDevice, uvec2 size)
     this->mpShader = new Shader(kQuadVertexShader, L"RenderPass/BlendPass/BlendPass.hlsl", mpDevice, 2, rtvFormats);
 
     mpParameterBuffer = createBuffer(mpDevice, sizeof(BlendParameters), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+    mEnabled = false;
 }
 
 void BlendPass::createRenderTextures(
@@ -19,11 +20,18 @@ void BlendPass::createRenderTextures(
 
 void BlendPass::processGUI()
 {
+    mDirty = false;
     if (ImGui::CollapsingHeader("Blend"))
     {
-        ImGui::Checkbox("Blend with accumulated HDR", &mEnabled);
-        ImGui::SliderInt("Max FrameNumber", &maxFrameNumber, 1, 512);
-        ImGui::SliderInt("Divide?", &mParam.divide, 0, 1);
+        bool divide;
+        mDirty |= ImGui::Checkbox("Blend with GT Path Tracer", &mEnabled);
+        const char* items[] = { "Temporal Blend", "Divide Mode" };
+        mDirty |= ImGui::Combo("Blend Mode Mode", &mParam.divide, items, IM_ARRAYSIZE(items), 2);
+
+        if (mParam.divide == 0) 
+        {
+            mDirty |= ImGui::SliderInt("Max FrameNumber", &maxFrameNumber, 1, 512);
+        }
     }
 }
 
@@ -45,6 +53,9 @@ void BlendPass::forward(RenderContext* pRenderContext, RenderData& renderData)
     mpCmdList->SetGraphicsRootConstantBufferView(0, mpParameterBuffer->GetGPUVirtualAddress());
 
     mpCmdList->DrawInstanced(6, 1, 0, 0);
+    mpCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(blendRenderTexture->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+    
+    renderData.outputGPUHandleDictionary["blendedTexture"] = blendRenderTexture->getGPUSrvHandler();
 }
 
 void BlendPass::uploadParams()

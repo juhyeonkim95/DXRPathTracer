@@ -92,6 +92,9 @@ private:
     Timer* initializationTimer;
     Timer* perFrameTimer;
 
+    // Just for faster debug
+    // 0 --> denoised output
+    // 1~9 --> other output whatever you want.
     uint renderMode = 0;
     
     // Render Pass

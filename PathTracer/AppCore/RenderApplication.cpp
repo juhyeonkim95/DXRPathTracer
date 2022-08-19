@@ -242,9 +242,12 @@ void RenderApplication::onFrameRender()
 
     postProcessQuad->bind(mpCmdList);
 
-    D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gPositionMeshID");
+    D3D12_GPU_DESCRIPTOR_HANDLE output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR");
 
-    if (this->renderMode != 10  && this->renderMode != 0) {
+    // Just for faster debug
+    // 0 --> denoised output
+    // 1~9 --> other output whatever you want.
+    if (this->renderMode != 0) {
         switch (this->renderMode) {
         case 1: output = mpSrvUavHeap->getGPUHandleByName("gOutputHDR"); break;
         case 2: output = mpSrvUavHeap->getGPUHandleByName("gDeltaReflectionRadiance"); break;
@@ -397,8 +400,18 @@ void RenderApplication::onFrameRender()
 
         modulatePass->forward(&renderContext, renderDataModulatePass);
         output = renderDataModulatePass.outputGPUHandleDictionary.at("gOutput");
-
         perFrameTimer->addRecord("Modulate Pass");
+
+        if (blendPass->isEnabled())
+        {
+            RenderData renderData;
+            renderData.gpuHandleDictionary["src1"] = renderDataPathTracer.outputGPUHandleDictionary["gOutputHDR"];
+            renderData.gpuHandleDictionary["src2"] = output;
+            blendPass->setAlpha(mFrameNumber);
+            blendPass->forward(&renderContext, renderData);
+
+            output = renderData.outputGPUHandleDictionary["blendedTexture"];
+        }
 
         if (fxaaPass->isEnabled())
         {
@@ -534,7 +547,7 @@ void RenderApplication::update()
     uint nextRenderMode = renderMode;
     for(int i = 0; i < 10; i++) {
         if (mpKeyboardState[DIK_1 + i] & 0x80) {
-            nextRenderMode = i + 1;
+            nextRenderMode = (i + 1) % 10;
         }
     }
 

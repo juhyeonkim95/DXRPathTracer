@@ -3,6 +3,7 @@
 #include "../Core/Light/LightSampling.hlsli"
 #include "../ReSTIR/ReSTIRInitTemporal.hlsli"
 #include "PathTracerConstants.hlsli"
+#include "PathTracerAdditionalOutputDescriptorTable.hlsli"
 
 void PrimaryPath(in RayDesc ray, inout PathTraceResult pathResult, inout RayPayload payload)
 {
@@ -330,7 +331,6 @@ void PathTrace(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult
     pathResult.radiance = result;
     return;
 }
-
 
 
 void PathTraceDeltaReflectance(in RayDesc ray, inout uint seed, inout PathTraceResult pathResult, inout RayPayload payload)

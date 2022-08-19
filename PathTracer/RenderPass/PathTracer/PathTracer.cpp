@@ -215,9 +215,9 @@ RootSignatureDesc PathTracer::createGlobalRootDesc()
     desc.rootParams[4].DescriptorTable.NumDescriptorRanges = 1;
     desc.rootParams[4].DescriptorTable.pDescriptorRanges = &desc.range[1];
 
+    // uavs for swap
     for (int i = 0; i < nSwap; i++)
     {
-        // Position Mesh ID Prev
         desc.rootParams[5 + i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         desc.rootParams[5 + i].DescriptorTable.NumDescriptorRanges = 1;
         desc.rootParams[5 + i].DescriptorTable.pDescriptorRanges = &desc.range[2 + i];

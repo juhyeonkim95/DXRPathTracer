@@ -2,6 +2,7 @@
 
 This is a real-time 1spp path tracer based on DirectX 12 RayTracing.
 Detailed daily work process could be found [here](WorkProgress.md).
+
 ![Teaser](assets/20220816_teaser_v1.jpg)
 
 Followings are real-time rendered images.
@@ -11,8 +12,9 @@ It works stable at 60 FPS (RTX 3060).
 ![Teaser](assets/20220818_teaser_v5.gif)
 
 Additional details could be found here.
-- [Rendering pipeline](RenderPipeline.md)
 - [Material info](MaterialInfo.md)
+- [Rendering pipeline](RenderPipeline.md)
+- [Renderpass details](RenderPassDetails.md)
 
 ## Project Overview
 The goal of this project is to implement a scalable path tracer that runs in real-time.
@@ -73,14 +75,14 @@ For details, refer [this document](MaterialInfo.md).
 
 #### Emitter
 - [x] Area (rectangle only)
-- [x] Environment
+- [x] Environment (only without NEE/MIS)
 - [ ] Point
 - [ ] Directional
 - [ ] Spotlight
+
 #### Integrator (Rendering Equation Estimator)
 - [x] Path Tracer
-- [x] Path Tracer with MIS (direct light sampling)
-- [x] Path Tracer with MIS / multiple lights
+- [x] Path Tracer with NEE/MIS (direct light sampling)
 - [ ] Guided Path Tracer
 
 ### (Week 4, 5) Denoising (SVGF)
@@ -103,6 +105,11 @@ For details, refer [this document](MaterialInfo.md).
 Because of the time limit, RELAX implementation is quite different from the original one.
 I only managed to develop motion vectors for delta reflection / tramission and split the renderpass, and still used a large portion of SVGF code.
 If you want to know the exact implementation of RELAX, please refer to the [original code](https://github.com/NVIDIAGameWorks/RayTracingDenoiser).
+
+## Not Implemented
+ - Efficient & scalable scene loader
+ - Exact RELAX & delta motion vector implementation
+ - ReSTIR with spatial reuse
 
 ## Acknowledgement
 This project was supported by [PearlAbyss](https://www.pearlabyss.com/ko-kr).
