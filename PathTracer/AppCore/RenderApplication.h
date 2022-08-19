@@ -8,7 +8,7 @@
 #include "SVGF/SVGFPass.h"
 #include "RELAX/RELAXPass.h"
 #include "RELAXSingle/RELAXSinglePass.h"
-
+#include "Timer.h"
 #include "ModulateIllumination/ModulateIllumination.h"
 #include "ReSTIR/ReSTIR.h"
 #include "PathTracer/PathTracer.h"
@@ -25,8 +25,7 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
-static const int FRAME_ACCUMULATE_NUMBER = 32;
-static const uint32_t kDefaultSwapChainBuffers = 2;  // TODO : change!!
+static const uint32_t kDefaultSwapChainBuffers = 2;  // TODO : change?
 
 class RenderApplication : public Application
 {
@@ -58,7 +57,7 @@ private:
     ID3D12FencePtr mpFence;
     HANDLE mFenceEvent;
     uint64_t mFenceValue = 0;
-    vector<pair<string, float>> elapsedTimeRecords;
+
 
     struct
     {
@@ -87,19 +86,18 @@ private:
 
     uint32_t mFrameNumber = 1;
     uint32_t mTotalFrameNumber = 0;
-    std::ofstream logFile;
-    std::chrono::steady_clock::time_point lastTime;
+    std::ofstream mLogFile;
+    std::chrono::steady_clock::time_point mLastFrameTimeStamp;
 
-    float elapsedTime[FRAME_ACCUMULATE_NUMBER];
-    
+    Timer* initializationTimer;
+    Timer* perFrameTimer;
+
     uint renderMode = 0;
-    bool doPostProcess = false;
     
     // Render Pass
     PostProcessQuad* postProcessQuad;
     PathTracer* pathTracer;
-    ReSTIR* restirPass;
-    SVGFPass* svgfPass;
+    ReSTIR* restirSetting;
     
     DepthDerivativePass* depthDerivativePass;
 

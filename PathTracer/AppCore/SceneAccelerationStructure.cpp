@@ -13,7 +13,6 @@ void SceneAccelerationStructure::createSceneAccelerationStructure(
     uint64_t& fenceValue
 )
 {
-    // Currently assume 
     mBottomLevelASwithTransform.resize(mpScene->getMeshes().size());
 
     std::vector<AccelerationStructureBuffers> bottomLevelBuffers;

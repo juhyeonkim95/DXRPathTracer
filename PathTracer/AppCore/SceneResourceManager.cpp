@@ -176,7 +176,7 @@ void SceneResourceManager::createSceneSRVs()
         uint32 counter = 0;
         for (Mesh& mesh : mpScene->getMeshes()) {
             for (int i = 0; i < mesh.verticesNumber; i++) {
-                verticesData[counter].position = mesh.vertices[i];
+                // verticesData[counter].position = mesh.vertices[i];
                 verticesData[counter].normal = mesh.normals[i];
                 verticesData[counter].uv = mesh.texcoords[i];
                 counter++;

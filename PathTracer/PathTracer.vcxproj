@@ -163,6 +163,7 @@
     <ClCompile Include="..\Framework\Externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Framework\Externals\imgui\imgui_widgets.cpp" />
     <ClCompile Include="AppCore\SceneAccelerationStructure.cpp" />
+    <ClCompile Include="AppCore\Timer.cpp" />
     <ClCompile Include="DX12\DX12AccelerationStructureUtils.cpp" />
     <ClCompile Include="DX12\DX12StateSubobjects.cpp" />
     <ClCompile Include="DX12\DX12DxilLibrary.cpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="..\Framework\Externals\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Framework\Externals\imgui\imstb_truetype.h" />
     <ClInclude Include="AppCore\SceneAccelerationStructure.h" />
+    <ClInclude Include="AppCore\Timer.h" />
     <ClInclude Include="DX12\DX12AccelerationStructureUtils.h" />
     <ClInclude Include="DX12\DX12StateSubobjects.h" />
     <ClInclude Include="External\stb_image_write.h" />

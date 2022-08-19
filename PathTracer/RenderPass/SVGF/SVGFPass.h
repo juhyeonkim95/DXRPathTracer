@@ -2,6 +2,26 @@
 #include "PostProcessPass.h"
 #include "HeapData.h"
 
+
+
+
+
+
+
+
+// *************************************
+// This is outdated!
+// Use RELAX instead!!
+// *************************************
+
+
+
+
+
+
+
+
+
 struct SVGFParameters
 {
 	ivec2 screenSize;

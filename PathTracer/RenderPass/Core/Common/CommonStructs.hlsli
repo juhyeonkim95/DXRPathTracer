@@ -49,7 +49,7 @@ struct GeometryInfo
 
 struct MeshVertex
 {
-    float3 position;
+    // float3 position;
     float3 normal;
     float2 uv;
 };

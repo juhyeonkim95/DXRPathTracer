@@ -9,6 +9,7 @@
 #include "Sensor/Sensor.h"
 #include "Texture/Texture.h"
 #include "CommonStruct.h"
+#include "Timer.h"
 namespace fs = std::filesystem;
 
 using namespace std;
@@ -40,16 +41,26 @@ public:
 	Sensor* sensor;
 	void loadShape();
 	void loadShapeNew();
-	void loadTexture();
 
 	void loadSensor();
 	void loadBSDFs();
 	void loadTextures();
 	void loadEmitters();
+
+	void processGUI();
+
 	
 	Texture* envMapTexture;
 	mat4 envMapTransform;
 
 	uint32 verticesNumber=0;
 	uint32 indicesNumber=0;
+
+	float mScneLoadElapsedTime;
+
+	Timer* mSceneTotalLoadTimer;
+	Timer* mSceneMeshLoadTimer;
+	Timer* mSceneTextureLoadTimer;
+	
+	map<string, float> mSceneShapeLoadTimes;
 };
